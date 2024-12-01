@@ -1,5 +1,6 @@
 import numpy as np
 import open3d as o3d
+from typing import Tuple
 
 from Tests import read_write_model
 
@@ -47,7 +48,7 @@ def translationError(t_gt, t_est) -> float:
     """
     return np.linalg.norm(t_gt - t_est)
 
-def evaluate_R_t(R_gt, t_gt, R_est, t_est) -> tuple:
+def evaluate_R_t(R_gt, t_gt, R_est, t_est) -> Tuple[float, float]:
     """
     Evaluate the rotation and translation errors between the ground truth and the estimated poses.
     Args:
@@ -63,52 +64,73 @@ def evaluate_R_t(R_gt, t_gt, R_est, t_est) -> tuple:
     t_error = translationError(t_gt, t_est)
     return R_error, t_error
 
-def perform_icp(source_pcd, target_pcd, voxel_size=0.05, visualisation=False):
-    """
-    Perform ICP alignment between two point clouds.
-    Args:
-        source_pcd: Source point cloud.
-        target_pcd: Target point cloud.
-        voxel_size: Voxel size for downsampling.
-        visualisation: Enable visualisation or not
-    Returns:
-        Transformation matrix and aligned source point cloud.
-    """
+def preprocess_point_cloud(pcd, voxel_size):
+    print(":: Downsample with a voxel size %.3f." % voxel_size)
+    pcd_down = pcd.voxel_down_sample(voxel_size)
 
-    # Downsample point clouds
-    source_down = source_pcd.voxel_down_sample(voxel_size)
-    target_down = target_pcd.voxel_down_sample(voxel_size)
+    radius_normal = voxel_size * 2
+    print(":: Estimate normal with search radius %.3f." % radius_normal)
+    pcd_down.estimate_normals(
+        o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30))
+    pcd.estimate_normals(
+        o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30))
 
-    # Estimate normals (necessary for colored ICP or point-to-plane ICP)
-    source_down.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=voxel_size * 2, max_nn=30))
-    target_down.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=voxel_size * 2, max_nn=30))
+    radius_feature = voxel_size * 5
+    print(":: Compute FPFH feature with search radius %.3f." % radius_feature)
+    pcd_fpfh = o3d.pipelines.registration.compute_fpfh_feature(
+        pcd_down,
+        o3d.geometry.KDTreeSearchParamHybrid(radius=radius_feature, max_nn=100))
+    return pcd, pcd_down, pcd_fpfh
 
-    # Initial transformation (identity)
-    initial_transformation = np.eye(4)
+def perform_global_registration(estimated_pcd, gt_pcd, estimated_pcd_fpfh, gt_pcd_fpfh, voxel_size):
+    distance_threshold = voxel_size * 1.4
+    print(":: RANSAC registration on downsampled point clouds.")
+    result = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+        estimated_pcd, gt_pcd, estimated_pcd_fpfh, gt_pcd_fpfh, True,
+        distance_threshold,
+        o3d.pipelines.registration.TransformationEstimationPointToPoint(True),
+        3, [
+            o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(
+                0.9),
+            o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
+                distance_threshold)
+        ], o3d.pipelines.registration.RANSACConvergenceCriteria(100000, 0.999))
+    return result
 
-    # Run ICP (Point-to-Point)
-    icp_result = o3d.pipelines.registration.registration_icp(
-        source_down, target_down, max_correspondence_distance=voxel_size * 2,
-        init=initial_transformation,
-        estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint()
+def perform_fast_global_registration(source, target, source_fpfh, target_fpfh, voxel_size):
+    distance_threshold = voxel_size * 0.5
+    print(":: Fast global registration on downsampled point clouds.")
+    result = o3d.pipelines.registration.registration_fgr_based_on_feature_matching(
+        source, target, source_fpfh, target_fpfh,
+        o3d.pipelines.registration.FastGlobalRegistrationOption(
+            maximum_correspondence_distance=distance_threshold
+        )
     )
+    return result
 
-    # Apply transformation to original source point cloud
-    source_transformed = source_pcd.transform(icp_result.transformation)
+def perform_local_registration(estimated_pcd, gt_pcd, result, voxel_size):
+    distance = voxel_size * 0.4
+    print(":: Point-to-plane ICP registration is applied on original point")
+    print("   clouds to refine the alignment. This time we use a strict")
+    print("   distance threshold %.3f." % distance)
+    result = o3d.pipelines.registration.registration_icp(
+        estimated_pcd, gt_pcd, distance, result.transformation,
+        o3d.pipelines.registration.TransformationEstimationPointToPlane()
+    )
+    return result
 
-    # Print result
+def evaluate_registration(icp_result) -> None:
     print("ICP Alignment Results:")
     print(f"Transformation Matrix:\n{icp_result.transformation}")
-    print(f"Fitness: {icp_result.fitness}")
-    print(f"Inlier RMSE: {icp_result.inlier_rmse}")
+    print(f"Fitness: {icp_result.fitness}")  # The higher, the better
+    print(f"Inlier RMSE: {icp_result.inlier_rmse}")  # The lower, the better
 
+def visualize_registration(source, target, result_icp) -> None:
     # Visualize alignment
-    if visualisation:
-        source_transformed.paint_uniform_color([1, 0, 0])  # Source in red
-        target_pcd.paint_uniform_color([0, 1, 0])  # Target in green
-        o3d.visualization.draw_geometries([source_transformed, target_pcd])
-
-    return icp_result.transformation, source_transformed
+    source_transformed = source.transform(result_icp.transformation)
+    source_transformed.paint_uniform_color([1, 0, 0])  # Source in red
+    target.paint_uniform_color([0, 1, 0])  # Target in green
+    o3d.visualization.draw_geometries([source_transformed, target])
 
 if __name__ == '__main__':
     model_path = '../images/out/sparse/0'
@@ -176,9 +198,23 @@ if __name__ == '__main__':
 
 
     # Perform ICP alignment between the estimated and ground truth point clouds
-    # TODO : Find a correct voxel value and check why alignment is poor
-    transformation, aligned_pcd = perform_icp(estimated_pcd, gt_pcd, voxel_size=1, visualisation=True)
+    voxel_size = 0.8
+
+    # Preprocess point clouds
+    estimated_pcd, estimated_pcd_down, estimated_pcd_fpfh = preprocess_point_cloud(estimated_pcd, voxel_size=voxel_size)
+    gt_pcd, gt_pcd_down, gt_pcd_fpfh = preprocess_point_cloud(gt_pcd, voxel_size=voxel_size)
+
+    # Perform global registration
+    result_ransac = perform_global_registration(
+        estimated_pcd_down, gt_pcd_down, estimated_pcd_fpfh, gt_pcd_fpfh, voxel_size=voxel_size
+    )
+
+    # Perform refined registration
+    result_icp = perform_local_registration(
+        estimated_pcd, gt_pcd, result_ransac, voxel_size=voxel_size
+    )
+
+    evaluate_registration(result_icp)
 
     # Display aligned estimated_pcd
-    # display_point_cloud(aligned_pcd)
-
+    visualize_registration(estimated_pcd, gt_pcd, result_icp)
