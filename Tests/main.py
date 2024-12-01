@@ -108,14 +108,17 @@ def perform_fast_global_registration(source, target, source_fpfh, target_fpfh, v
     )
     return result
 
-def perform_local_registration(estimated_pcd, gt_pcd, result, voxel_size):
+def perform_local_registration(estimated_pcd, gt_pcd, init_transformation, voxel_size):
     distance = voxel_size * 0.4
     print(":: Point-to-plane ICP registration is applied on original point")
     print("   clouds to refine the alignment. This time we use a strict")
     print("   distance threshold %.3f." % distance)
     result = o3d.pipelines.registration.registration_icp(
-        estimated_pcd, gt_pcd, distance, result.transformation,
-        o3d.pipelines.registration.TransformationEstimationPointToPlane()
+        estimated_pcd, gt_pcd, distance, init_transformation,
+        o3d.pipelines.registration.TransformationEstimationPointToPlane(),
+        o3d.pipelines.registration.ICPConvergenceCriteria(relative_fitness=1e-6,
+                                                          relative_rmse=1e-6,
+                                                          max_iteration=100)
     )
     return result
 
@@ -211,7 +214,7 @@ if __name__ == '__main__':
 
     # Perform refined registration
     result_icp = perform_local_registration(
-        estimated_pcd, gt_pcd, result_ransac, voxel_size=voxel_size
+        estimated_pcd, gt_pcd, result_ransac.transformation, voxel_size=voxel_size
     )
 
     evaluate_registration(result_icp)
