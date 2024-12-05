@@ -1,20 +1,42 @@
+import copy
 import numpy as np
 import open3d as o3d
-from typing import Tuple
 
-from evaluation import *
+from evaluation import evaluate_registration, quaternion2rotation
 from read_write_model import read_model
-from pcd_alignment import perform_registration
+from probreg import cpd
+from icp_alignment import perform_local_registration, perform_fast_global_registration, preprocess_point_cloud
 
 def display_point_cloud(pcd):
     o3d.visualization.draw_geometries([pcd])
 
-def visualize_registration(source, target, result_icp) -> None:
+def visualize_registration(source, target, result) -> None:
     # Visualize alignment
-    source_transformed = source.transform(result_icp.transformation)
-    source_transformed.paint_uniform_color([1, 0, 0])  # Source in red
-    target.paint_uniform_color([0, 1, 0])  # Target in green
-    o3d.visualization.draw_geometries([source_transformed, target])
+    source.paint_uniform_color([1, 0, 0])
+    target.paint_uniform_color([0, 1, 0])
+    result.paint_uniform_color([0, 0, 1])
+    o3d.visualization.draw_geometries([source, target, result])
+
+def perform_registration(source, target, voxel_size):
+    # source, target = interpolate_missing_points(source, target)
+    source, source_down, source_fpfh = preprocess_point_cloud(source, voxel_size)
+    target, target_down, target_fpfh = preprocess_point_cloud(target, voxel_size)
+
+    # Perform CPD registration (global registration)
+    tf_param, _, _ = cpd.registration_cpd(source, target, tf_type_name='affine', maxiter=2, use_color=True, use_cuda=False)
+    transformation = np.hstack((tf_param.b, tf_param.t.reshape(3, 1)))
+    transformation = np.vstack((transformation, np.array([0, 0, 0, 1])))
+
+    # Perform fast global registration (global registration)
+    # result_global = perform_fast_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
+    # transformation = result_global.transformation
+
+    # Perform ICP registration (local registration)
+    result_icp = perform_local_registration(source, target, transformation, voxel_size)
+
+    # result_icp = perform_generalized_icp(source_down, target_down, result_global.transformation, voxel_size)
+    return result_icp
+
 
 
 if __name__ == '__main__':
@@ -75,18 +97,16 @@ if __name__ == '__main__':
     gt_pcd.colors = o3d.utility.Vector3dVector(np.array(gt_colors))
     # display_point_cloud(gt_pcd)
 
-    # Compare the estimated poses with the ground truth poses
-    print("Comparing estimated poses with ground truth poses:")
-    for i in range(len(estimated_R)):
-        R_error, t_error = evaluate_R_t(gt_R[i], gt_t[i], estimated_R[i], estimated_t[i])
-        print(f"Image {i}: Rotation Error: {R_error:.4f} rad, Translation Error: {t_error:.4f} m")
+    # Remove outliers
+    gt_pcd, ind = gt_pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
 
-
-    # Perform ICP alignment between the estimated and ground truth point clouds
-    voxel_size = 0.01
+    # Perform alignment between the estimated and ground truth point clouds
+    voxel_size = 0.05
     result_icp = perform_registration(estimated_pcd, gt_pcd, voxel_size)
 
-    evaluate_registration(result_icp)
+    result = copy.deepcopy(estimated_pcd)
+    result = result.transform(result_icp.transformation)
 
-    # Display aligned estimated_pcd
-    visualize_registration(estimated_pcd, gt_pcd, result_icp)
+    evaluate_registration(result_icp)
+    visualize_registration(estimated_pcd, gt_pcd, result)
+
