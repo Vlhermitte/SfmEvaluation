@@ -1,0 +1,13 @@
+name: Evaluation
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - open3d
+  - matplotlib
+  - pip
+  - pip:
+    - probreg
+    - cupy
