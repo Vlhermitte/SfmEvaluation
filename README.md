@@ -14,9 +14,6 @@ The project takes as input a COLMAP model and outputs the evaluation results.
 
 
 ## TODO
-
-- [ ] Code ICP alignment for point cloud alignment
-- [ ] Perform 3D sparse point cloud error evaluation (after ICP alignment)
-- [ ] Perform camera pose error evaluation
-- [ ] Perform camera intrinsics error evaluation
-- [ ] Check this repo : https://github.com/ETH3D/multi-view-evaluation?tab=readme-ov-file
+- [ ] Find out what's wrong with the ICP algorithm for the courtyard dataset.
+- [ ] Fix alignment of the courtyard dataset
+- [ ] Check out the novel view synthesis paper (https://arxiv.org/abs/1601.06950)
