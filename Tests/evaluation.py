@@ -19,50 +19,66 @@ def matrix2Rt(A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     t = A[0:3, 3]
     return R, t
 
-def rotationError(R_gt: np.ndarray, R_est: np.ndarray) -> float:
+def evaluate_camera_pose(R_gt: np.ndarray, t_gt: np.ndarray, R_est: np.ndarray, t_est: np.ndarray):
     """
-    Evaluate the rotation error between the ground truth and the estimated rotation matrix.
+    Evaluation of position error, not translation error.
     Args:
-        R_gt: 3x3 ground truth rotation matrix
-        R_est: 3x3 estimated rotation matrix
+        R_gt: Ground truth rotation matrix (3x3) in camera coordinate frame
+        t_gt: Ground truth translation vector (3x1) in camera coordinate frame
+        R_est: Estimated rotation matrix (3x3) in camera coordinate frame
+        t_est: Estimated translation vector (3x1) in camera coordinate frame
 
     Returns:
-        The rotation error in radians.
+        position_error: Euclidean distance between estimated and ground truth camera position
     """
-    R = R_gt @ R_est.T
-    return np.arccos((np.trace(R) - 1) / 2)
+    # Compute estimated camera position in world coordinates
+    p_est = -R_est.T @ t_est
 
-def translationError(t_gt: np.ndarray, t_est: np.ndarray) -> float:
+    # Compute ground truth camera position in world coordinates
+    p_gt = -R_gt.T @ t_gt
+
+    # Compute position error (Euclidean distance)
+    position_error = np.linalg.norm(p_est - p_gt)
+
+    return position_error
+
+def evaluate_registration(estimated_pcd: o3d.geometry.PointCloud, gt_pcd: o3d.geometry.PointCloud, transformation: np.ndarray):
     """
-    Evaluate the translation error between the ground truth and the estimated translation vector.
-    The error is the Euclidean L2 norm between the two vectors.
+    Evaluate the registration between estimated and ground truth point clouds.
     Args:
-        t_gt: 3x1 ground truth translation vector
-        t_est: 3x1 estimated translation vector
+        estimated_pcd: Estimated point cloud
+        gt_pcd: Ground truth point cloud
+        transformation: Estimated transformation matrix (4x4)
 
     Returns:
-        The translation error in meters.
+        fitness: Fitness score
+        inlier_rmse: Inlier RMSE
     """
-    return np.linalg.norm(t_gt - t_est)
+    # Apply transformation
+    estimated_pcd.transform(transformation)
 
-def evaluate_R_t(R_gt: np.ndarray, t_gt: np.ndarray, R_est: np.ndarray, t_est: np.ndarray) -> Tuple[float, float]:
+    # Evaluate registration
+    evaluation = o3d.pipelines.registration.evaluate_registration(estimated_pcd, gt_pcd,
+                                                                 max_correspondence_distance=np.inf)
+
+    fitness = evaluation.fitness
+    inlier_rmse = evaluation.inlier_rmse
+
+    return fitness, inlier_rmse
+
+def evaluate_points_cloud(estimated_pcd: o3d.geometry.PointCloud, gt_pcd: o3d.geometry.PointCloud):
     """
-    Evaluate the rotation and translation errors between the ground truth and the estimated poses.
+    Given 2 points clouds, evaluate the accuracy of the estimated point cloud.
+    The evaluation is done by evaluation the distance from the estimated point cloud to nearest neighbor in the ground truth point cloud.
     Args:
-        R_gt: 3x3 ground truth rotation matrix
-        t_gt: 3x1 ground truth translation vector
-        R_est: 3x3 estimated rotation matrix
-        t_est: 3x1 estimated translation vector
+        estimated_pcd: Estimated point cloud
+        gt_pcd: Ground truth point cloud
 
     Returns:
-        A tuple containing the rotation and translation errors in radians and meters respectively.
+        mean_distance: Mean distance between estimated point cloud and ground truth point cloud
     """
-    R_error = rotationError(R_gt, R_est)
-    t_error = translationError(t_gt, t_est)
-    return R_error, t_error
+    # compute_point_cloud_distance info : https://www.open3d.org/docs/latest/tutorial/Basic/pointcloud.html#Point-Cloud-Distance
+    distances = estimated_pcd.compute_point_cloud_distance(gt_pcd)
+    mean_distance = np.mean(distances)
 
-def evaluate_registration(icp_result: o3d.pipelines.registration.RegistrationResult) -> None:
-    print("ICP Alignment Results:")
-    print(f"Transformation Matrix:\n{icp_result.transformation}")
-    print(f"Fitness: {icp_result.fitness}")  # The higher, the better
-    print(f"Inlier RMSE: {icp_result.inlier_rmse}")  # The lower, the better
+    return mean_distance
