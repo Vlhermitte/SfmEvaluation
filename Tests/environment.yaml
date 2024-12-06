@@ -10,4 +10,4 @@ dependencies:
   - pip
   - pip:
     - probreg
-    - cupy
+    - cupy-cuda12x
