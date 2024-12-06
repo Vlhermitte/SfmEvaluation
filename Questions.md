@@ -1,4 +1,4 @@
-# Questions/Problems and TODO List
+# Questions/Problems encountered
 
 ## Problems encountered
 - The ICP algorithm is working very poorly for the courtyard dataset. The alignment is ver bad. Thus, it is impossible to evaluate the points cloud and camera pose.
@@ -9,8 +9,3 @@
 
 - The ETH3D dataset provide a dense points cloud as ground truth. But Tank&Temples dataset provide only a points cloud of the object alone. \
   How Can I perform ICP alignment when the ground is avery narrow point cloud
-
-
-## TODO
-- Fix alignment of the courtyard dataset
-- Check out the novel view synthesis paper (https://arxiv.org/abs/1601.06950)
