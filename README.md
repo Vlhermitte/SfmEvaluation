@@ -4,9 +4,9 @@
 
 This project provides tools for reading, writing, and evaluating Structure-from-Motion (SfM) models.
 The evaluation protocol is composed of the following elements:
-* Camera pose error (evaluating the estimated camera rotations and translations)
-* Camera intrinsics error (if available in the dataset)
-* 3D sparse point cloud error
+* Camera pose error 
+* 3D point cloud error
+* Novel view synthesis (https://arxiv.org/abs/1601.06950) (Not implemented yet)
 
 ## I/O Formats
 
