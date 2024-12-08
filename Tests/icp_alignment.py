@@ -131,3 +131,23 @@ def perform_generalized_icp(source, target, init_transformation, voxel_size):
                                                           max_iteration=100))
 
     return result
+
+def perform_registration(source, target, voxel_size):
+    # source, target = interpolate_missing_points(source, target)
+    source, source_down, source_fpfh = preprocess_point_cloud(source, voxel_size)
+    target, target_down, target_fpfh = preprocess_point_cloud(target, voxel_size)
+
+    # Perform CPD registration (global registration)
+    # tf_param, _, _ = cpd.registration_cpd(source, target, tf_type_name='affine', maxiter=2, use_color=True, use_cuda=False)
+    # transformation = np.hstack((tf_param.b, tf_param.t.reshape(3, 1)))
+    # transformation = np.vstack((transformation, np.array([0, 0, 0, 1])))
+
+    # Perform fast global registration (global registration)
+    result_global = perform_fast_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
+    transformation = result_global.transformation
+
+    # Perform ICP registration (local registration)
+    result_icp = perform_local_registration(source, target, transformation, voxel_size)
+
+    # result_icp = perform_generalized_icp(source_down, target_down, result_global.transformation, voxel_size)
+    return result_icp
