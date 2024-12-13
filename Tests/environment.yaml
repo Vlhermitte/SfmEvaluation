@@ -8,6 +8,3 @@ dependencies:
   - open3d
   - matplotlib
   - pip
-  - pip:
-    - probreg
-    - cupy-cuda12x

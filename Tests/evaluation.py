@@ -1,23 +1,45 @@
 import numpy as np
-import open3d as o3d
-
 
 def evaluate_camera_pose(R_gt: np.ndarray, t_gt: np.ndarray, R_est: np.ndarray, t_est: np.ndarray):
     """
-    Evaluation of position error, not translation error.
+    Evaluate the positional accuracy of an estimated camera pose against the ground truth.
+
+    The camera pose consists of a rotation matrix (R) and a translation vector (t),
+    which together define the transformation from the world coordinate frame to
+    the camera coordinate frame. This function computes the Euclidean distance
+    between the camera centers derived from the ground truth and the estimated poses.
+
+    Camera center in the world coordinate frame is computed as:
+        p = -R^T @ t
+    where:
+        - R is the rotation matrix (3x3),
+        - t is the translation vector (3x1).
+
     Args:
-        R_gt: Ground truth rotation matrix (3x3) in camera coordinate frame
-        t_gt: Ground truth translation vector (3x1) in camera coordinate frame
-        R_est: Estimated rotation matrix (3x3) in camera coordinate frame
-        t_est: Estimated translation vector (3x1) in camera coordinate frame
+        R_gt (np.ndarray): Ground truth rotation matrix (3x3), transforming points
+                           from world to camera coordinates.
+        t_gt (np.ndarray): Ground truth translation vector (3x1), representing the
+                           camera position in the world frame.
+        R_est (np.ndarray): Estimated rotation matrix (3x3), transforming points
+                            from world to camera coordinates.
+        t_est (np.ndarray): Estimated translation vector (3x1), representing the
+                            camera position in the world frame.
 
     Returns:
-        position_error: Euclidean distance between estimated and ground truth camera position
+        float: The Euclidean distance (position error) between the ground truth
+               and estimated camera centers in the world coordinate frame.
     """
-    # Compute estimated camera position in world coordinates
+    assert R_gt.shape == (3, 3), f'Ground truth R shape is {R_gt.shape}, expected (3, 3)'
+    assert R_est.shape == (3, 3), f'Estimated R shape is {R_est.shape}, expected (3, 3)'
+    assert t_gt.shape == (3, 1) or t_gt.shape == (3,), f'Ground truth t shape is {t_gt.shape}, expected (3, 1) or (3,)'
+    assert t_est.shape == (3, 1) or t_est.shape == (3,), f'Estimated t shape is {t_est.shape}, expected (3, 1) or (3,)'
+    assert np.allclose(np.linalg.det(R_gt), 1), 'Ground truth R determinant is not 1'
+    assert np.allclose(np.linalg.det(R_est), 1), 'Estimated R determinant is not 1'
+
+    # Compute estimated camera position (world coordinates)
     p_est = -R_est.T @ t_est
 
-    # Compute ground truth camera position in world coordinates
+    # Compute ground truth camera position
     p_gt = -R_gt.T @ t_gt
 
     # Compute position error (Euclidean distance)
@@ -25,43 +47,30 @@ def evaluate_camera_pose(R_gt: np.ndarray, t_gt: np.ndarray, R_est: np.ndarray, 
 
     return position_error
 
-def evaluate_registration(estimated_pcd: o3d.geometry.PointCloud, gt_pcd: o3d.geometry.PointCloud, transformation: np.ndarray):
-    """
-    Evaluate the registration between estimated and ground truth point clouds.
-    Args:
-        estimated_pcd: Estimated point cloud
-        gt_pcd: Ground truth point cloud
-        transformation: Estimated transformation matrix (4x4)
+if __name__ == '__main__':
+    from geometry import quaternion2rotation
+    from main import get_camera_info
+    from read_write_model import read_model
 
-    Returns:
-        fitness: Fitness score
-        inlier_rmse: Inlier RMSE
-    """
-    # Apply transformation
-    estimated_pcd.transform(transformation)
+    model_path = '../results/courtyard/sparse/aligned'
+    db_path = '../results/courtyard/sample_reconstruction.db'
+    gt_model_path = '../images/ETH3D/courtyard/dslr_calibration_jpg'
 
-    # Evaluate registration
-    evaluation = o3d.pipelines.registration.evaluate_registration(estimated_pcd, gt_pcd,
-                                                                 max_correspondence_distance=np.inf)
+    # Estimated model
+    est_cameras_type, images, est_points3D = read_model(model_path, '.bin')
+    # Ground truth model
+    gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, '.txt')
 
-    fitness = evaluation.fitness
-    inlier_rmse = evaluation.inlier_rmse
+    # Create Open3D point cloud and get R and t for estimated and ground truth models
+    cameras = get_camera_info(est_cameras_type, images)
+    gt_cameras = get_camera_info(gt_cameras_type, gt_images)
 
-    return fitness, inlier_rmse
+    # Evaluate camera pose
+    results = []
+    for camera, gt_camera in zip(cameras, gt_cameras):
+        R = quaternion2rotation(camera.qvec)
+        R_gt = quaternion2rotation(gt_camera.qvec)
+        position_error = evaluate_camera_pose(R_gt, gt_camera.tvec, R, camera.tvec)
+        results.append(position_error)
 
-def evaluate_points_cloud(estimated_pcd: o3d.geometry.PointCloud, gt_pcd: o3d.geometry.PointCloud):
-    """
-    Given 2 points clouds, evaluate the accuracy of the estimated point cloud.
-    The evaluation is done by evaluation the distance from the estimated point cloud to nearest neighbor in the ground truth point cloud.
-    Args:
-        estimated_pcd: Estimated point cloud
-        gt_pcd: Ground truth point cloud
-
-    Returns:
-        mean_distance: Mean distance between estimated point cloud and ground truth point cloud
-    """
-    # compute_point_cloud_distance info : https://www.open3d.org/docs/latest/tutorial/Basic/pointcloud.html#Point-Cloud-Distance
-    distances = estimated_pcd.compute_point_cloud_distance(gt_pcd)
-    mean_distance = np.mean(distances)
-
-    return mean_distance
+    print(f'Average position error: {np.mean(results):.2f} meters')

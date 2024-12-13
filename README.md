@@ -4,8 +4,8 @@
 
 This project provides tools for reading, writing, and evaluating Structure-from-Motion (SfM) models.
 The evaluation protocol is composed of the following elements:
-* Camera pose error 
-* 3D point cloud error
+* Camera pose error
+* 3D point cloud error (Maybe not, because it is too difficult to perform alignment)
 * Novel view synthesis (https://arxiv.org/abs/1601.06950) (Not implemented yet)
 
 ## Input Formats
@@ -27,16 +27,18 @@ The COLMAP model are a .txt/.bin files that contains the following information:
 
 ## Dataset used
 - ETH3D Stereo dataset (https://www.eth3d.net/datasets)
-  - Info available are: 
+  - Info available are: (in meters)
     - Ground truth camera poses
     - Camera intrinsics
     - Ground truth 3D points
+    - COLMAP model
 - Tanks and Temples dataset (https://www.tanksandtemples.org/download/)
   - Info available are:
     - Ground truth 3D points
+    - .ply file
 - MipNerf dataset (https://jonbarron.info/mipnerf360/)
   - Info available are:
-    - TODO: Find out what info is available
+    - COLMAP model
 
 ### Notes
 - In the Tanks and Temples dataset, if the scene is an object (e.g. Ignatius, Truck), the ground truth 3D points \
@@ -47,3 +49,6 @@ The COLMAP model are a .txt/.bin files that contains the following information:
   - [ ] Try to do create a 3D point cloud where each point is the camera pose and perform ICP alignment on it.
 - [ ] Implement rotation error and report the angle error.
 - [ ] Check out the novel view synthesis paper (https://arxiv.org/abs/1601.06950)
+
+
+# 
