@@ -1,4 +1,6 @@
 import numpy as np
+from common import Camera
+from typing import List, Dict
 
 def evaluate_camera_pose(R_gt: np.ndarray, t_gt: np.ndarray, R_est: np.ndarray, t_est: np.ndarray) -> float:
     """
@@ -37,10 +39,10 @@ def evaluate_camera_pose(R_gt: np.ndarray, t_gt: np.ndarray, R_est: np.ndarray, 
     assert np.allclose(np.linalg.det(R_est), 1), 'Estimated R determinant is not 1'
 
     # Compute estimated camera position (world coordinates)
-    C_est = -R_est.T @ t_est
+    C_est = -R_est.T @ (t_est / np.linalg.norm(t_est))
 
     # Compute ground truth camera position
-    C_gt = -R_gt.T @ t_gt
+    C_gt = -R_gt.T @ (t_gt / np.linalg.norm(t_gt))
 
     # Compute position error (Euclidean distance)
     position_error = np.linalg.norm(C_est - C_gt)
@@ -63,10 +65,8 @@ def evaluate_rotation_matrices(R_gt: np.ndarray, R_est: np.ndarray) -> float:
     angle between the two possible solutions.
 
     Args:
-        R_gt (np.ndarray): Ground truth rotation matrix (3x3), transforming points
-                           from world to camera coordinates.
-        R_est (np.ndarray): Estimated rotation matrix (3x3), transforming points
-                            from world to camera coordinates.
+        R_gt (np.ndarray): Ground truth rotation matrix (3x3), world orientation in camera coordinate frame.
+        R_est (np.ndarray): Estimated rotation matrix (3x3), world orientation in camera coordinate frame.
 
     Returns:
         float: The angle (in degrees) between the ground truth and estimated rotation matrices.
@@ -94,8 +94,8 @@ def evaluate_translation_error(t_gt: np.ndarray, t_est: np.ndarray) -> float:
     The translation error is computed as the Euclidean distance between the two translation vectors.
 
     Args:
-        t_gt (np.ndarray): Ground truth translation vector (3x1), representing the camera position in the world frame.
-        t_est (np.ndarray): Estimated translation vector (3x1), representing the camera position in the world frame.
+        t_gt (np.ndarray): Ground truth translation vector (3x1), world origin in camera coordinate frame.
+        t_est (np.ndarray): Estimated translation vector (3x1), world origin in camera coordinate frame.
 
     Returns:
         float: The Euclidean distance (translation error) between the ground truth and estimated translation vectors.
@@ -112,36 +112,81 @@ def evaluate_translation_error(t_gt: np.ndarray, t_est: np.ndarray) -> float:
 
     return translation_error
 
-if __name__ == '__main__':
-    from geometry import quaternion2rotation
-    from common import get_cameras_info
-    from read_write_model import read_model
+def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]) -> Dict[str, List]:
+    """
+    Evaluate the relative rotation and translation errors on image pairs.
 
-    model_path = '../results/colmap/courtyard/sparse/0'
-    # model_path = '../results/vggsfm/courtyard/sparse'
-    gt_model_path = '../images/ETH3D/courtyard/dslr_calibration_jpg'
+    Args:
+        gt_cameras (Cameras): Ground truth cameras.
+        est_cameras (Cameras): Estimated cameras.
 
-    # Estimated model
-    est_cameras_type, images, est_points3D = read_model(model_path, '.bin')
-    # Ground truth model
-    gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, '.txt')
+    Returns:
+        dict: A dictionary with the relative_rotation_error and relative_translation_error lists.
+    """
+    results = {'relative_rotation_error': [], 'relative_translation_error': []}
 
-    # Create Open3D point cloud and get R and t for estimated and ground truth models
-    cameras = get_cameras_info(est_cameras_type, images)
-    gt_cameras = get_cameras_info(gt_cameras_type, gt_images)
+    for i in range(len(est_cameras) - 1):
+        for j in range(i + 1, len(est_cameras)):
+            # Compute relative transformations
+            R_rel_est = est_cameras[j].R @ est_cameras[i].R.T   # R.T = R^-1
+            R_rel_gt = gt_cameras[j].R @ gt_cameras[i].R.T
 
-    # Evaluate camera pose
-    results = {'position_error': [], 'rotation_error': [], 'translation_error': []}
-    for camera, gt_camera in zip(cameras, gt_cameras):
-        R_est = camera.R
-        R_gt = gt_camera.R
-        position_error = evaluate_camera_pose(R_gt, gt_camera.t, R_est, camera.t)
-        rotation_error = evaluate_rotation_matrices(R_gt, R_est)
-        translation_error = evaluate_translation_error(gt_camera.t, camera.t)
-        results['position_error'].append(position_error)
-        results['rotation_error'].append(rotation_error)
-        results['translation_error'].append(translation_error)
+            t_rel_est = est_cameras[j].t - (R_rel_est @ est_cameras[i].t)
+            t_rel_gt = gt_cameras[j].t - (R_rel_gt @ gt_cameras[i].t)
 
-    print(f'Average position error: {np.mean(results["position_error"]):.2f} meters')
-    print(f'Average rotation error: {np.mean(results["rotation_error"]):.2f} degrees')
-    print(f'Average translation error: {np.mean(results["translation_error"]):.2f} meters')
+            # Evaluate errors
+            rotation_error = evaluate_rotation_matrices(R_rel_gt, R_rel_est)
+            translation_error = evaluate_translation_error(t_rel_gt, t_rel_est)
+
+            results['relative_rotation_error'].append(rotation_error)
+            results['relative_translation_error'].append(translation_error)
+
+    return results
+
+def report_metrics(results) -> tuple[dict, dict]:
+    """
+    Compute and report comprehensive metrics for camera pose estimation.
+
+    Args:
+        results (dict): Dictionary containing lists of errors
+            - rotation_error: List of rotation errors in degrees
+            - translation_error: List of translation errors
+            - position_error: List of position errors
+    """
+
+    # Compute summary statistics
+    stats = {}
+    for metric_name, values in results.items():
+        stats[metric_name] = {
+            'mean': np.mean(values),
+            'median': np.median(values),
+            'std': np.std(values),
+            'min': np.min(values),
+            'max': np.max(values)
+        }
+
+    # Compute error distributions
+    rotation_bins = [0, 5, 10, 15, 20, float('inf')]  # in degrees
+    translation_bins = [0, 0.05, 0.10, 0.15, 0.20, float('inf')]
+
+    def compute_histogram(values, bins):
+        hist, _ = np.histogram(values, bins=bins)
+        return hist.tolist()
+
+    distributions = {
+        'rotation_hist': compute_histogram(results['relative_rotation_error'], rotation_bins),
+        'translation_hist': compute_histogram(results['relative_translation_error'], translation_bins)
+    }
+
+    # Print summary
+    print("\nCamera Pose Estimation Results")
+    print("==============================")
+
+    for metric_name, metric_stats in stats.items():
+        print(f"\n{metric_name.replace('_', ' ').title()}:")
+        print(f"  Mean: {metric_stats['mean']:.3f}")
+        print(f"  Median: {metric_stats['median']:.3f}")
+        print(f"  Std Dev: {metric_stats['std']:.3f}")
+        print(f"  Range: [{metric_stats['min']:.3f}, {metric_stats['max']:.3f}]")
+
+    return stats, distributions
