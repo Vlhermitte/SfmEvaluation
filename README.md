@@ -1,15 +1,26 @@
 # Structure-from-Motion (SfM) Evaluation Protocol
 
 ## Overview
-
 This project provides tools for reading, writing, and evaluating Structure-from-Motion (SfM) models.
 The evaluation protocol is composed of the following elements:
 * Camera pose error
-* 3D point cloud error (Maybe not, because it is too difficult to perform alignment)
+* 3D triangulation error (Not implemented yet)
 * Novel view synthesis (https://arxiv.org/abs/1601.06950) (Not implemented yet)
 
-## Input Formats
+## Evaluation Protocol
+The evaluation protocol assesses the camera relative rotation error (RRE) and relative translation error (RTE). 
+Specifically, for each pair of images \(i\) and \(j\), the relative rotation and translation are computed as follows:
+```math
+  R_{rel} = R_j \cdot R_i^T
+```
+```math
+  t_{rel} = t_j - (R_{rel} \cdot t_i)
+```
+For more details, see the function [`evaluate_relative_errors`](Tests/evaluation.py) in [`evaluation.py`](Tests/evaluation.py).
 
+- [ ] Rest is coming soon. (hopefully !)
+
+## Input Formats
 The project takes as input a COLMAP model and outputs the evaluation results.
 
 ## Output Formats
@@ -45,10 +56,15 @@ The COLMAP model are a .txt/.bin files that contains the following information:
     is a point cloud of the object without the background.
 
 ## TODO
-- [ ] Check out ATE and RPE for camera pose evaluation. (https://cvg.cit.tum.de/data/datasets/rgbd-dataset/tools/)
-  - [ ] Try to do create a 3D point cloud where each point is the camera pose and perform ICP alignment on it.
-- [ ] Implement rotation error and report the angle error.
+- [x] Implement relative rotation and translation error evaluation
+- [ ] Implement 3D triangulation error evaluation (accuracy and completeness of 3D triangulation)
 - [ ] Check out the novel view synthesis paper (https://arxiv.org/abs/1601.06950)
 
 
-# 
+# Resources
+- [COLMAP](https://colmap.github.io/)
+- [ETH3D](https://www.eth3d.net/)
+- [Tanks and Temples](https://www.tanksandtemples.org/)
+- [MipNerf](https://jonbarron.info/mipnerf360/)
+- [TUM RGB-D SLAM tools](https://cvg.cit.tum.de/data/datasets/rgbd-dataset/tools/)
+- [Novel View Synthesis](https://arxiv.org/abs/1601.06950)
