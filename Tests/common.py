@@ -36,7 +36,7 @@ class Camera:
             self.distortion_params = type.params[4:]
 
     def __repr__(self):
-        return f'Camera: {self.image} Type: {self.type}'
+        return f'Camera: {self.image} Type: {self.type.model}'
 
     def __str__(self):
         return f'Camera: {self.image}'
