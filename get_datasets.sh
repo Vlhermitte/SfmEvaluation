@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Exit on any error, unset variable, or pipe failure
-set -euo pipefail
+# set -euo pipefail
 
 # Configuration
 BASE_DIR="./datasets/ETH3D"
@@ -26,7 +26,7 @@ verify_download() {
     local file=$1
     if [ ! -f "${file}" ] || [ ! -s "${file}" ]; then
         echo "Download verification failed for ${file}. Exiting..."
-        exit 1  # Exit immediately on failure
+        return 1  # Exit immediately on failure
     fi
 }
 
@@ -35,7 +35,7 @@ verify_extraction() {
     local dir=$1
     if [ ! -d "${dir}/images" ] || ! ls "${dir}/images/dslr_images"/*.jpg >/dev/null 2>&1; then
         echo "Extraction verification failed for ${dir}. Exiting..."
-        exit 1  # Exit immediately on failure
+        return 1  # Exit immediately on failure
     fi
 }
 
@@ -44,12 +44,16 @@ check_scene_exists() {
     local scene_path=$1
     local image_dir="${scene_path}/images"
 
-    if [ -d "${image_dir}" ] && ls "${image_dir}"/*.jpg >/dev/null 2>&1; then
-        local image_count=$(ls "${image_dir}"/*.jpg | wc -l)
+    echo "Checking if scene exists: ${scene_path}"
+
+    if [ -d "${image_dir}" ] && ls "${image_dir}"/*.[jJ][pP][gG] >/dev/null 2>&1; then
+        local image_count=$(ls "${image_dir}"/*.[jJ][pP][gG] | wc -l)
         echo "Scene already exists with ${image_count} images"
-        return 0
+        return 0  # Scene exists
     fi
-    return 1
+
+    echo "Scene does not exist or is incomplete"
+    return 1  # Scene does not exist
 }
 
 # Function to download and extract a scene
@@ -74,7 +78,7 @@ download_and_extract() {
     echo "Downloading ${scene}..."
     wget --progress=bar:force --show-progress "${url}" || {
         echo "Failed to download ${scene}"
-        exit 1  # Exit immediately on failure
+        return 1  # Exit immediately on failure
     }
 
     # Verify download
@@ -82,7 +86,7 @@ download_and_extract() {
 
     7z x "${archive_file}" -o"${output_dir}" | grep -E "^Extracting|^Everything" || {
         echo "Extraction failed for ${scene}"
-        exit 1  # Exit immediately on failure
+        return 1  # Exit immediately on failure
     }
     # Fix permissions
     chmod -R u+w "${output_dir}${scene}"
@@ -109,34 +113,33 @@ organize_images() {
     # Check for source files (.jpg or .JPG)
     if ! ls "${image_dir}"/*.JPG >/dev/null 2>&1; then
         echo "No JPG files found in ${image_dir}"
-        exit 1  # Exit immediately on failure
+    else
+        # Move images with progress feedback
+        echo "Moving images..."
+        local total_files=$(ls "${image_dir}"/*.JPG | wc -l)
+        local current=0
+
+        for img in "${image_dir}"/*.JPG; do
+            mv "${img}" "${dest_dir}/" || {
+                echo "Failed to move file: ${img}"
+                return 1  # Exit immediately on failure
+            }
+            ((current++))
+            printf "\rProgress: [%d/%d] files moved" "${current}" "${total_files}"
+        done
+        echo
+
+        # Verify all files were moved
+        local moved_files=$(ls "${dest_dir}"/*.JPG | wc -l)
+        if [ "${moved_files}" -ne "${total_files}" ]; then
+            echo "File count mismatch after moving"
+            return 1  # Exit immediately on failure
+        fi
+
+        # Remove the source directory
+        rm -r "${image_dir}"
+        echo "Images organized for: ${scene_path}"
     fi
-
-    # Move images with progress feedback
-    echo "Moving images..."
-    local total_files=$(ls "${image_dir}"/*.JPG | wc -l)
-    local current=0
-
-    for img in "${image_dir}"/*.JPG; do
-        mv "${img}" "${dest_dir}/" || {
-            echo "Failed to move file: ${img}"
-            exit 1  # Exit immediately on failure
-        }
-        ((current++))
-        printf "\rProgress: [%d/%d] files moved" "${current}" "${total_files}"
-    done
-    echo
-
-    # Verify all files were moved
-    local moved_files=$(ls "${dest_dir}"/*.JPG | wc -l)
-    if [ "${moved_files}" -ne "${total_files}" ]; then
-        echo "File count mismatch after moving"
-        exit 1  # Exit immediately on failure
-    fi
-
-    # Remove the source directory
-    rm -r "${image_dir}"
-    echo "Images organized for: ${scene_path}"
 }
 
 # Main execution
@@ -155,6 +158,10 @@ main() {
     local skipped_scenes=0
     local successful_scenes=0
 
+    for scene in "${SCENES[@]}"; do
+        echo "$scene"
+    done
+
     echo "Starting ETH3D dataset download..."
     echo "Base directory: ${BASE_DIR}"
     echo
@@ -164,13 +171,16 @@ main() {
         echo "=== Processing scene [${current_scene}/${total_scenes}]: ${scene} ==="
 
         if check_scene_exists "${BASE_DIR}/${scene}"; then
+            echo "Scene already exists. Skipping to the next."
             ((skipped_scenes++))
         else
-            # Both functions will exit immediately on failure
-            download_and_extract "${scene}"
-            organize_images "${BASE_DIR}/${scene}"
-            echo "=== Completed ${scene} ==="
-            ((successful_scenes++))
+            # Try to download and process the scene, handling errors gracefully
+            if download_and_extract "${scene}" && organize_images "${BASE_DIR}/${scene}"; then
+                echo "=== Completed ${scene} ==="
+                ((successful_scenes++))
+            else
+                echo "Failed to process scene: ${scene}. Skipping to the next."
+            fi
         fi
 
         echo
