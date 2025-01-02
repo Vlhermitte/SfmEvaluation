@@ -23,8 +23,8 @@ def run_evaluation(est_model_path: str, gt_model_path: str):
     stats, distributions = report_metrics(results)
 
     # Plot the error distributions
-    plot_error_distributions(results)
-    plot_cumulative_errors(results)
+    plot_error_distributions(results, save_path=est_model_path)
+    plot_cumulative_errors(results, save_path=est_model_path)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ if __name__ == '__main__':
         "--gt-model-path",
         type = str,
         required = False,
-        default="../images/ETH3D/courtyard/dslr_calibration_jpg",
+        default="../data/ETH3D/courtyard/dslr_calibration_jpg",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(

@@ -125,6 +125,9 @@ def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]
     """
     results = {'relative_rotation_error': [], 'relative_translation_error': []}
 
+    print(f"{len(est_cameras)} estimated cameras")
+    print(f"{len(gt_cameras)} ground truth cameras")
+
     for i in range(len(est_cameras) - 1):
         for j in range(i + 1, len(est_cameras)):
             # Compute relative transformations
