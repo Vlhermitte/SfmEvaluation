@@ -2,52 +2,53 @@ import numpy as np
 from common import Camera
 from typing import List, Dict
 
-def evaluate_camera_pose(R_gt: np.ndarray, t_gt: np.ndarray, R_est: np.ndarray, t_est: np.ndarray) -> float:
-    """
-    Evaluate the positional accuracy of an estimated camera pose against the ground truth.
-
-    The camera pose consists of a rotation matrix (R) and a translation vector (t),
-    which together define the transformation from the world coordinate frame to
-    the camera coordinate frame. This function computes the Euclidean distance
-    between the camera centers derived from the ground truth and the estimated poses.
-
-    Camera center in the world coordinate frame is computed as:
-        p = -R^T @ t
-    where:
-        - R is the rotation matrix (3x3),
-        - t is the translation vector (3x1).
-
-    Args:
-        R_gt (np.ndarray): Ground truth rotation matrix (3x3), transforming points
-                           from world to camera coordinates.
-        t_gt (np.ndarray): Ground truth translation vector (3x1), representing the
-                           camera position in the world frame.
-        R_est (np.ndarray): Estimated rotation matrix (3x3), transforming points
-                            from world to camera coordinates.
-        t_est (np.ndarray): Estimated translation vector (3x1), representing the
-                            camera position in the world frame.
-
-    Returns:
-        float: The Euclidean distance (position error) between the ground truth
-               and estimated camera centers in the world coordinate frame.
-    """
-    assert R_gt.shape == (3, 3), f'Ground truth R shape is {R_gt.shape}, expected (3, 3)'
-    assert R_est.shape == (3, 3), f'Estimated R shape is {R_est.shape}, expected (3, 3)'
-    assert t_gt.shape == (3, 1) or t_gt.shape == (3,), f'Ground truth t shape is {t_gt.shape}, expected (3, 1) or (3,)'
-    assert t_est.shape == (3, 1) or t_est.shape == (3,), f'Estimated t shape is {t_est.shape}, expected (3, 1) or (3,)'
-    assert np.allclose(np.linalg.det(R_gt), 1), 'Ground truth R determinant is not 1'
-    assert np.allclose(np.linalg.det(R_est), 1), 'Estimated R determinant is not 1'
-
-    # Compute estimated camera position (world coordinates)
-    C_est = -R_est.T @ (t_est / np.linalg.norm(t_est))
-
-    # Compute ground truth camera position
-    C_gt = -R_gt.T @ (t_gt / np.linalg.norm(t_gt))
-
-    # Compute position error (Euclidean distance)
-    position_error = np.linalg.norm(C_est - C_gt)
-
-    return position_error
+# def evaluate_camera_pose(R_gt: np.ndarray, t_gt: np.ndarray, R_est: np.ndarray, t_est: np.ndarray) -> float:
+#     """
+#     NOT IN USE FOR NOW.
+#     Evaluate the positional accuracy of an estimated camera pose against the ground truth.
+#
+#     The camera pose consists of a rotation matrix (R) and a translation vector (t),
+#     which together define the transformation from the world coordinate frame to
+#     the camera coordinate frame. This function computes the Euclidean distance
+#     between the camera centers derived from the ground truth and the estimated poses.
+#
+#     Camera center in the world coordinate frame is computed as:
+#         p = -R^T @ t
+#     where:
+#         - R is the rotation matrix (3x3),
+#         - t is the translation vector (3x1).
+#
+#     Args:
+#         R_gt (np.ndarray): Ground truth rotation matrix (3x3), transforming points
+#                            from world to camera coordinates.
+#         t_gt (np.ndarray): Ground truth translation vector (3x1), representing the
+#                            camera position in the world frame.
+#         R_est (np.ndarray): Estimated rotation matrix (3x3), transforming points
+#                             from world to camera coordinates.
+#         t_est (np.ndarray): Estimated translation vector (3x1), representing the
+#                             camera position in the world frame.
+#
+#     Returns:
+#         float: The Euclidean distance (position error) between the ground truth
+#                and estimated camera centers in the world coordinate frame.
+#     """
+#     assert R_gt.shape == (3, 3), f'Ground truth R shape is {R_gt.shape}, expected (3, 3)'
+#     assert R_est.shape == (3, 3), f'Estimated R shape is {R_est.shape}, expected (3, 3)'
+#     assert t_gt.shape == (3, 1) or t_gt.shape == (3,), f'Ground truth t shape is {t_gt.shape}, expected (3, 1) or (3,)'
+#     assert t_est.shape == (3, 1) or t_est.shape == (3,), f'Estimated t shape is {t_est.shape}, expected (3, 1) or (3,)'
+#     assert np.allclose(np.linalg.det(R_gt), 1), 'Ground truth R determinant is not 1'
+#     assert np.allclose(np.linalg.det(R_est), 1), 'Estimated R determinant is not 1'
+#
+#     # Compute estimated camera position (world coordinates)
+#     C_est = -R_est.T @ (t_est / np.linalg.norm(t_est))
+#
+#     # Compute ground truth camera position
+#     C_gt = -R_gt.T @ (t_gt / np.linalg.norm(t_gt))
+#
+#     # Compute position error (Euclidean distance)
+#     position_error = np.linalg.norm(C_est - C_gt)
+#
+#     return position_error
 
 def evaluate_rotation_matrices(R_gt: np.ndarray, R_est: np.ndarray) -> float:
     """
