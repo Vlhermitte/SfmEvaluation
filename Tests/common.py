@@ -35,6 +35,9 @@ class Camera:
         elif type.model == 'RADIAL':
             self.distortion_params = type.params[4:]
 
+    def __eq__(self, other):
+        return self.image == other.image
+
     def __repr__(self):
         return f'Camera: {self.image} Type: {self.type.model}'
 
@@ -45,7 +48,8 @@ class Camera:
 def get_cameras_info(cameras_type, images) -> list:
     cameras = []
     for key, img in images.items():
-        img_name = img.name
+        # take only the last part of the path as the image name
+        img_name = img.name.split('/')[-1]
         qvec = img.qvec
         tvec = img.tvec
         type = cameras_type[img.camera_id]
