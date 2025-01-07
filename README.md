@@ -7,6 +7,19 @@ The evaluation protocol is composed of the following elements:
 * 3D triangulation error (Not implemented yet)
 * Novel view synthesis (https://arxiv.org/abs/1601.06950) (Not implemented yet)
 
+## Usage
+To run the evaluation on all results, run the following command:
+```
+bash evaluation.sh
+```
+The script expect the result to be stored in results/ETH3D directory. For more details, see the script [`evaluation.sh`](evaluation.sh).
+
+To run an individual evaluation, the [`main.py`](Tests/main.py) file in the [`Tests`](Tests) directory can be used.
+```
+python3 Tests/main.py --gt-model-path <path_to_gt_model> --est-model-path <path_to_estimated_model>
+```
+
+
 ## Evaluation Protocol
 The evaluation protocol assesses the camera relative rotation error (RRE) and relative translation error (RTE). 
 Specifically, for each pair of images \(i\) and \(j\), the relative rotation and translation are computed as follows:
