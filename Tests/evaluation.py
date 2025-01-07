@@ -123,26 +123,24 @@ def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]
     Returns:
         dict: A dictionary with the relative_rotation_error and relative_translation_error lists.
     """
+    assert len(gt_cameras) == len(est_cameras), f'Number of cameras in ground truth ({len(gt_cameras)}) and estimated ({len(est_cameras)}) models do not match'
     results = {'relative_rotation_error': [], 'relative_translation_error': []}
 
-    print(f"{len(est_cameras)} estimated cameras")
-    print(f"{len(gt_cameras)} ground truth cameras")
-
     for i in range(len(est_cameras) - 1):
-        for j in range(i + 1, len(est_cameras)):
-            # Compute relative transformations
-            R_rel_est = est_cameras[j].R @ est_cameras[i].R.T   # R.T = R^-1
-            R_rel_gt = gt_cameras[j].R @ gt_cameras[i].R.T
+        j = i+1
+        # Compute relative transformations
+        R_rel_est = est_cameras[j].R @ est_cameras[i].R.T   # R.T = R^-1
+        R_rel_gt = gt_cameras[j].R @ gt_cameras[i].R.T
 
-            t_rel_est = est_cameras[j].t - (R_rel_est @ est_cameras[i].t)
-            t_rel_gt = gt_cameras[j].t - (R_rel_gt @ gt_cameras[i].t)
+        t_rel_est = est_cameras[j].t - (R_rel_est @ est_cameras[i].t)
+        t_rel_gt = gt_cameras[j].t - (R_rel_gt @ gt_cameras[i].t)
 
-            # Evaluate errors
-            rotation_error = evaluate_rotation_matrices(R_rel_gt, R_rel_est)
-            translation_error = evaluate_translation_error(t_rel_gt, t_rel_est)
+        # Evaluate errors
+        rotation_error = evaluate_rotation_matrices(R_rel_gt, R_rel_est)
+        translation_error = evaluate_translation_error(t_rel_gt, t_rel_est)
 
-            results['relative_rotation_error'].append(rotation_error)
-            results['relative_translation_error'].append(translation_error)
+        results['relative_rotation_error'].append(rotation_error)
+        results['relative_translation_error'].append(translation_error)
 
     return results
 
