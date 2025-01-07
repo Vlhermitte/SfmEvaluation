@@ -1,11 +1,9 @@
 # Questions/Problems encountered
 
 ## Problems encountered
-- The ICP algorithm is working very poorly for the courtyard dataset. The alignment is ver bad. Thus, it is impossible to evaluate the points cloud and camera pose.
+- Sometimes, the SFM pipeline fail to compute the camera pose for some images. 
 
 ## Questions
-- The points cloud evaluation is done by finding for each point in the estimated_pcd the closest points in the Ground truth. Is it a good way ?
-- The camera pose evaluation is done by aligning the estimated camera pose using the transformation from the ICP alignment. Then it is compared to the ground truth camera pose. Is it a good way ?
+- Because I have missing cameras in the list of estimated cameras. 
+  How can I evaluate the relative pose between two cameras if one or both camera are missing in the list of estimated cameras?
 
-- The ETH3D dataset provide a dense points cloud as ground truth. But Tank&Temples dataset provide only a points cloud of the object alone. \
-  How Can I perform ICP alignment when the ground is avery narrow point cloud
