@@ -145,7 +145,7 @@ def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]
 
     return results
 
-def report_metrics(results) -> tuple[dict, dict]:
+def report_metrics(results, verbose: bool = False) -> tuple[dict, dict]:
     """
     Compute and report comprehensive metrics for camera pose estimation.
 
@@ -181,14 +181,15 @@ def report_metrics(results) -> tuple[dict, dict]:
     }
 
     # Print summary
-    print("\nCamera Pose Estimation Results")
-    print("==============================")
+    if verbose:
+        print("\nCamera Pose Estimation Results")
+        print("==============================")
 
-    for metric_name, metric_stats in stats.items():
-        print(f"\n{metric_name.replace('_', ' ').title()}:")
-        print(f"  Mean: {metric_stats['mean']:.3f}")
-        print(f"  Median: {metric_stats['median']:.3f}")
-        print(f"  Std Dev: {metric_stats['std']:.3f}")
-        print(f"  Range: [{metric_stats['min']:.3f}, {metric_stats['max']:.3f}]")
+        for metric_name, metric_stats in stats.items():
+            print(f"\n{metric_name.replace('_', ' ').title()}:")
+            print(f"  Mean: {metric_stats['mean']:.3f}")
+            print(f"  Median: {metric_stats['median']:.3f}")
+            print(f"  Std Dev: {metric_stats['std']:.3f}")
+            print(f"  Range: [{metric_stats['min']:.3f}, {metric_stats['max']:.3f}]")
 
     return stats, distributions
