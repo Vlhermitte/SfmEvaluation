@@ -79,7 +79,7 @@ if [ ! -f ${DATABASE} ]; then
 	--ImageReader.single_camera 1 \
 	--SiftExtraction.use_gpu 1
 
-${COLMAP_PATH}/colmap sequential_matcher \
+${COLMAP_PATH}/colmap exhaustive_matcher \
     --database_path ${DATABASE} \
     --SiftMatching.use_gpu 1
 fi
