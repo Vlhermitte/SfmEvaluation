@@ -1,0 +1,69 @@
+\section{Methodology}\label{sec:methodology}
+
+In this section, we describe the methodology used to evaluate the performance of Structure-from-Motion (SfM) algorithms.
+
+\subsection{Evaluation Metrics}
+
+We employ a range of metrics to evaluate the performance of SfM algorithms.
+These metrics are designed to capture the geometric accuracy, scene reconstruction fidelity, and computational efficiency of the algorithms.
+The key metrics used in this study are:
+\begin{itemize}
+    \item \textbf{Camera Pose Error:} The camera pose error quantifies the accuracy of camera pose estimation in the reconstructed 3D scene. 
+    We compute the relative rotation error (RRE) and relative translation error (RTE) to assess the precision of camera pose estimation.
+    \item \textbf{3D Triangulation Accuracy (To be implemented):} This metric evaluates the accuracy of 3D point triangulation in the reconstructed scene. 
+    We plan to measure the reprojection error of 3D points in the image space to assess the quality of triangulated points.
+    \item \textbf{Novel View Synthesis Quality (To be implemented):} The quality of novel view synthesis will be evaluated to assess the fidelity of scene reconstruction. 
+    The plan is to compare synthesized views with ground truth images to quantify rendering accuracy.
+\end{itemize}
+
+These metrics provide a comprehensive evaluation of the performance of SfM algorithms, considering both geometric accuracy and computational efficiency.
+
+\subsubsection{Camera Pose Error}
+The camera pose error is a critical metric for evaluating the accuracy of camera pose estimation in SfM algorithms.
+There is two possible ways to compute the camera pose error. Relative pose error and Absolute pose error.
+We focus on relative pose error as computing the absolute pose error is difficult to compute.
+
+Indeed, absolute pose error is difficult to evaluate due to the inherent misalignment between the predicted model and the ground truth. 
+Achieving proper alignment is not a trivial task, as it often requires algorithms like the Iterative Closest Point (ICP), which themselves demand a good initial alignment to converge effectively. 
+This dependency on an accurate initial alignment introduces an additional layer of complexity and potential error in absolute pose evaluation.
+
+
+We compute the relative rotation error (RRE) and relative translation error (RTE) to quantify the precision of camera pose estimation.
+For a given pair of estimated and ground truth camera poses, we compute 
+
+
+\paragraph{Relative Rotation Error (RRE)}  
+The Relative Rotation Error (RRE) quantifies the angular discrepancy between the estimated and ground truth camera rotations. It is calculated as the geodesic distance between their corresponding rotation matrices. The RRE is defined as:  
+\begin{equation}  
+    \text{RRE} = \arccos\left(\frac{\text{tr}(R_{\text{gt}}^T R_{\text{est}}) - 1}{2}\right),  
+\end{equation}  
+where \( R_{\text{gt}} \) and \( R_{\text{est}} \) denote the ground truth and estimated rotation matrices, respectively.
+
+\paragraph{Relative Translation Error (RTE)}  
+The Relative Translation Error (RTE) measures the Euclidean distance between the estimated and ground truth translation vectors. It is defined as:  
+\begin{equation}  
+    \text{RTE} = \lVert t_{\text{gt}} - t_{\text{est}} \rVert,  
+\end{equation}  
+where \( t_{\text{gt}} \) and \( t_{\text{est}} \) are the ground truth and estimated translation vectors, respectively.
+
+For a pair of cameras, the errors are computed based on the relative transformations between them. The relative rotation is given by:  
+\begin{equation}  
+    R_{\text{rel}} = R_{\text{camera\_1}} R_{\text{camera\_2}}^T,  
+\end{equation}  
+and the relative translation is computed as:  
+\begin{equation}  
+    t_{\text{rel}} = t_{\text{camera\_1}} - R_{\text{rel}} t_{\text{camera\_2}}.  
+\end{equation}  
+
+The RRE and RTE are then calculated using the relative ground truth rotation matrix and translation vector, as well as their estimated counterparts.
+
+
+\subsection{Future Work}
+In the next semester, we plan to implement the following evaluation metrics to extend this study:
+\begin{itemize}
+    \item \textbf{3D Triangulation Accuracy:} We will calculate the reprojection error of 3D points in the image space, which will provide a measure of the quality of triangulated points in the reconstructed scene.
+    \item \textbf{Novel View Synthesis Quality:} We aim to compare synthesized views with ground truth images to assess the fidelity of scene reconstruction described in \cite{DBLP:journals/corr/WaechterBFMKG16}
+    \item \textbf{Potential Additional Metrics:} We are also considering incorporating other evaluation metrics, depending on emerging research trends or identified gaps in our methodology. These additional metrics will be determined as the project progresses.
+\end{itemize}
+
+These additional metrics will enhance the comprehensiveness of our evaluation framework and provide further insights into the performance of SfM algorithms.

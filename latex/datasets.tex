@@ -1,0 +1,40 @@
+\section{Dataset Overview}\label{sec:datasets}
+
+In this study, we evaluate the performance of Structure-from-Motion (SfM) algorithms using three diverse datasets: \textbf{ETH3D, Tanks and Temples,} and \textbf{MipNeft360}. 
+These datasets are carefully selected to represent a variety of challenges, including indoor and outdoor scenes, complex geometries, and novel imaging formats. 
+Below, we provide an overview of each dataset and its key characteristics.
+
+\subsection{ETH3D Dataset}
+
+The \textbf{ETH3D} \cite{Schops_2019_CVPR} is a benchmark dataset designed for evaluating 3D reconstruction and dense stereo algorithms. 
+It contains both indoor and outdoor scenes, offering high-resolution images with corresponding ground truth data.
+
+\paragraph{Key Features:}
+\begin{itemize}
+    \item \textbf{Scene Diversity:} The dataset includes scenes with varying complexity, such as indoor objects, outdoor landscapes, and architectural structures.
+    \item \textbf{Ground Truth Data:} Precise camera poses and dense point clouds are provided for evaluation purposes.
+    \item \textbf{Image Resolution:} High-resolution images enable detailed reconstruction of scene geometry.
+\end{itemize}
+
+\subsection{Tanks and Temples Dataset}
+
+Tanks and Temples \cite{Knapitsch2017} is a benchmark for large-scale scene reconstruction, focusing on scenes with intricate geometries and varying surface textures. 
+It includes high-resolution images and corresponding 3D ground truth models.
+
+\paragraph{Key Features:}
+\begin{itemize}
+    \item \textbf{Complex Geometry:} The dataset features scenes with challenging geometries, such as intricate architectural details and textured surfaces.
+    \item \textbf{Large-Scale Scenes:} Tanks and Temples includes scenes with extensive coverage, allowing for evaluation of scalability and reconstruction accuracy.
+    \item \textbf{High-Quality Images:} The dataset provides high-resolution images suitable for detailed reconstruction.
+\end{itemize}
+
+\subsection{MipNeft360 Dataset}
+
+The \textbf{MipNeft360} dataset \cite{barron2022mipnerf360} focuses on novel view synthesis from 360-degree images, enabling the evaluation of SfM algorithms in immersive environments.
+
+\paragraph{Key Features:}
+\begin{itemize}
+    \item \textbf{360-Degree Images:} The dataset consists of panoramic images suitable for immersive applications and virtual reality.
+    \item \textbf{Novel View Synthesis:} MipNeft360 emphasizes the generation of novel views from 360-degree images, assessing the algorithms' ability to reconstruct immersive scenes.
+    \item \textbf{Immersive Environments:} The scenes in MipNeft360 are designed to capture immersive environments, such as virtual tours and interactive experiences.
+\end{itemize}
