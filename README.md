@@ -10,9 +10,9 @@ The evaluation protocol is composed of the following elements:
 ## Usage
 To run the evaluation on all results, run the following command:
 ```
-bash evaluation.sh
+bash evaluate.sh
 ```
-The script expect the result to be stored in results/ETH3D directory. For more details, see the script [`evaluation.sh`](evaluation.sh).
+The script expect the result to be stored in results/ETH3D directory. For more details, see the script [`evaluate.sh`](evaluate.sh).
 
 To run an individual evaluation, the [`main.py`](Tests/main.py) file in the [`Tests`](Tests) directory can be used.
 ```
