@@ -127,16 +127,3 @@ def interpolate_camera(prev_cam: Optional[Camera], next_cam: Optional[Camera],
 
     return interpolated_cam
 
-
-def rotation2quaternion(R: np.ndarray) -> np.ndarray:
-    """
-    Convert rotation matrix to quaternion.
-
-    Args:
-        R: 3x3 rotation matrix
-
-    Returns:
-        4D quaternion vector [w, x, y, z]
-    """
-    rot = Rotation.from_matrix(R)
-    return rot.as_quat()
