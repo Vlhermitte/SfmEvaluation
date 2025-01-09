@@ -3,6 +3,7 @@ from scipy.spatial.transform import Rotation, Slerp
 import copy
 from typing import List, Optional
 from common import Camera
+from geometry import rotation2quaternion
 
 
 def interpolate_missing_cameras(est_cameras: List[Camera], gt_cameras: List[Camera]) -> List[Camera]:
@@ -106,8 +107,6 @@ def interpolate_camera(prev_cam: Optional[Camera], next_cam: Optional[Camera],
     t_interp = weight * prev_cam.t + (1 - weight) * next_cam.t
 
     # Interpolate rotation using SLERP
-    rot_prev = Rotation.from_matrix(prev_cam.R)
-    rot_next = Rotation.from_matrix(next_cam.R)
     times = [0, 1]  # Normalized time points
     rots = Rotation.from_matrix(np.stack([prev_cam.R, next_cam.R]))
     slerp = Slerp(times, rots)
