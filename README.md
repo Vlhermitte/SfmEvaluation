@@ -29,7 +29,7 @@ Specifically, for each pair of images \(i\) and \(j\), the relative rotation and
 ```math
   t_{rel} = t_j - (R_{rel} \cdot t_i)
 ```
-For more details, see the function [`evaluate_relative_errors`](Tests/evaluation.py) in [`evaluation.py`](Tests/evaluation.py).
+For more details, see the function [`evaluate_relative_errors`](Tests/relative_error_evaluation.py) in [`evaluation.py`](Tests/relative_error_evaluation.py).
 
 - [ ] Rest is coming soon. (hopefully !)
 

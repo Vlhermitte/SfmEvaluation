@@ -55,8 +55,10 @@ def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], pe
 
         # Compute rotation error
         R_rel = gt_pose[:3, :3] @ est_pose[:3, :3].T
-        R_rel = cv2.Rodrigues(R_rel)[0]
-        angle = np.linalg.norm(R_rel) * 180 / np.pi
+        angle = cv2.Rodrigues(R_rel)[0]
+        angle = np.linalg.norm(angle)
+        # Convert to degrees
+        angle = np.degrees(angle)
         rotation_errors.append(angle)
 
     return {'rotation_error': rotation_errors, 'translation_error': translation_errors}
@@ -98,12 +100,6 @@ if __name__ == '__main__':
 
     # Evaluate pose error
     results = evaluate_camera_pose(est_cameras, gt_cameras, perform_alignment=True)
-
-    # Export error as json
-    import json
-    with open(f'{est_model_path}/results.json', 'w') as f:
-        json.dump(results, f)
-
 
     print(f"Rotation error: {results['rotation_error']}\n")
     print(f"Translation error: {results['translation_error']}")

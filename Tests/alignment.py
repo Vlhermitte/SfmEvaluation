@@ -57,7 +57,7 @@ def estimate_alignment(
         inlier_threshold_r: float = 5,
         inlier_threshold_t: float = 0.1,
         confidence: float = 0.99,
-        max_iterations: int = 1000
+        max_iterations: int = 10000
 ) -> Tuple[np.ndarray, float]:
     """
     Estimate the alignment between the estimated and ground truth poses using

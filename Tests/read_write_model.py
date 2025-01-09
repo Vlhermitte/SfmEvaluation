@@ -515,7 +515,6 @@ def read_model(path, ext=""):
             points3D = read_points3D_binary(os.path.join(path, "points3D") + ext)
     return cameras, images, points3D
 
-
 def write_model(cameras, images, points3D, path, ext=".bin"):
     if ext == ".txt":
         write_cameras_text(cameras, os.path.join(path, "cameras" + ext))

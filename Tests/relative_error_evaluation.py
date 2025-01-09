@@ -1,9 +1,6 @@
 import numpy as np
-from common import Camera, get_cameras_info
+from common import Camera
 from typing import List, Dict
-from read_write_model import read_model
-from alignment import estimate_alignment
-from interpolation import interpolate_missing_cameras
 
 
 def evaluate_rotation_matrices(R_gt: np.ndarray, R_est: np.ndarray) -> float:
@@ -100,83 +97,3 @@ def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]
         results['relative_translation_error'].append(translation_error)
 
     return results
-
-def report_metrics(results, verbose: bool = False) -> tuple[dict, dict]:
-    """
-    Compute and report comprehensive metrics for camera pose estimation.
-
-    Args:
-        results (dict): Dictionary containing lists of errors
-            - rotation_error: List of rotation errors in degrees
-            - translation_error: List of translation errors
-            - position_error: List of position errors
-    """
-
-    # Compute summary statistics
-    stats = {}
-    for metric_name, values in results.items():
-        stats[metric_name] = {
-            'mean': np.mean(values),
-            'median': np.median(values),
-            'std': np.std(values),
-            'min': np.min(values),
-            'max': np.max(values)
-        }
-
-    # Compute error distributions
-    rotation_bins = [0, 5, 10, 15, 20, float('inf')]  # in degrees
-    translation_bins = [0, 0.05, 0.10, 0.15, 0.20, float('inf')]
-
-    def compute_histogram(values, bins):
-        hist, _ = np.histogram(values, bins=bins)
-        return hist.tolist()
-
-    distributions = {
-        'rotation_hist': compute_histogram(results['relative_rotation_error'], rotation_bins),
-        'translation_hist': compute_histogram(results['relative_translation_error'], translation_bins)
-    }
-
-    # Print summary
-    if verbose:
-        print("\nCamera Pose Estimation Results")
-        print("==============================")
-
-        for metric_name, metric_stats in stats.items():
-            print(f"\n{metric_name.replace('_', ' ').title()}:")
-            print(f"  Mean: {metric_stats['mean']:.3f}")
-            print(f"  Median: {metric_stats['median']:.3f}")
-            print(f"  Std Dev: {metric_stats['std']:.3f}")
-            print(f"  Range: [{metric_stats['min']:.3f}, {metric_stats['max']:.3f}]")
-
-    return stats, distributions
-
-def run_evaluation(est_model_path: str, gt_model_path: str, verbose: bool = False) -> Tuple[dict, dict]:
-    # Estimated model
-    est_cameras_type, images, est_points3D = read_model(est_model_path)
-    # Ground truth model
-    gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, '.txt')
-
-    # Create Open3D point cloud and get R and t for estimated and ground truth models
-    est_cameras = get_cameras_info(est_cameras_type, images)
-    gt_cameras = get_cameras_info(gt_cameras_type, gt_images)
-
-    if len(est_cameras) != len(gt_cameras):
-        # Interpolate missing cameras in the estimated set using neighboring cameras
-        if verbose:
-            print('Missing cameras in the estimated model. Interpolating...')
-        est_cameras = interpolate_missing_cameras(est_cameras, gt_cameras)
-
-    # Sort the cameras in estimated cameras based on the image name to match the ground truth
-    gt_camera_order = {camera.image: idx for idx, camera in enumerate(gt_cameras)}
-    est_cameras = sorted(
-        est_cameras,
-        key=lambda camera: gt_camera_order.get(camera.image, float('inf'))
-    )
-
-    # Evaluating
-    results = evaluate_relative_errors(est_cameras=est_cameras, gt_cameras=gt_cameras)
-    stats, distributions = report_metrics(results, verbose=verbose)
-
-    # Plot the error distributions
-    plot_error_distributions(results, save_path=est_model_path)
-    plot_cumulative_errors(results, save_path=est_model_path)
