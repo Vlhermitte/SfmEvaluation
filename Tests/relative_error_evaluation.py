@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 from common import Camera
 from typing import List, Dict
 
@@ -32,14 +33,12 @@ def evaluate_rotation_matrices(R_gt: np.ndarray, R_est: np.ndarray) -> float:
 
     # Compute the angle between the two rotation matrices
     R_rel = R_est.T @ R_gt
-    trace_R_rel = np.trace(R_rel)
-    trace_R_rel = np.clip(trace_R_rel, -1, 3)
+    angle = cv2.Rodrigues(R_rel)[0]
+    angle = np.linalg.norm(angle)
+    # Convert to degrees
+    angle = np.degrees(angle)
 
-    # Consider ambiguity due to quaternion representation
-    angle = np.arccos((trace_R_rel - 1) / 2) * 180 / np.pi
-    angle_opposite = np.arccos((-trace_R_rel - 1) / 2)
-
-    return min(angle, angle_opposite)
+    return angle
 
 def evaluate_translation_error(t_gt: np.ndarray, t_est: np.ndarray) -> float:
     """
