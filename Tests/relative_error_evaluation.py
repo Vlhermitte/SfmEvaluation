@@ -65,6 +65,33 @@ def evaluate_translation_error(t_gt: np.ndarray, t_est: np.ndarray) -> float:
 
     return translation_error
 
+def evaluate_translation_angle(t_gt: np.ndarray, t_est: np.ndarray) -> float:
+    """
+    Evaluate the angular error (in degrees) between the ground truth and estimated translation vectors.
+
+    Args:
+        t_gt (np.ndarray): Ground truth translation vector (3x1), world origin in camera coordinate frame.
+        t_est (np.ndarray): Estimated translation vector (3x1), world origin in camera coordinate frame.
+
+    Returns:
+        float: The angular error (in degrees) between the ground truth and estimated translation vectors.
+    """
+    assert t_gt.shape == (3, 1) or t_gt.shape == (3,), f'Ground truth t shape is {t_gt.shape}, expected (3, 1) or (3,)'
+    assert t_est.shape == (3, 1) or t_est.shape == (3,), f'Estimated t shape is {t_est.shape}, expected (3, 1) or (3,)'
+
+    # Normalize the translation vectors (to ensure they are unit vectors)
+    t_gt_norm = t_gt / np.linalg.norm(t_gt)
+    t_est_norm = t_est / np.linalg.norm(t_est)
+
+    # Compute the cosine of the angle using the dot product
+    cos_theta = np.clip(np.dot(t_gt_norm, t_est_norm), -1.0, 1.0)  # Clip to avoid numerical issues
+
+    # Compute the angle in radians and convert to degrees
+    angle_rad = np.arccos(cos_theta)
+    angle_deg = np.degrees(angle_rad)
+
+    return angle_deg
+
 def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]) -> Dict[str, List]:
     """
     Evaluate the relative rotation and translation errors on image pairs.
@@ -76,11 +103,16 @@ def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]
     Returns:
         dict: A dictionary with the relative_rotation_error and relative_translation_error lists.
     """
-    assert len(gt_cameras) == len(est_cameras), f'Number of cameras in ground truth ({len(gt_cameras)}) and estimated ({len(est_cameras)}) models do not match'
-    results = {'relative_rotation_error': [], 'relative_translation_error': []}
+    results = {'relative_rotation_error': [], 'relative_translation_error': [], 'relative_translation_angle': []}
 
-    for i in range(len(est_cameras) - 1):
-        j = i+1
+    for i in range(len(gt_cameras) - 1):
+        if i >= len(est_cameras) - 1:  # Handle missing images
+            # Assign high values for missing cameras
+            results['relative_rotation_error'].append(180.0)
+            results['relative_translation_error'].append(1000.0)
+            results['relative_translation_angle'].append(180.0)
+            continue
+        j = i + 1
         # Compute relative transformations
         R_rel_est = est_cameras[j].R @ est_cameras[i].R.T   # R.T = R^-1
         R_rel_gt = gt_cameras[j].R @ gt_cameras[i].R.T
@@ -91,8 +123,10 @@ def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]
         # Evaluate errors
         rotation_error = evaluate_rotation_matrices(R_rel_gt, R_rel_est)
         translation_error = evaluate_translation_error(t_rel_gt, t_rel_est)
+        translation_angle = evaluate_translation_angle(t_rel_gt, t_rel_est)
 
         results['relative_rotation_error'].append(rotation_error)
         results['relative_translation_error'].append(translation_error)
+        results['relative_translation_angle'].append(translation_angle)
 
     return results
