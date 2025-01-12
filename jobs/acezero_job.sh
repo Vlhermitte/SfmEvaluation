@@ -51,7 +51,7 @@ OUT_DIR="../results/acezero"
 # Run the FlowMap pipeline for each scene
 for SCENE in "${SCENES[@]}"; do
     echo "Processing scene: $SCENE"
-    OUTPUT_DIR="${OUT_DIR}/${SCENE}"
+    OUTPUT_DIR="${OUT_DIR}/${SCENE}/acezero_format"
 
     # Check if the output directory already exists
     if [ -d "$OUTPUT_DIR" ]; then
@@ -59,7 +59,8 @@ for SCENE in "${SCENES[@]}"; do
         continue
     fi
 
-    python ace_zero.py "../datasets/ETH3D/$SCENE/images/*.JPG" ../$OUTPUT_DIR --export_point_cloud True
+    python ace_zero.py "../datasets/ETH3D/$SCENE/images/*.JPG" $OUTPUT_DIR --export_point_cloud True
+    python convert_to_colmap.py --src_dir $OUTPUT_DIR
 
     if [ $? -eq 0 ]; then
         echo "Finished processing scene: $SCENE"
