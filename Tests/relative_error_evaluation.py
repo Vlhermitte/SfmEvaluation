@@ -57,8 +57,8 @@ def evaluate_translation_error(t_gt: np.ndarray, t_est: np.ndarray) -> float:
     assert t_est.shape == (3, 1) or t_est.shape == (3,), f'Estimated t shape is {t_est.shape}, expected (3, 1) or (3,)'
 
     # Normalize the translation vectors (because of the scaling ambiguity)
-    t_gt_norm = t_gt / np.linalg.norm(t_gt)
-    t_est_norm = t_est / np.linalg.norm(t_est)
+    t_gt_norm = t_gt / (np.linalg.norm(t_gt) + 1e-10) # 1e-10 to avoid division by zero
+    t_est_norm = t_est / (np.linalg.norm(t_est) + 1e-10)
 
     # Compute the translation error (Euclidean distance)
     translation_error = np.linalg.norm(t_gt_norm - t_est_norm)
@@ -80,8 +80,8 @@ def evaluate_translation_angle(t_gt: np.ndarray, t_est: np.ndarray) -> float:
     assert t_est.shape == (3, 1) or t_est.shape == (3,), f'Estimated t shape is {t_est.shape}, expected (3, 1) or (3,)'
 
     # Normalize the translation vectors (to ensure they are unit vectors)
-    t_gt_norm = t_gt / np.linalg.norm(t_gt)
-    t_est_norm = t_est / np.linalg.norm(t_est)
+    t_gt_norm = t_gt / (np.linalg.norm(t_gt) + 1e-10) # 1e-10 to avoid division by zero
+    t_est_norm = t_est / (np.linalg.norm(t_est) + 1e-10)
 
     # Compute the cosine of the angle using the dot product
     cos_theta = np.clip(np.dot(t_gt_norm, t_est_norm), -1.0, 1.0)  # Clip to avoid numerical issues
