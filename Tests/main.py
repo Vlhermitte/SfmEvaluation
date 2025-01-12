@@ -1,4 +1,5 @@
 import argparse
+import os
 import logging
 import json
 import numpy as np
@@ -10,6 +11,13 @@ from absolute_error_evaluation import evaluate_camera_pose
 from interpolation import interpolate_missing_cameras
 from relative_error_evaluation import evaluate_relative_errors
 
+def detect_colmap_format(path: str) -> str:
+    for ext in ['.txt', '.bin']:
+        if os.path.isfile(os.path.join(path, "cameras" + ext)) and os.path.isfile(os.path.join(path, "images" + ext)):
+            print("Detected model format: '" + ext + "'")
+            return ext
+    raise ValueError("No .txt or .bin format not found in the specified path")
+
 def run_rel_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], verbose: bool = False) -> Tuple[dict, dict]:
     if len(est_cameras) != len(gt_cameras):
         # Interpolate missing cameras in the estimated set using neighboring cameras
@@ -18,11 +26,12 @@ def run_rel_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], 
         # est_cameras = interpolate_missing_cameras(est_cameras, gt_cameras)
         if verbose:
             print('Missing cameras in the estimated model. Assigning high values for missing cameras...')
-        # For every est_camera not in gt_cameras, assign high values
-        for est_camera in est_cameras:
-            if est_camera not in gt_cameras:
-                est_camera.R = np.eye(3)
-                est_camera.t = np.array([1000, 1000, 1000])
+        # For every gt_cameras not in est_cameras, assign high values
+        for gt_camera in gt_cameras:
+            if gt_camera not in est_cameras:
+                est_cameras.append(
+                    Camera(gt_camera.image, gt_camera.type, np.array([0, 0, 0, 1]), np.array([1000, 1000, 1000]))
+                )
 
     # Sort the cameras in estimated cameras based on the image name to match the ground truth
     est_cameras = sorted(est_cameras, key=lambda camera: camera.image)
@@ -80,7 +89,6 @@ def report_metrics(results, verbose: bool = False) -> tuple[dict, dict]:
         'translation_percentages': translation_percentages
     }
 
-
 def compute_auc(R_error, t_error, max_threshold=30):
     """
     Compute the Area Under the Curve (AUC) for given errors and thresholds.
@@ -92,8 +100,8 @@ def compute_auc(R_error, t_error, max_threshold=30):
     Returns:
         List: AUC value.
     """
-    R_error = np.array(R_error)
-    t_error = np.array(t_error)
+    R_error = np.array(R_error) if R_error is not None else np.zeros_like(t_error)
+    t_error = np.array(t_error) if t_error is not None else np.zeros_like(R_error)
     # Concatenate the error arrays along a new axis
     error_matrix = np.concatenate((R_error[:, None], t_error[:, None]), axis=1)
 
@@ -123,14 +131,14 @@ if __name__ == '__main__':
         "--gt-model-path",
         type = str,
         required = False,
-        default="../datasets/ETH3D/courtyard/dslr_calibration_jpg",
+        default="../datasets/ETH3D/terrains/dslr_calibration_jpg",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
         "--est-model-path",
         type=str,
         required=False,
-        default="../results/vggsfm/courtyard/sparse",
+        default="../results/glomap/terrains/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
@@ -148,17 +156,14 @@ if __name__ == '__main__':
 
     try:
         _logger.info(f"Reading estimated model {est_model_path}")
-        est_cameras_type, images, est_points3D = read_model(est_model_path)
+        # Detect manually .txt or .bin
+        ext = detect_colmap_format(est_model_path)
+        # Estimated model
+        est_cameras_type, images, est_points3D = read_model(est_model_path, ext=ext)
+        # Ground truth model
+        gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, ext='.txt')
     except:
         _logger.error(f"Warning: Absolute error evaluation failed for {est_model_path}. Please check the input model paths and try again.")
-        exit(1)
-
-    # Ground truth model
-    try:
-        _logger.info(f"Reading ground truth model {gt_model_path}")
-        gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, '.txt')
-    except:
-        _logger.error(f"Warning: Absolute error evaluation failed for {gt_model_path}. Please check the input model paths and try again.")
         exit(1)
 
     # Create list of Camera objects for estimated and ground truth models
@@ -171,7 +176,6 @@ if __name__ == '__main__':
     rel_results = run_rel_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
 
     # Define thresholds
-    #angle_thresholds = [5, 15, 30]
     # Compute AUC for rotation and translation errors
     Auc_30, normalized_histogram = compute_auc(rel_results['relative_rotation_error'], rel_results['relative_translation_angle'])
     Auc_3 = np.mean(np.cumsum(normalized_histogram[:3]))
@@ -183,13 +187,45 @@ if __name__ == '__main__':
         print(f"Auc_10 (%): {Auc_10 * 100}")
         print(f"Auc_30 (%): {Auc_30 * 100}")
 
+    # RRE auc
+    RRE_30, normalized_histogram = compute_auc(rel_results['relative_rotation_error'], None)
+    RRE_3 = np.mean(np.cumsum(normalized_histogram[:3]))
+    RRE_5 = np.mean(np.cumsum(normalized_histogram[:5]))
+    RRE_10 = np.mean(np.cumsum(normalized_histogram[:10]))
+    if verbose:
+        print(f'RRE_3  (%): {RRE_3 * 100}')
+        print(f'RRE_5  (%): {RRE_5 * 100}')
+        print(f'RRE_10 (%): {RRE_10 * 100}')
+        print(f'RRE_30 (%): {RRE_30 * 100}')
+
+    # RTE auc
+    RTE_30, normalized_histogram = compute_auc(None, rel_results['relative_translation_angle'])
+    RTE_3 = np.mean(np.cumsum(normalized_histogram[:3]))
+    RTE_5 = np.mean(np.cumsum(normalized_histogram[:5]))
+    RTE_10 = np.mean(np.cumsum(normalized_histogram[:10]))
+    if verbose:
+        print(f'RTE_3  (%): {RTE_3 * 100}')
+        print(f'RTE_5  (%): {RTE_5 * 100}')
+        print(f'RTE_10 (%): {RTE_10 * 100}')
+        print(f'RTE_30 (%): {RTE_30 * 100}')
+
     # Write auc to txt file
-    with open(f'{est_model_path}/auc.txt', 'w') as f:
-        f.write(f'Number of unregistered images: {number_of_missing_cameras}\n')
-        f.write(f'Auc_3  (%): {Auc_3 * 100}\n')
-        f.write(f'Auc_5  (%): {Auc_5 * 100}\n')
-        f.write(f'Auc_10 (%): {Auc_10 * 100}\n')
-        f.write(f'Auc_30 (%): {Auc_30 * 100}\n')
+    with open(f'{est_model_path}/auc.json', 'w') as f:
+        json.dump({
+            'Missing_cameras': number_of_missing_cameras,
+            'Auc_3': Auc_3,
+            'Auc_5': Auc_5,
+            'Auc_10': Auc_10,
+            'Auc_30': Auc_30,
+            'RRE_3': RRE_3,
+            'RRE_5': RRE_5,
+            'RRE_10': RRE_10,
+            'RRE_30': RRE_30,
+            'RTE_3': RTE_3,
+            'RTE_5': RTE_5,
+            'RTE_10': RTE_10,
+            'RTE_30': RTE_30
+        }, f, indent=4)
 
 
     # abs_results = run_abs_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
