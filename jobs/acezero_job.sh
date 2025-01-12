@@ -17,7 +17,7 @@ source ~/miniconda3/etc/profile.d/conda.sh || { echo "Failed to source conda.sh"
 # Check if the 'flowmap' conda environment exists
 if conda env list | grep -q '^ace0'; then
     echo "Activating the existing 'ace0' environment..."
-    conda activate flowmap || { echo "Failed to activate conda environment: ace0"; exit 1; }
+    conda activate ace0 || { echo "Failed to activate conda environment: ace0"; exit 1; }
 else
     echo "Creating a new 'ace0' conda environment..."
     cd acezero
@@ -55,8 +55,7 @@ for SCENE in "${SCENES[@]}"; do
 
     # Check if the output directory already exists
     if [ -d "$OUTPUT_DIR" ]; then
-        echo "Output directory exists. Skipping scene: $SCENE"
-        continue
+        echo "Output directory exists. Overwritting scene: $SCENE"
     fi
 
     python ace_zero.py "../datasets/ETH3D/$SCENE/images/*.JPG" $OUTPUT_DIR --export_point_cloud True
