@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#SBATCH --job-name=flowmap_ETH3D
-#SBATCH --output=flowmap_ETH3D.out
-#SBATCH --error=flowmap_ETH3D.err
-#SBATCH --time=08:00:00             # Request 6 hours of runtime
-#SBATCH --partition=1day            # Use the 'fast' partition
+#SBATCH --job-name=acezero_ETH3D
+#SBATCH --output=acezero_ETH3D.out
+#SBATCH --error=acezero_ETH3D.err
+#SBATCH --time=08:00:00             # Request 8 hours of runtime
+#SBATCH --partition=1day            # Use the '1day' partition
 #SBATCH --gres=gpu:a16:1            # Request 1 GPU (a16)
 #SBATCH --mem=32G                   # Request 32 GB of RAM
 #SBATCH --cpus-per-task=12          # Request 12 CPUs
