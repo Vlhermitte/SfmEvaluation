@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Check if the script is running on a Slurm device
+if [ ! -z "$SLURM_JOB_ID" ]; then
+    echo "Running on a Slurm-managed system. Loading required modules..."
+    module load CMake
+    module load GCC
+    module load Ninja
+    module load Eigen
+    module load FLANN
+    module load Ceres
+    module load COLMAP
+fi
 
 # Verify COLMAP and GLOMAP are executable
 if ! command -v colmap &> /dev/null; then
