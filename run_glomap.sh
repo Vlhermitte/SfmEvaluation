@@ -8,7 +8,6 @@ if [ ! -z "$SLURM_JOB_ID" ]; then
     module load Ninja
     module load Eigen
     module load FLANN
-    module load Ceres
     module load COLMAP
 fi
 
@@ -20,6 +19,7 @@ fi
 
 if ! command -v glomap &> /dev/null; then
     echo "GLOMAP is not installed. Please build from source : https://github.com/colmap/glomap or check your PATH"
+    exit 1
 fi
 
 scene=$1
