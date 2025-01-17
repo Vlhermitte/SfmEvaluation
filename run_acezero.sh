@@ -1,18 +1,15 @@
 #!/bin/bash
 
 scene=$1
+out=$2
 
 # Check if the scene and output directory are provided
-if [ -z "$scene" ]; then
-    echo "Usage: ./run_acezero.sh <scene_dir>"
+if [ -z "$scene" ] || [ -z "$out" ]; then
+    echo "Usage: ./run_acezero.sh <scene_dir> <output_dir>"
     exit 1
 fi
 
-# Get last part of the scene directory
-scene_name=$(basename $scene)
-echo "Scene name: $scene_name"
-
-out_dir="results/acezero/$scene_name"
+out_dir=$out
 echo "Output directory: $out_dir"
 
 # Check if the scene directory exists
@@ -35,6 +32,9 @@ if [ "$(ls -A $out_dir)" ]; then
     fi
 fi
 
+# Check image format in the scene directory (png, jpg, JPG, etc.)
+image_format=$(ls $scene | head -n 1 | rev | cut -d'.' -f1 | rev)
+
 # Activate conda environment
 conda_env="ace0"
 echo "Activating conda environment: $conda_env"
@@ -43,4 +43,4 @@ conda activate $conda_env || { echo "Failed to activate conda environment: $cond
 
 cd acezero
 
-python ace_zero.py "../$scene/images/*.JPG" ../$out_dir --export_point_cloud True
+python ace_zero.py "../$scene/*.$image_format" ../$out_dir --export_point_cloud True
