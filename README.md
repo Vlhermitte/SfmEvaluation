@@ -12,12 +12,16 @@ To run the evaluation on all results, run the following command:
 ```
 bash evaluate.sh
 ```
-The script expect the result to be stored in results/ETH3D directory. For more details, see the script [`evaluate.sh`](evaluate.sh).
+The script expect the result to be stored in results/<methods>/ETH3D/<scene> directory. For more details, see the script [`evaluate.sh`](evaluate.sh).
 
 To run an individual evaluation, the [`main.py`](Tests/main.py) file in the [`Tests`](Tests) directory can be used.
 ```
 python3 Tests/main.py --gt-model-path <path_to_gt_model> --est-model-path <path_to_estimated_model>
 ```
+
+An absolute pose evaluation script is **under development** (see [`absolute_error_evaluation.py`](Tests/absolute_error_evaluation.py)).
+It first tries to perform alignment between the estimated and ground truth camera poses using the Kabsch-Umeyama algorithm.
+Then, it computes the absolute rotation and translation errors.
 
 
 ## Evaluation Protocol
