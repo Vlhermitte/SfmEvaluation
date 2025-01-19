@@ -7,6 +7,27 @@ The evaluation protocol is composed of the following elements:
 * 3D triangulation error (Not implemented yet)
 * Novel view synthesis (https://arxiv.org/abs/1601.06950) (Not implemented yet)
 
+## Installation
+In order to use the project, you need to execute the follinwg script:
+```
+bash get_datasets.sh
+```
+This script will download the ETH3D dataset.
+
+```
+bash clone_repos.sh
+```
+This script will clone the following repositories:
+* GLOMAP
+* VGGSfm
+* Flowmap
+* Ace0
+
+Once you have cloned the repositories, you need to install the dependencies for each method.
+Follow the instructions in the README files of each repository. Most of the methods only require to create a virtual environment and install the dependencies (conda or pip).
+
+GLOMAP however requires to compile the code. Or to download the precompiled binaries (for Windows only).
+
 ## Usage
 To run the evaluation on all results, run the following command:
 ```
