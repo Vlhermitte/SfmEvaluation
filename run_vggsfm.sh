@@ -49,4 +49,4 @@ source "$(conda info --base)/etc/profile.d/conda.sh" || { echo "Failed to source
 conda activate $conda_env || { echo "Failed to activate conda environment: $conda_env"; exit 1; }
 
 # run the VGG-SfM pipeline
-python ./vggsfm/demo.py query_method=sp+aliked SCENE_DIR=$scene OUTPUT_DIR=$out_dir
+python ./vggsfm/demo.py query_method=sp+aliked camera_type=SIMPLE_RADIAL SCENE_DIR=$scene OUTPUT_DIR=$out_dir
