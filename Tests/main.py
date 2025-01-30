@@ -156,12 +156,10 @@ if __name__ == '__main__':
 
     try:
         _logger.info(f"Reading estimated model {est_model_path}")
-        # Detect manually .txt or .bin
-        ext = detect_colmap_format(est_model_path)
         # Estimated model
-        est_cameras_type, images, est_points3D = read_model(est_model_path, ext=ext)
+        est_cameras_type, images, est_points3D = read_model(est_model_path, ext=detect_colmap_format(est_model_path))
         # Ground truth model
-        gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, ext='.txt')
+        gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, ext=detect_colmap_format(gt_model_path))
     except:
         _logger.error(f"Warning: Absolute error evaluation failed for {est_model_path}. Please check the input model paths and try again.")
         exit(1)
