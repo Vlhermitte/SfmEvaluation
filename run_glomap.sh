@@ -89,14 +89,29 @@ glomap mapper \
     --image_path ${scene} \
     --output_path ${out_dir}/sparse
 
-# Disable for now 
-# colmap patch_match_stereo \
-#     --workspace_path ${out_dir}/dense \
-#     --workspace_format COLMAP \
-#     --PatchMatchStereo.geom_consistency true
-
-# colmap stereo_fusion \
-#     --workspace_path ${out_dir}/dense \
-#     --workspace_format COLMAP \
-#     --input_type geometric \
-#     --output_path ${out_dir}/dense/fused.ply
+# Disable for now
+#mkdir ${out_dir}/dense
+#colmap image_undistorter \
+#    --image_path ${scene} \
+#    --input_path ${out_dir}/sparse/0 \
+#    --output_path ${out_dir}/dense \
+#    --output_type COLMAP
+#
+#colmap patch_match_stereo \
+#   --workspace_path ${out_dir}/dense \
+#   --workspace_format COLMAP \
+#   --PatchMatchStereo.geom_consistency true
+#
+#colmap stereo_fusion \
+#   --workspace_path ${out_dir}/dense \
+#   --workspace_format COLMAP \
+#   --input_type geometric \
+#   --output_path ${out_dir}/dense/fused.ply
+#
+#colmap poisson_mesher \
+#    --input_path ${out_dir}/dense/fused.ply \
+#    --output_path ${out_dir}/dense/meshed-poisson.ply
+#
+#colmap delaunay_mesher \
+#    --input_path ${out_dir}/dense \
+#    --output_path ${out_dir}/dense/meshed-delaunay.ply
