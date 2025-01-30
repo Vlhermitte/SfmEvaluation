@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation, Slerp
 import copy
 from typing import List, Optional
-from common import Camera
+from Evaluation.utils.common import Camera
 from geometry import rotation2quaternion
 
 

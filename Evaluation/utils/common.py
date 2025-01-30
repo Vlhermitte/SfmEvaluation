@@ -1,6 +1,6 @@
 import numpy as np
 
-from geometry import quaternion2rotation
+from Evaluation.core.geometry import quaternion2rotation
 
 class Camera:
     """

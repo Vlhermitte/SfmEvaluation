@@ -4,12 +4,10 @@ import logging
 import json
 import numpy as np
 from typing import Tuple, List
-from common import Camera, get_cameras_info
-from plotting import plot_percentage_below_thresholds
-from read_write_model import read_model
-from absolute_error_evaluation import evaluate_camera_pose
-from interpolation import interpolate_missing_cameras
-from relative_error_evaluation import evaluate_relative_errors
+from utils.common import Camera, get_cameras_info
+from utils.read_write_model import read_model
+from core.absolute_error_evaluation import evaluate_camera_pose
+from core.relative_error_evaluation import evaluate_relative_errors
 
 def detect_colmap_format(path: str) -> str:
     for ext in ['.txt', '.bin']:

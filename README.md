@@ -33,7 +33,7 @@ To run the evaluation on all results, run the following command:
 ```
 bash evaluate.sh
 ```
-The script expect the result to be stored in results/<methods>/ETH3D/<scene> directory. For more details, see the script [`evaluate.sh`](evaluate.sh).
+The script expect the result to be stored in results/<methods>/ETH3D/<scene> directory. For more details, see the script [`evaluate.sh`](scripts/evaluate.sh).
 
 To run an individual evaluation, the [`main.py`](Tests/main.py) file in the [`Tests`](Tests) directory can be used.
 ```

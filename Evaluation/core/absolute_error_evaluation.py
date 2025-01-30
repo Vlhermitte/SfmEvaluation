@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from common import Camera
+from Evaluation.utils.common import Camera
 from typing import List, Dict
 from alignment import estimate_alignment
 
@@ -67,7 +67,7 @@ def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], pe
 
 if __name__ == '__main__':
     from read_write_model import read_model
-    from common import get_cameras_info
+    from Evaluation.utils.common import get_cameras_info
     import argparse
 
     parser = argparse.ArgumentParser()
