@@ -8,7 +8,7 @@ The evaluation protocol is composed of the following elements:
 * Novel view synthesis (https://arxiv.org/abs/1601.06950) (Not implemented yet)
 
 ## Installation
-In order to use the project, you need to execute the follinwg script:
+In order to use the project, you need to execute the following script:
 ```
 bash get_datasets.sh
 ```
