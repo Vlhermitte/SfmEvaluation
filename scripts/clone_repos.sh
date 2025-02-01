@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Make sure we are in the root directory of the project
+cd "$(dirname "$0")/.." || exit
+
 # Clone the SFM approaches (Glomap, VGGSfm, Flowmap, AceZero)
 
 # Clone Glomap

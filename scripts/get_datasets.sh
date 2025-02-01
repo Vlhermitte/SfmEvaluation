@@ -150,6 +150,9 @@ main() {
         exit 1
     fi
 
+    # Make sure we are in the root directory of the project
+    cd "$(dirname "$0")/.." || exit
+
     # Create base directory
     mkdir -p "${BASE_DIR}"
 

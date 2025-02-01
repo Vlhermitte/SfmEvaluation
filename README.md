@@ -10,12 +10,12 @@ The evaluation protocol is composed of the following elements:
 ## Installation
 In order to use the project, you need to execute the following script:
 ```
-bash get_datasets.sh
+bash scripts/get_datasets.sh
 ```
 This script will download the ETH3D dataset.
 
 ```
-bash clone_repos.sh
+bash scripts/clone_repos.sh
 ```
 This script will clone the following repositories:
 * GLOMAP
@@ -33,14 +33,15 @@ To run the evaluation on all results, run the following command:
 ```
 bash evaluate.sh
 ```
-The script expect the result to be stored in results/<methods>/ETH3D/<scene> directory. For more details, see the script [`evaluate.sh`](scripts/evaluate.sh).
+The script expect the result to be stored in results/<methods>/ETH3D/<scene> directory.
+For more details, see the script [`evaluate.sh`](scripts/evaluate.sh) in the [`scripts`](scripts) directory.
 
-To run an individual evaluation, the [`main.py`](Evaluation/main.py) file in the [`Evaluation`](Evaluation) directory can be used.
+To run an individual evaluation, the [`main.py`](main.py) file can be used.
 ```
 python3 Tests/main.py --gt-model-path <path_to_gt_model> --est-model-path <path_to_estimated_model>
 ```
 
-An absolute pose evaluation script is **under development** (see [`absolute_error_evaluation.py`](Evaluation/core/absolute_error_evaluation.py)).
+An absolute pose evaluation script is **under development** (see [`absolute_error_evaluation.py`](evaluation/core/absolute_error_evaluation.py)).
 It first tries to perform alignment between the estimated and ground truth camera poses using the Kabsch-Umeyama algorithm.
 Then, it computes the absolute rotation and translation errors.
 
@@ -54,7 +55,7 @@ Specifically, for each pair of images \(i\) and \(j\), the relative rotation and
 ```math
   t_{rel} = t_j - (R_{rel} \cdot t_i)
 ```
-For more details, see the function [`evaluate_relative_errors`](Evaluation/core/relative_error_evaluation.py) in [`evaluation.py`](Evaluation/core/relative_error_evaluation.py).
+For more details, see the function [`evaluate_relative_errors`](evaluation/core/relative_error_evaluation.py) in [`evaluation.py`](evaluation/core/relative_error_evaluation.py).
 
 - [ ] Rest is coming soon. (hopefully !)
 
