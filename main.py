@@ -129,14 +129,14 @@ if __name__ == '__main__':
         "--gt-model-path",
         type = str,
         required = False,
-        default="../datasets/ETH3D/courtyard/dslr_calibration_jpg",
+        default="datasets/ETH3D/courtyard/dslr_calibration_jpg",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
         "--est-model-path",
         type=str,
         required=False,
-        default="../results/glomap/ETH3D/courtyard/sparse/0",
+        default="results/glomap/ETH3D/courtyard/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
@@ -159,7 +159,7 @@ if __name__ == '__main__':
         # Ground truth model
         gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, ext=detect_colmap_format(gt_model_path))
     except:
-        _logger.error(f"Warning: Absolute error evaluation failed for {est_model_path}. Please check the input model paths and try again.")
+        _logger.error(f"Warning: Evaluation failed for {est_model_path}. Please check the input model paths and try again.")
         exit(1)
 
     # Create list of Camera objects for estimated and ground truth models

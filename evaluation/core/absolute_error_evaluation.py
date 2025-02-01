@@ -66,8 +66,8 @@ def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], pe
 
 
 if __name__ == '__main__':
-    from read_write_model import read_model
-    from Evaluation import get_cameras_info
+    from evaluation.utils.read_write_model import read_model
+    from evaluation.utils.common import get_cameras_info
     import argparse
 
     parser = argparse.ArgumentParser()
