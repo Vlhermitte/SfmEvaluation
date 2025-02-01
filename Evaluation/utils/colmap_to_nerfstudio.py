@@ -5,7 +5,6 @@
 import json
 from pathlib import Path
 from typing import Dict, Optional, Any
-from enum import Enum
 
 import numpy as np
 from read_write_model import read_cameras_binary, read_images_binary
