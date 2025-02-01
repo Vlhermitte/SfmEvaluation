@@ -95,7 +95,7 @@ if __name__ == '__main__':
             df.loc[len(df)] = row
 
     # Save the results to a CSV file
-    output_csv = '../results/results.csv'
+    output_csv = '../../results/results.csv'
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     df.to_csv(output_csv, index=False)
 

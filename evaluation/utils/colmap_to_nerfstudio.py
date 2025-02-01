@@ -8,7 +8,7 @@ from typing import Dict, Optional, Any
 
 import numpy as np
 from read_write_model import read_cameras_binary, read_images_binary
-from Evaluation.core.geometry import quaternion2rotation
+from evaluation.core.geometry import quaternion2rotation
 
 def colmap_to_json(
     recon_dir: Path,

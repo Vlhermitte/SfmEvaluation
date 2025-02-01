@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import splprep, splev
@@ -43,28 +44,28 @@ def plot_trajectory(trajectory, save_path=None):
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
     ax.set_title('Camera Trajectory (B-spline)')
-    if save_path:
+    if save_path and os.path.exists(save_path):
         plt.savefig(save_path)
     plt.show()
 
 
 if __name__ == '__main__':
     import argparse
-    from Evaluation.main import read_model, get_cameras_info, detect_colmap_format
+    from evaluation.utils.read_write_model import read_model
+    from evaluation.utils.common import get_cameras_info
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--gt-model-path",
         type=str,
         required=False,
-        default="../datasets/ETH3D/terrains/dslr_calibration_jpg",
+        default="../../datasets/ETH3D/terrains/dslr_calibration_jpg",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
         "--est-model-path",
         type=str,
         required=False,
-        # default="../datasets/House/sparse",
-        default="../results/House/sparse/0",
+        default="../../results/glomap/ETH3D/courtyard/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
 
@@ -74,7 +75,7 @@ if __name__ == '__main__':
     est_model_path = args.est_model_path
 
     # Estimated model
-    est_cameras_type, images, est_points3D = read_model(est_model_path, ext=detect_colmap_format(est_model_path))
+    est_cameras_type, images, est_points3D = read_model(est_model_path, ext='.bin')
     est_cameras = get_cameras_info(est_cameras_type, images)
     est_cameras = sorted(est_cameras, key=lambda camera: camera.image)
 
