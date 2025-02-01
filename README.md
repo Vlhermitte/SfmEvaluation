@@ -38,7 +38,7 @@ For more details, see the script [`evaluate.sh`](scripts/evaluate.sh) in the [`s
 
 To run an individual evaluation, the [`main.py`](main.py) file can be used.
 ```
-python3 Tests/main.py --gt-model-path <path_to_gt_model> --est-model-path <path_to_estimated_model>
+python main.py --gt-model-path <path_to_gt_model> --est-model-path <path_to_estimated_model>
 ```
 
 An absolute pose evaluation script is **under development** (see [`absolute_error_evaluation.py`](evaluation/core/absolute_error_evaluation.py)).
