@@ -6,15 +6,16 @@ class Camera:
     """
     Camera class that stores camera information.
     The camera is of format colmap
-    If the camera is of type THIN_PRISM_FISHEYE, the distortion parameters are as follows:
-    params[4] - k1: radial distortion coefficient
-    params[5] - k2: radial distortion coefficient
-    params[6] - p1: tangential distortion coefficient
-    params[7] - p2: tangential distortion coefficient
-    params[8] - k3: radial distortion coefficient
-    params[9] - k4: radial distortion coefficient
-    params[10] - sx1: horizontal shear distortion coefficient
-    params[11] - sy1: vertical shear distortion coefficient
+
+    Attributes:
+    - image: str, image name
+    - type: CameraType, camera type
+    - R: np.array, rotation matrix
+    - t: np.array, translation vector
+    - K: np.array, intrinsic matrix
+    - P: np.array, projection matrix
+    - pose: np.array, pose matrix
+    - params: np.array, camera parameters (COLMAP sensor parameters, see https://colmap.github.io/cameras.html)
     """
     def __init__(self, image, type, qvec, tvec):
         self.image = image
@@ -29,11 +30,7 @@ class Camera:
         self.K[2, 2] = 1
         self.P = self.K @ np.hstack((self.R, self.t.reshape(-1, 1)))
         self.pose = np.hstack((self.R, self.t.reshape(-1, 1)))
-
-        if type.model == 'THIN_PRISM_FISHEYE':
-            self.distortion_params = type.params[4:]
-        elif type.model == 'RADIAL':
-            self.distortion_params = type.params[4:]
+        self.params = type.params
 
     def __eq__(self, other):
         return self.image == other.image
