@@ -31,7 +31,7 @@ GLOMAP however requires to compile the code. Or to download the precompiled bina
 ## Usage
 To run the evaluation on all results, run the following command:
 ```
-bash evaluate.sh
+bash scripts/evaluate.sh
 ```
 The script expect the result to be stored in results/<methods>/ETH3D/<scene> directory.
 For more details, see the script [`evaluate.sh`](scripts/evaluate.sh) in the [`scripts`](scripts) directory.
