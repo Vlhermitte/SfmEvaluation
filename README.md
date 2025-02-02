@@ -1,11 +1,20 @@
 # Structure-from-Motion (SfM) Evaluation Protocol
 
+## Table of Contents
+- [Overview](#overview)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Evaluation Protocol](#evaluation-protocol)
+    - [Camera Pose Error](#camera-pose-error)
+    - [Novel View Synthesis (in progress)](#novel-view-synthesis-in-progress)
+- [Input Formats](#input-formats)
+- [Output Formats](#output-formats)
+
 ## Overview
 This project provides tools for reading, writing, and evaluating Structure-from-Motion (SfM) models.
 The evaluation protocol is composed of the following elements:
 * Camera pose error
-* 3D triangulation error (Not implemented yet)
-* Novel view synthesis (https://arxiv.org/abs/1601.06950) (Not implemented yet)
+* Novel view synthesis (in progress)
 
 ## Installation
 In order to use the project, you need to execute the following script:
@@ -47,7 +56,10 @@ Then, it computes the absolute rotation and translation errors.
 
 
 ## Evaluation Protocol
-The evaluation protocol assesses the camera relative rotation error (RRE) and relative translation error (RTE). 
+
+### Camera Pose Error
+The evaluation protocol assesses the camera relative rotation error (RRE) and relative translation error (RTE) 
+as the computed angle between the ground truth and estimated camera translation vector. 
 Specifically, for each pair of images \(i\) and \(j\), the relative rotation and translation are computed as follows:
 ```math
   R_{rel} = R_j \cdot R_i^T
@@ -57,7 +69,13 @@ Specifically, for each pair of images \(i\) and \(j\), the relative rotation and
 ```
 For more details, see the function [`evaluate_relative_errors`](evaluation/core/relative_error_evaluation.py) in [`evaluation.py`](evaluation/core/relative_error_evaluation.py).
 
-- [ ] Rest is coming soon. (hopefully !)
+### Novel View Synthesis (in progress)
+The evaluation protocol assesses the quality of the novel view synthesis by comparing rendered images with the ground truth images.
+In order to produce novel view synthesis, nerfstudio is used to render the scene using NeRF, specifically Zip-NeRF.
+The evaluation is performed by computing the PSNR and SSIM between the rendered image and the ground truth image.
+
+For now this part is under development and the evaluation is not yet implemented.
+
 
 ## Input Formats
 The project takes as input a COLMAP model and outputs the evaluation results.
@@ -97,7 +115,7 @@ The COLMAP model are a .txt/.bin files that contains the following information:
 ## TODO
 - [x] Implement relative rotation and translation error evaluation
 - [ ] Implement 3D triangulation error evaluation (accuracy and completeness of 3D triangulation)
-- [ ] Check out the novel view synthesis paper (https://arxiv.org/abs/1601.06950)
+- [ ] Implement novel view synthesis evaluation
 
 
 # Resources
