@@ -5,6 +5,7 @@
 import json
 from pathlib import Path
 from typing import Dict, Optional, Any
+import argparse
 
 import numpy as np
 from read_write_model import read_cameras_binary, read_images_binary
@@ -40,7 +41,7 @@ def colmap_to_json(
         out = parse_colmap_camera_params(cam_id_to_camera[1])
 
     frames = []
-    for im_id, im_data in im_id_to_image.items():
+    for i, (im_id, im_data) in enumerate(im_id_to_image.items()):
         rotation = quaternion2rotation(im_data.qvec)
 
         translation = im_data.tvec.reshape(3, 1)
@@ -53,7 +54,7 @@ def colmap_to_json(
             c2w = c2w[np.array([0, 2, 1, 3]), :]
             c2w[2, :] *= -1
 
-        name = im_data.name
+        name = f"frame_{i+1:05d}.JPG"
         if image_dir:
             name = Path(f"{image_dir}/{name}")
         else:
@@ -220,8 +221,26 @@ def parse_colmap_camera_params(camera) -> Dict[str, Any]:
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--recon-dir",
+        type=str,
+        default="../../results/glomap/ETH3D/courtyard/sparse/0",
+        help="Path to the reconstruction directory, e.g. 'sparse/0'",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="../../results/glomap/ETH3D/courtyard/",
+        help="Path to the output directory",
+    )
+
+    args = parser.parse_args()
+    recon_dir = Path(args.recon_dir)
+    output_dir = Path(args.output_dir)
+
     colmap_to_json(
-        recon_dir=Path('../../results/glomap/ETH3D/courtyard/sparse/0'),
-        output_dir=Path('../../results/glomap/ETH3D/courtyard/'),
-        image_dir='../../data/ETH3D/courtyard/images/',
+        recon_dir=recon_dir,
+        output_dir=output_dir
     )
