@@ -74,8 +74,33 @@ The evaluation protocol assesses the quality of the novel view synthesis by comp
 In order to produce novel view synthesis, nerfstudio is used to render the scene using NeRF, specifically Zip-NeRF.
 The evaluation is performed by computing the PSNR and SSIM between the rendered image and the ground truth image.
 
-For now this part is under development and the evaluation is not yet implemented.
+**_For now this part is under development and the evaluation is not yet implemented._**
+#### Usage
+First, we need to export the COLMAP model to nerfstudio transform.jons
 
+```
+python export_colmap_to_nerfstudio.py --recon-dir PATH_TO_COLMAP_MODEL --output-dir PATHTO_OUTPUT
+```
+
+Then, we need to export the images at different resolutions using _ns-process-data_
+```
+ns-process-data images --data PATH_TO_SCENE_IMAGES --output-dir OUTPUT_RESULTS --skip-colmap
+```
+Then, we train the NeRF model (using nerfacto for now):
+```
+ns-train nerfacto --data PATH_TO_RESULTS_SCENE --output-dir CONFIG_OUTPUT colmap
+```
+Finally, we need to evaluate the results.
+```
+ns-eval --load-config=PATH_TO_CONFIG --output-path= PATH_TO_RESULTS_SCENE/eval.json
+```
+
+Alternatively, we provide a python file to run the training and evaluation [`run_nerfstudio.py`](evaluation/core/run_nerfstudio.py):
+```
+python evaluation/core/run_nerfstudio.py --dataset-path PATH_TO_SCENE_IMAGES --results-path PATH_TO_RESULTS
+```
+The script expect the PATH_TO_SCENE_IMAGES to be the path to the dataset with the images directory, 
+and the PATH_TO_RESULTS to be the path to the results of the SFM method (e.g. results/glomap/ETH3D/courtyard). 
 
 ## Input Formats
 The project takes as input a COLMAP model and outputs the evaluation results.
