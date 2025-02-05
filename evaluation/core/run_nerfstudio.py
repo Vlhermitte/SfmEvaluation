@@ -46,7 +46,7 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto'):
     CUDA_VISIBLE_DEVICES = f"CUDA_VISIBLE_DEVICES={','.join([str(i) for i in range(num_gpus)])}"
 
     # Train the NeRF model TODO: Investigate using Zip-NeRF for better quality
-    _logger.info("Training the NeRF model...")
+    _logger.info(f"Training the model using : {method}")
     train_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-train {method} "
            f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu True "
            f"--data {results_path} --output-dir {results_path}/nerfstudio colmap")
@@ -61,6 +61,8 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto'):
 
 if __name__ == '__main__':
     _logger = logging.getLogger(__name__)
+    _logger.setLevel(logging.INFO)
+    _logger.addHandler(logging.StreamHandler(sys.stdout))
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset-path",
