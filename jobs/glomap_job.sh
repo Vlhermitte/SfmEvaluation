@@ -38,7 +38,7 @@ for SCENE in "${SCENES[@]}"; do
     echo "Processing scene: $SCENE"
     # Base scene directory
     SCENE_DIR="datasets/ETH3D"
-    OUTPUT_DIR="${OUT_DIR}/${SCENE}"
+    OUTPUT_DIR="${OUT_DIR}/${SCENE}/colmap"
 
     # Check if the output directory already exists
     if [ -d "$OUTPUT_DIR" ]; then

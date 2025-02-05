@@ -43,23 +43,25 @@ SCENES=(
     "terrains"
 )
 
-cd /home.nfs/lhermval/SfmEvaluation/acezero
+cd /home.nfs/lhermval/SfmEvaluation
 
 # Base output directory
-OUT_DIR="../results/acezero"
+OUT_DIR="results/vggsfm"
 
-# Run the FlowMap pipeline for each scene
+# Run the VGGSfm pipeline for each scene
 for SCENE in "${SCENES[@]}"; do
     echo "Processing scene: $SCENE"
-    OUTPUT_DIR="${OUT_DIR}/${SCENE}/acezero_format"
+    OUTPUT_DIR="${OUT_DIR}/${SCENE}"
 
     # Check if the output directory already exists
     if [ -d "$OUTPUT_DIR" ]; then
         echo "Output directory exists. Overwritting scene: $SCENE"
     fi
 
-    python ace_zero.py "../datasets/ETH3D/$SCENE/images/*.JPG" $OUTPUT_DIR --export_point_cloud True
-    python convert_to_colmap.py --src_dir $OUTPUT_DIR
+    python ./vggsfm/demo.py \
+      query_method=sp+aliked camera_type=SIMPLE_RADIAL \
+      SCENE_DIR=datasets/ETH3D/$SCENE/ \  # vggsfm assume image to be an images directory
+      OUTPUT_DIR=$OUTPUT_DIR/colmap/
 
     if [ $? -eq 0 ]; then
         echo "Finished processing scene: $SCENE"

@@ -12,7 +12,7 @@ from evaluation.core.relative_error_evaluation import evaluate_relative_errors
 def detect_colmap_format(path: str) -> str:
     for ext in ['.txt', '.bin']:
         if os.path.isfile(os.path.join(path, "cameras" + ext)) and os.path.isfile(os.path.join(path, "images" + ext)):
-            print("Detected model format: '" + ext + "'")
+            # print("Detected model format: '" + ext + "'")
             return ext
     raise ValueError("No .txt or .bin format not found in the specified path")
 
