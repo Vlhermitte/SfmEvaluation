@@ -4,7 +4,7 @@ import argparse
 import logging
 from tqdm import tqdm
 
-def run_nerfstudio(dataset_path, results_path):
+def run_nerfstudio(dataset_path, results_path, method='nerfacto'):
     # First copy the images to the results directory if they are not already there
     _logger.info("Checking if images are in the results directory...")
     if not os.path.exists(results_path + "/images"):
@@ -36,7 +36,7 @@ def run_nerfstudio(dataset_path, results_path):
     try:
         cmd = "nvidia-smi --query-gpu=count --format=csv,noheader"
         result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
-        num_gpus = int(result.stdout.decode('utf-8').strip())
+        num_gpus = int(result.stdout.decode('utf-8').strip()[0])
         _logger.info(f"Found {num_gpus} CUDA GPUs.")
     except Exception:
         _logger.error("CUDA not found. NerfStudio requires CUDA to run.")
@@ -47,15 +47,15 @@ def run_nerfstudio(dataset_path, results_path):
 
     # Train the NeRF model TODO: Investigate using Zip-NeRF for better quality
     _logger.info("Training the NeRF model...")
-    train_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-train nerfacto "
+    train_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-train {method} "
            f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu True "
            f"--data {results_path} --output-dir {results_path}/nerfstudio colmap")
     subprocess.run(train_cmd, shell=True)
 
     # Evaluate the NeRF model
     _logger.info("Evaluating the NeRF model...")
-    eval_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-eval --load-config {results_path}/nerfacto/config.yml "
-           f"--output-dir {results_path}/nerfacto/eval.json")
+    eval_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-eval --load-config {results_path}/{method}/config.yml "
+           f"--output-dir {results_path}/{method}/eval.json")
     subprocess.run(eval_cmd, shell=True)
 
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--dataset-path",
         type=str,
-        required=False,
+        required=True,
         default="../../datasets/ETH3D/courtyard",
         help="path to the dataset containing images"
     )
@@ -73,17 +73,25 @@ if __name__ == '__main__':
     parser.add_argument(
         "--results-path",
         type=str,
-        required=False,
+        required=True,
         default="../../results/glomap/ETH3D/courtyard",
         help="path to the results directory containing the images and colmap model under 'colmap/sparse/0'"
+    )
+    parser.add_argument(
+        "--method",
+        type=str,
+        required=False,
+        default="nerfacto",
+        help="nerfacto, splatfacto"
     )
     args = parser.parse_args()
     dataset_path = args.dataset_path
     results_path = args.results_path
+    method = args.method
 
     # check that results_path/colmap/sparse/0 exists
     if not os.path.exists(results_path + "/colmap/sparse/0"):
         _logger.error(f"Error: The path {results_path}/colmap/sparse/0 does not exist. Please check the results path and try again.")
         exit(1)
 
-    run_nerfstudio(dataset_path, results_path)
+    run_nerfstudio(dataset_path, results_path, method)
