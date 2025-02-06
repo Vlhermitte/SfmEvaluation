@@ -58,22 +58,23 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
     _logger.info(f"Training the model using : {method}")
     train_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-train {method} "
            f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu True "
+           f"--pipeline.datamanager.dataloader-num-workers 8"
            f"{'--viewer.make-share-url True' if viz else ''} "
            f"--data {results_path} --output-dir {results_path}/nerfstudio colmap")
     subprocess.run(train_cmd, shell=True)
 
     # Move the trained model to the results directory
-    _logger.info("Moving the trained model to the results directory...")
-    if not os.path.exists(results_path + f"/{method}"):
-        os.makedirs(results_path + f"/{method}", exist_ok=True)
-    mv_cmd = f"mv {results_path}/nerfstudio/{method}/* {results_path}/{method}"
-    subprocess.run(mv_cmd, shell=True)
-
-    # Evaluate the NeRF model
-    _logger.info("Evaluating the NeRF model...")
-    eval_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-eval --load-config {results_path}/{method}/config.yml "
-           f"--output-dir {results_path}/{method}/eval.json")
-    subprocess.run(eval_cmd, shell=True)
+    # _logger.info("Moving the trained model to the results directory...")
+    # if not os.path.exists(results_path + f"/{method}"):
+    #     os.makedirs(results_path + f"/{method}", exist_ok=True)
+    # mv_cmd = f"mv {results_path}/nerfstudio/{method}/* {results_path}/{method}"
+    # subprocess.run(mv_cmd, shell=True)
+    #
+    # # Evaluate the NeRF model
+    # _logger.info("Evaluating the NeRF model...")
+    # eval_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-eval --load-config {results_path}/{method}/config.yml "
+    #        f"--output-dir {results_path}/{method}/eval.json")
+    # subprocess.run(eval_cmd, shell=True)
 
 def sanity_check_colmap(path):
     # read the colmap model
