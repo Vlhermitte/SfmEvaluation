@@ -95,9 +95,9 @@ Finally, we need to evaluate the results.
 ns-eval --load-config=PATH_TO_CONFIG --output-path= PATH_TO_RESULTS_SCENE/eval.json
 ```
 
-Alternatively, we provide a python file to run the training and evaluation [`run_nerfstudio.py`](evaluation/core/run_nerfstudio.py):
+Alternatively, we provide a python file to run the training and evaluation [`run_nerfstudio.py`](run_nerfstudio.py):
 ```
-python evaluation/core/run_nerfstudio.py --dataset-path PATH_TO_SCENE_IMAGES --results-path PATH_TO_RESULTS
+python run_nerfstudio.py --dataset-path PATH_TO_SCENE_IMAGES --results-path PATH_TO_RESULTS
 ```
 The script expect the PATH_TO_SCENE_IMAGES to be the path to the dataset with the images directory, 
 and the PATH_TO_RESULTS to be the path to the results of the SFM method (e.g. results/glomap/ETH3D/courtyard). 
