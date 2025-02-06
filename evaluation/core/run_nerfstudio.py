@@ -5,7 +5,7 @@ import argparse
 import logging
 from tqdm import tqdm
 
-def run_nerfstudio(dataset_path, results_path, method='nerfacto'):
+def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
     # First copy the images to the results directory if they are not already there
     _logger.info("Checking if images are in the results directory...")
     if not os.path.exists(results_path + "/images"):
@@ -32,7 +32,7 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto'):
         _logger.info("Downscaled images are already in the results directory.")
 
     # Find how many CUDA GPUs are available
-    print("Checking for available CUDA GPUs...")
+    _logger.info("Checking for available CUDA GPUs...")
     num_gpus = 2
     try:
         cmd = "nvidia-smi --query-gpu=count --format=csv,noheader"
@@ -43,6 +43,11 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto'):
         _logger.error("CUDA not found. NerfStudio requires CUDA to run.")
         exit(1)
 
+    # Splatfacto does not support multi-gpus
+    if method == 'splatfacto':
+        _logger.warning("Splatfacto does not support multi-gpus. Using 1 GPU.")
+        num_gpus = 1
+
     # Set the number of GPUs to use for training
     CUDA_VISIBLE_DEVICES = f"CUDA_VISIBLE_DEVICES={','.join([str(i) for i in range(num_gpus)])}"
 
@@ -50,8 +55,16 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto'):
     _logger.info(f"Training the model using : {method}")
     train_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-train {method} "
            f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu True "
+           f"{'--viewer.make-share-url True' if viz else ''} "
            f"--data {results_path} --output-dir {results_path}/nerfstudio colmap")
     subprocess.run(train_cmd, shell=True)
+
+    # Move the trained model to the results directory
+    _logger.info("Moving the trained model to the results directory...")
+    if not os.path.exists(results_path + f"/{method}"):
+        os.makedirs(results_path + f"/{method}", exist_ok=True)
+    mv_cmd = f"mv {results_path}/nerfstudio/{method}/* {results_path}/{method}"
+    subprocess.run(mv_cmd, shell=True)
 
     # Evaluate the NeRF model
     _logger.info("Evaluating the NeRF model...")
