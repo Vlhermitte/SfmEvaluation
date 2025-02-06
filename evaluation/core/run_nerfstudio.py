@@ -3,7 +3,10 @@ import os
 import sys
 import argparse
 import logging
+from pathlib import Path
 from tqdm import tqdm
+
+from evaluation.utils.read_write_model import read_model, write_model
 
 def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
     # First copy the images to the results directory if they are not already there
@@ -33,7 +36,7 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
 
     # Find how many CUDA GPUs are available
     _logger.info("Checking for available CUDA GPUs...")
-    num_gpus = 2
+    num_gpus = 0
     try:
         cmd = "nvidia-smi --query-gpu=count --format=csv,noheader"
         result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
@@ -44,7 +47,7 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
         exit(1)
 
     # Splatfacto does not support multi-gpus
-    if method == 'splatfacto':
+    if method == 'splatfacto' and num_gpus > 1:
         _logger.warning("Splatfacto does not support multi-gpus. Using 1 GPU.")
         num_gpus = 1
 
@@ -72,6 +75,27 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
            f"--output-dir {results_path}/{method}/eval.json")
     subprocess.run(eval_cmd, shell=True)
 
+def sanity_check_colmap(path):
+    # read the colmap model
+    cameras, images, points3D = read_model(path)
+
+    # check that the model is not empty
+    if len(cameras) == 0 or len(images) == 0 or len(points3D) == 0:
+        _logger.error(f"Error: The colmap model at {path} is empty. Please check the results path and try again.")
+        exit(1)
+
+    # check that in images, each image has a valid path
+    path_changed = False
+    for image_id, image in images.items():
+        img_path = Path(image.name)
+        if len(img_path.parts) > 1:
+            new_image = image._replace(name=img_path.parts[-1])
+            images[image_id] = new_image
+            path_changed = True
+    if path_changed:
+        _logger.info("Fixed image paths in the colmap model.")
+        write_model(cameras=cameras, images=images, points3D=points3D, path=path, ext=".bin")
+
 
 if __name__ == '__main__':
     _logger = logging.getLogger(__name__)
@@ -81,16 +105,16 @@ if __name__ == '__main__':
     parser.add_argument(
         "--dataset-path",
         type=str,
-        required=True,
-        default="../../datasets/ETH3D/courtyard",
+        required=False,
+        default="../../datasets/MipNerf360/garden",
         help="path to the dataset containing images"
     )
 
     parser.add_argument(
         "--results-path",
         type=str,
-        required=True,
-        default="../../results/glomap/ETH3D/courtyard",
+        required=False,
+        default="../../results/glomap/MipNerf360/garden",
         help="path to the results directory containing the images and colmap model under 'colmap/sparse/0'"
     )
     parser.add_argument(
@@ -118,5 +142,8 @@ if __name__ == '__main__':
     if not os.path.exists(results_path + "/colmap/sparse/0"):
         _logger.error(f"Error: The path {results_path}/colmap/sparse/0 does not exist. Please check the results path and try again.")
         exit(1)
+
+    # Sanity check on colmap model
+    sanity_check_colmap(results_path + "/colmap/sparse/0")
 
     run_nerfstudio(dataset_path, results_path, method, viz)
