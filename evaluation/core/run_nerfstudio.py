@@ -100,14 +100,23 @@ if __name__ == '__main__':
         default="nerfacto",
         help="nerfacto, splatfacto"
     )
+    parser.add_argument(
+        "--viz",
+        type=bool,
+        required=False,
+        default=False,
+        help="Whether to visualize the results"
+    )
+
     args = parser.parse_args()
     dataset_path = args.dataset_path
     results_path = args.results_path
     method = args.method
+    viz = args.viz
 
     # check that results_path/colmap/sparse/0 exists
     if not os.path.exists(results_path + "/colmap/sparse/0"):
         _logger.error(f"Error: The path {results_path}/colmap/sparse/0 does not exist. Please check the results path and try again.")
         exit(1)
 
-    run_nerfstudio(dataset_path, results_path, method)
+    run_nerfstudio(dataset_path, results_path, method, viz)
