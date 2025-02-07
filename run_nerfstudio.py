@@ -10,29 +10,30 @@ from evaluation.utils.read_write_model import read_model, write_model
 
 def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
     # First copy the images to the results directory if they are not already there
-    _logger.info("Checking if images are in the results directory...")
-    if not os.path.exists(results_path + "/images"):
-        _logger.info("Copying images to the results directory...")
-        cp_cmd = f"cp -r {dataset_path}/images {results_path}"
-        subprocess.run(cp_cmd, shell=True)
-    else:
-        _logger.info("Images are already in the results directory.")
+    # _logger.info("Checking if images are in the results directory...")
+    # if not os.path.exists(results_path + "/images"):
+    #     _logger.info("Copying images to the results directory...")
+    #     cp_cmd = f"cp -r {dataset_path}/images {results_path}"
+    #     subprocess.run(cp_cmd, shell=True)
+    # else:
+    #     _logger.info("Images are already in the results directory.")
 
-    # Downscaling images by a factor of 4
-    if not os.path.exists(results_path + "/images_4"):
-        for image_name in tqdm(os.listdir(results_path + "/images"), desc="Downscaling images by a factor of 4"):
-            image_path = os.path.join(results_path, "images", image_name)
-            image_out = os.path.join(results_path, "images_4", image_name)
-            if not os.path.exists(os.path.dirname(image_out)):
-                os.makedirs(os.path.dirname(image_out), exist_ok=True)
-            ffmpeg_cmd = (
-                f'ffmpeg -y -noautorotate -i "{image_path}" '
-                f'-q:v 2 -vf scale=iw/4:-1:flags=neighbor '
-                f'-frames:v 1 -update 1 -f image2 "{image_out}" -loglevel quiet'
-            )
-            subprocess.run(ffmpeg_cmd, shell=True)
-    else:
-        _logger.info("Downscaled images are already in the results directory.")
+    # Downscaling images by a factor of 2, 4 and 8
+    for factor in [2, 4, 8]:
+        if not os.path.exists(dataset_path + f"/images_{factor}"):
+            for image_name in tqdm(os.listdir(dataset_path + "/images"), desc=f"Downscaling images by a factor of {factor}"):
+                image_path = os.path.join(dataset_path, "images", image_name)
+                image_out = os.path.join(dataset_path, f"/images_{factor}", image_name)
+                if not os.path.exists(os.path.dirname(image_out)):
+                    os.makedirs(os.path.dirname(image_out), exist_ok=True)
+                ffmpeg_cmd = (
+                    f'ffmpeg -y -noautorotate -i "{image_path}" '
+                    f'-q:v 2 -vf scale=iw/{factor}:-1:flags=neighbor '
+                    f'-frames:v 1 -update 1 -f image2 "{image_out}" -loglevel quiet'
+                )
+                subprocess.run(ffmpeg_cmd, shell=True)
+        else:
+            _logger.info("Downscaled images are already in the results directory.")
 
     # Find how many CUDA GPUs are available
     _logger.info("Checking for available CUDA GPUs...")
