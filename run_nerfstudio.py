@@ -60,7 +60,8 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
            f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu True "
            f"--pipeline.datamanager.dataloader-num-workers 8"
            f"{'--viewer.make-share-url True' if viz else ''} "
-           f"--data {results_path} --output-dir {results_path}/nerfstudio colmap")
+           f"--images-path {dataset_path}/images --colmap-path {results_path}/colmap/sparse/0 "
+           f" --output-dir {results_path}/nerfstudio colmap")
     subprocess.run(train_cmd, shell=True)
 
     # Move the trained model to the results directory
