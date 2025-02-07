@@ -56,12 +56,12 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
 
     # Train the NeRF model TODO: Investigate using Zip-NeRF for better quality
     _logger.info(f"Training the model using : {method}")
-    train_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-train {method} "
+    train_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-train {method} colmap "
            f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu True "
            f"{'--pipeline.datamanager.dataloader-num-workers 8' if method == 'nerfacto' else ''} "
            f"{'--viewer.make-share-url True' if viz else ''} "
            f"--images-path {dataset_path}/images --colmap-path {results_path}/colmap/sparse/0 "
-           f" --output-dir {results_path}/nerfstudio colmap")
+           f" --output-dir {results_path}/nerfstudio")
     subprocess.run(train_cmd, shell=True)
 
     # Move the trained model to the results directory
