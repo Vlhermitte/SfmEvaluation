@@ -1,5 +1,5 @@
-from typing import Tuple
 import numpy as np
+from typing import Tuple
 from scipy.spatial.transform import Rotation
 
 def quaternion2rotation(Q: np.ndarray) -> np.ndarray:

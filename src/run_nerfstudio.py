@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from tqdm import tqdm
 
-from evaluation.utils.read_write_model import read_model, write_model
+from data.read_write_model import read_model, write_model
 
 def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
     # First copy the images to the results directory if they are not already there

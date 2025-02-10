@@ -1,9 +1,10 @@
 import numpy as np
-from scipy.spatial.transform import Rotation, Slerp
 import copy
+from scipy.spatial.transform import Rotation, Slerp
 from typing import List, Optional
-from evaluation.utils.common import Camera
-from geometry import rotation2quaternion
+
+from utils.common import Camera
+from utils.geometry import rotation2quaternion
 
 
 def interpolate_missing_cameras(est_cameras: List[Camera], gt_cameras: List[Camera]) -> List[Camera]:

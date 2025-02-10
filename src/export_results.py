@@ -46,13 +46,13 @@ if __name__ == '__main__':
         for method in methods:
             # Construct the file path
             if str.lower(method) == 'glomap':
-                json_file = f'../results/{str.lower(method)}/ETH3D/{scene}/sparse/0/auc.json'
+                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/sparse/0/auc.json'
             elif str.lower(method) == 'flowmap':
-                json_file = f'../results/{str.lower(method)}/ETH3D/{scene}/colmap/sparse/0/auc.json'
+                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/colmap/sparse/0/auc.json'
             elif str.lower(method) == 'vggsfm':
-                json_file = f'../results/{str.lower(method)}/ETH3D/{scene}/sparse/auc.json'
+                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/sparse/auc.json'
             elif str.lower(method) == 'acezero':
-                json_file = f'../results/{str.lower(method)}/ETH3D/{scene}/sparse/auc.json'
+                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/sparse/auc.json'
             else:
                 print(f"Invalid method: {str.lower(method)}")
                 continue

@@ -1,7 +1,6 @@
 .idea
-/datasets
-/trainingdata
-/results
+/data/datasets
+/data/results
 /glomap
 /vggsfm
 /flowmap

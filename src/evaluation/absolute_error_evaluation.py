@@ -1,8 +1,10 @@
 import numpy as np
 import cv2
-from evaluation.utils.common import Camera
 from typing import List, Dict
-from .alignment import estimate_alignment
+
+from utils.common import Camera
+from utils.alignment import estimate_alignment
+
 
 def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], perform_alignment: bool = True) -> Dict:
     """

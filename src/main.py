@@ -4,10 +4,11 @@ import logging
 import json
 import numpy as np
 from typing import Tuple, List
-from evaluation.utils.common import Camera, get_cameras_info
-from evaluation.utils.read_write_model import read_model
-from evaluation.core.absolute_error_evaluation import evaluate_camera_pose
-from evaluation.core.relative_error_evaluation import evaluate_relative_errors
+
+from utils.common import Camera, get_cameras_info
+from data.read_write_model import read_model
+from evaluation.absolute_error_evaluation import evaluate_camera_pose
+from evaluation.relative_error_evaluation import evaluate_relative_errors
 
 def detect_colmap_format(path: str) -> str:
     for ext in ['.txt', '.bin']:
@@ -129,14 +130,14 @@ if __name__ == '__main__':
         "--gt-model-path",
         type = str,
         required = False,
-        default="datasets/ETH3D/courtyard/dslr_calibration_jpg",
+        default="../data/datasets/ETH3D/courtyard/dslr_calibration_jpg",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
         "--est-model-path",
         type=str,
         required=False,
-        default="results/glomap/ETH3D/courtyard/colmap/sparse/0",
+        default="../data/results/glomap/ETH3D/courtyard/colmap/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
