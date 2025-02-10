@@ -84,7 +84,7 @@ if __name__ == '__main__':
         "--est-model-path",
         type=str,
         required=False,
-        default="../../data/results/glomap/courtyard/colmap/sparse/0",
+        default="../../data/results/glomap/ETH3D/courtyard/colmap/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
     args = parser.parse_args()
