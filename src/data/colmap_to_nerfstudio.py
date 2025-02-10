@@ -2,14 +2,14 @@
 # Copyright (c) 2022 The Regents of the University of California, Nerfstudio Team.
 # The original code can be found at https://github.com/nerfstudio-project/nerfstudio/blob/main/nerfstudio/process_data/colmap_utils.py
 
+import argparse
 import json
+import numpy as np
 from pathlib import Path
 from typing import Dict, Optional, Any
-import argparse
 
-import numpy as np
 from read_write_model import read_cameras_binary, read_images_binary
-from evaluation.core.geometry import quaternion2rotation
+from utils.geometry import quaternion2rotation
 
 def colmap_to_json(
     recon_dir: Path,

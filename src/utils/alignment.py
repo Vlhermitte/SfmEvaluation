@@ -1,6 +1,6 @@
-from scipy.spatial.transform import Rotation
 import numpy as np
 from typing import Tuple
+from scipy.spatial.transform import Rotation
 
 def kabsch(pts1, pts2, estimate_scale=False) -> Tuple[np.ndarray, float]:
     """

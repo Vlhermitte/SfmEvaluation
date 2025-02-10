@@ -4,7 +4,7 @@
 # set -euo pipefail
 
 # Configuration
-BASE_DIR="./datasets/ETH3D"
+BASE_DIR="data/datasets/ETH3D"
 SCENES=(
     "courtyard"
     "delivery_area"

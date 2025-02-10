@@ -42,15 +42,15 @@ To run the evaluation on all results, run the following command:
 ```
 bash scripts/evaluate.sh
 ```
-The script expect the result to be stored in results/<methods>/ETH3D/<scene> directory.
+The script expect the result to be stored in data/results/\<methods>/ETH3D/\<scene> directory.
 For more details, see the script [`evaluate.sh`](scripts/evaluate.sh) in the [`scripts`](scripts) directory.
 
-To run an individual evaluation, the [`main.py`](main.py) file can be used.
+To run an individual evaluation, the [`main.py`](src/main.py) file can be used.
 ```
 python main.py --gt-model-path <path_to_gt_model> --est-model-path <path_to_estimated_model>
 ```
 
-An absolute pose evaluation script is **under development** (see [`absolute_error_evaluation.py`](evaluation/core/absolute_error_evaluation.py)).
+An absolute pose evaluation script is **under development** (see [`absolute_error_evaluation.py`](src/evaluation/absolute_error_evaluation.py)).
 It first tries to perform alignment between the estimated and ground truth camera poses using the Kabsch-Umeyama algorithm.
 Then, it computes the absolute rotation and translation errors.
 
@@ -67,7 +67,7 @@ Specifically, for each pair of images \(i\) and \(j\), the relative rotation and
 ```math
   t_{rel} = t_j - (R_{rel} \cdot t_i)
 ```
-For more details, see the function [`evaluate_relative_errors`](evaluation/core/relative_error_evaluation.py) in [`evaluation.py`](evaluation/core/relative_error_evaluation.py).
+For more details, see the function [`evaluate_relative_errors`](src/evaluation/relative_error_evaluation.py) in [`evaluation.py`](src/evaluation/relative_error_evaluation.py).
 
 ### Novel View Synthesis (in progress)
 The evaluation protocol assesses the quality of the novel view synthesis by comparing rendered images with the ground truth images.
@@ -76,12 +76,12 @@ The evaluation is performed by computing the PSNR and SSIM between the rendered 
 
 **_For now this part is under development and the evaluation is not yet implemented._**
 #### Usage
-We provide a python file to run the training and evaluation [`run_nerfstudio.py`](run_nerfstudio.py):
+We provide a python file to run the training and evaluation [`run_nerfstudio.py`](src/run_nerfstudio.py):
 ```
 python run_nerfstudio.py --dataset-path PATH_TO_SCENE_IMAGES --results-path PATH_TO_RESULTS
 ```
 The script expect the PATH_TO_SCENE_IMAGES to be the path to the dataset with the images directory, 
-and the PATH_TO_RESULTS to be the path to the results of the SFM method (e.g. results/glomap/ETH3D/courtyard/colmap/sparse/0).
+and the PATH_TO_RESULTS to be the path to the results of the SFM method (e.g. data/results/glomap/ETH3D/courtyard/colmap/sparse/0).
 
 The files in PATH_TO_RESULTS are expected to be in **COLMAP** format (.txt/.bin files).
 

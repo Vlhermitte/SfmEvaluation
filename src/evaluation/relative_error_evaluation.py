@@ -1,7 +1,8 @@
 import numpy as np
 import cv2
-from evaluation.utils.common import Camera
 from typing import List, Dict
+
+from utils.common import Camera
 
 
 def evaluate_rotation_matrices(R_gt: np.ndarray, R_est: np.ndarray) -> float:
