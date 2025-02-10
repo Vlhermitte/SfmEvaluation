@@ -3,7 +3,9 @@
 # Exit on any error, unset variable, or pipe failure
 # set -euo pipefail
 
-# Configuration
+#######################################
+# Configuration for ETH3D dataset
+#######################################
 BASE_DIR="data/datasets/ETH3D"
 SCENES=(
     "courtyard"
@@ -21,33 +23,37 @@ SCENES=(
     "terrains"
 )
 
-# Function to verify downloaded file
+#######################################
+# Utility functions
+#######################################
+
+# Verify downloaded file exists and is non-empty
 verify_download() {
     local file=$1
     if [ ! -f "${file}" ] || [ ! -s "${file}" ]; then
         echo "Download verification failed for ${file}. Exiting..."
-        return 1  # Exit immediately on failure
+        return 1
     fi
 }
 
-# Function to verify extracted files
+# Verify extraction for ETH3D scene
 verify_extraction() {
     local dir=$1
     if [ ! -d "${dir}/images" ] || ! ls "${dir}/images/dslr_images"/*.jpg >/dev/null 2>&1; then
         echo "Extraction verification failed for ${dir}. Exiting..."
-        return 1  # Exit immediately on failure
+        return 1
     fi
 }
 
-# Function to check if a scene is already downloaded and processed
+# Check if a scene is already downloaded and processed
 check_scene_exists() {
     local scene_path=$1
     local image_dir="${scene_path}/images"
 
     echo "Checking if scene exists: ${scene_path}"
-
     if [ -d "${image_dir}" ] && ls "${image_dir}"/*.[jJ][pP][gG] >/dev/null 2>&1; then
-        local image_count=$(ls "${image_dir}"/*.[jJ][pP][gG] | wc -l)
+        local image_count
+        image_count=$(ls "${image_dir}"/*.[jJ][pP][gG] | wc -l)
         echo "Scene already exists with ${image_count} images"
         return 0  # Scene exists
     fi
@@ -56,16 +62,20 @@ check_scene_exists() {
     return 1  # Scene does not exist
 }
 
-# Function to download and extract a scene
+#######################################
+# ETH3D Functions
+#######################################
+
+# Download and extract an ETH3D scene
 download_and_extract() {
     local scene=$1
     local url="https://www.eth3d.net/data/${scene}_dslr_jpg.7z"
-    local output_dir="${BASE_DIR}/" # ${scene}
+    local output_dir="${BASE_DIR}/"
     local archive_file="${scene}_dslr_jpg.7z"
 
     echo "Processing scene: ${scene}"
 
-    # Check if the scene already downloaded
+    # Check if the scene folder already exists
     if [ -d "${output_dir}${scene}" ]; then
         echo "Scene already exists. Skipping download..."
         return
@@ -74,24 +84,26 @@ download_and_extract() {
     # Create output directory if it doesn't exist
     mkdir -p "${output_dir}"
 
-    # Download with timeout and retry
+    # Download with progress feedback
     echo "Downloading ${scene}..."
     wget --progress=bar:force --show-progress "${url}" || {
         echo "Failed to download ${scene}"
-        return 1  # Exit immediately on failure
+        return 1
     }
 
-    # Verify download
+    # Verify the download
     verify_download "${archive_file}"
 
+    # Extract the archive
     7z x "${archive_file}" -o"${output_dir}" | grep -E "^Extracting|^Everything" || {
         echo "Extraction failed for ${scene}"
-        return 1  # Exit immediately on failure
+        return 1
     }
+
     # Fix permissions
     chmod -R u+w "${output_dir}${scene}"
 
-    # Verify extraction
+    # (Optional) Verify extraction if needed
     # verify_extraction "${output_dir}${scene}"
 
     # Clean up archive only after successful extraction
@@ -99,7 +111,7 @@ download_and_extract() {
     echo "Extracted ${scene}"
 }
 
-# Function to move images and clean up folders
+# Move images from nested folder and clean up for ETH3D scene
 organize_images() {
     local scene_path=$1
     local image_dir="${scene_path}/images/dslr_images"
@@ -110,19 +122,19 @@ organize_images() {
     # Ensure destination directory exists
     mkdir -p "${dest_dir}"
 
-    # Check for source files (.jpg or .JPG)
+    # Check for source JPG files (.JPG)
     if ! ls "${image_dir}"/*.JPG >/dev/null 2>&1; then
         echo "No JPG files found in ${image_dir}"
     else
-        # Move images with progress feedback
         echo "Moving images..."
-        local total_files=$(ls "${image_dir}"/*.JPG | wc -l)
+        local total_files
+        total_files=$(ls "${image_dir}"/*.JPG | wc -l)
         local current=0
 
         for img in "${image_dir}"/*.JPG; do
             mv "${img}" "${dest_dir}/" || {
                 echo "Failed to move file: ${img}"
-                return 1  # Exit immediately on failure
+                return 1
             }
             ((current++))
             printf "\rProgress: [%d/%d] files moved" "${current}" "${total_files}"
@@ -130,54 +142,37 @@ organize_images() {
         echo
 
         # Verify all files were moved
-        local moved_files=$(ls "${dest_dir}"/*.JPG | wc -l)
+        local moved_files
+        moved_files=$(ls "${dest_dir}"/*.JPG | wc -l)
         if [ "${moved_files}" -ne "${total_files}" ]; then
             echo "File count mismatch after moving"
-            return 1  # Exit immediately on failure
+            return 1
         fi
 
-        # Remove the source directory
+        # Remove the now-empty source directory
         rm -r "${image_dir}"
         echo "Images organized for: ${scene_path}"
     fi
 }
 
-# Main execution
-main() {
-    # Verify wget and 7z are installed
-    if ! command -v wget >/dev/null || ! command -v 7z >/dev/null; then
-        echo "Required tools (wget and/or 7z) are not installed"
-        exit 1
-    fi
-
-    # Make sure we are in the root directory of the project
-    cd "$(dirname "$0")/.." || exit
-
-    # Create base directory
-    mkdir -p "${BASE_DIR}"
-
-    local total_scenes=${#SCENES[@]}
-    local current_scene=1
-    local skipped_scenes=0
-    local successful_scenes=0
-
-    for scene in "${SCENES[@]}"; do
-        echo "$scene"
-    done
-
+# Download the complete ETH3D dataset by processing all scenes
+download_eth3d() {
     echo "Starting ETH3D dataset download..."
     echo "Base directory: ${BASE_DIR}"
     echo
 
-    for scene in "${SCENES[@]}"; do
-        current_scene="${scene}"  # For cleanup function
-        echo "=== Processing scene [${current_scene}/${total_scenes}]: ${scene} ==="
+    mkdir -p "${BASE_DIR}"
 
+    local total_scenes=${#SCENES[@]}
+    local skipped_scenes=0
+    local successful_scenes=0
+
+    for scene in "${SCENES[@]}"; do
+        echo "=== Processing scene: ${scene} ==="
         if check_scene_exists "${BASE_DIR}/${scene}"; then
-            echo "Scene already exists. Skipping to the next."
+            echo "Scene already exists. Skipping..."
             ((skipped_scenes++))
         else
-            # Try to download and process the scene, handling errors gracefully
             if download_and_extract "${scene}" && organize_images "${BASE_DIR}/${scene}"; then
                 echo "=== Completed ${scene} ==="
                 ((successful_scenes++))
@@ -185,15 +180,110 @@ main() {
                 echo "Failed to process scene: ${scene}. Skipping to the next."
             fi
         fi
-
         echo
     done
 
-    # Print summary
-    echo "=== Download Summary ==="
+    echo "=== ETH3D Download Summary ==="
     echo "Total scenes: ${total_scenes}"
     echo "Already existed: ${skipped_scenes}"
     echo "Successfully downloaded: ${successful_scenes}"
+}
+
+#######################################
+# MipNerf360 Functions
+#######################################
+
+download_mipnerf360() {
+    local mip_dir="data/datasets/MipNerf360"
+    local url="http://storage.googleapis.com/gresearch/refraw360/360_v2.zip"
+    local archive_file="360_v2.zip"
+
+    echo "Processing MipNerf360 dataset..."
+
+    # Check if the dataset is already downloaded and extracted
+    if [ -d "${mip_dir}" ] && [ "$(ls -A "${mip_dir}")" ]; then
+        echo "MipNerf360 dataset already exists. Skipping download..."
+        return
+    fi
+
+    mkdir -p "${mip_dir}"
+
+    echo "Downloading MipNerf360 dataset..."
+    wget --progress=bar:force --show-progress "${url}" || {
+        echo "Failed to download MipNerf360 dataset"
+        return 1
+    }
+
+    # Verify the download
+    verify_download "${archive_file}"
+
+    echo "Extracting MipNerf360 dataset..."
+    unzip -q "${archive_file}" -d "${mip_dir}" || {
+        echo "Extraction failed for MipNerf360 dataset"
+        return 1
+    }
+
+    # Clean up the archive file
+    rm "${archive_file}"
+    echo "MipNerf360 dataset downloaded and extracted to ${mip_dir}"
+}
+
+#######################################
+# Main Execution
+#######################################
+main() {
+    # Ensure we're in the root directory of the project
+    cd "$(dirname "$0")/.." || exit
+
+    echo "Which dataset(s) do you want to download?"
+    echo "1) ETH3D dataset"
+    echo "2) MipNerf360 dataset"
+    echo "3) Both datasets"
+    read -rp "Enter your choice (1/2/3): " dataset_choice
+    echo
+
+    # Check for wget (required for both)
+    if ! command -v wget >/dev/null; then
+        echo "Error: wget is not installed. Please install wget."
+        exit 1
+    fi
+
+    case "${dataset_choice}" in
+        1)
+            # Check for 7z (required for ETH3D)
+            if ! command -v 7z >/dev/null; then
+                echo "Error: 7z is not installed. Please install 7z."
+                exit 1
+            fi
+            download_eth3d
+            ;;
+        2)
+            # Check for unzip (required for MipNerf360)
+            if ! command -v unzip >/dev/null; then
+                echo "Error: unzip is not installed. Please install unzip."
+                exit 1
+            fi
+            download_mipnerf360
+            ;;
+        3)
+            # Both datasets require their respective tools
+            if ! command -v 7z >/dev/null; then
+                echo "Error: 7z is not installed. Please install 7z."
+                exit 1
+            fi
+            if ! command -v unzip >/dev/null; then
+                echo "Error: unzip is not installed. Please install unzip."
+                exit 1
+            fi
+            download_eth3d
+            echo
+            download_mipnerf360
+            ;;
+        *)
+            echo "Invalid choice. Exiting."
+            exit 1
+            ;;
+    esac
 }
 
 # Run the script
