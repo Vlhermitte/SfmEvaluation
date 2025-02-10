@@ -44,28 +44,32 @@ def plot_trajectory(trajectory, save_path=None):
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
     ax.set_title('Camera Trajectory (B-spline)')
-    if save_path and os.path.exists(save_path):
-        plt.savefig(save_path)
+    if os.path.exists(save_path):
+        if save_path:
+            plt.savefig(f"{save_path}/est_trajectory.png")
+            print(f"Saved the trajectory plot at {save_path}")
+    else:
+        print(f"Path {save_path} does not exist. Skipping saving the plot.")
     plt.show()
 
 
 if __name__ == '__main__':
     import argparse
-    from evaluation.utils.read_write_model import read_model
-    from evaluation.utils.common import get_cameras_info
+    from data.read_write_model import read_model
+    from utils.common import get_cameras_info
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--gt-model-path",
         type=str,
         required=False,
-        default="../../datasets/ETH3D/terrains/dslr_calibration_jpg",
+        default="../../data/datasets/ETH3D/terrains/dslr_calibration_jpg",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
         "--est-model-path",
         type=str,
         required=False,
-        default="../../results/glomap/ETH3D/courtyard/sparse/0",
+        default="../../data/results/glomap/ETH3D/courtyard/colmap/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
 
@@ -82,4 +86,4 @@ if __name__ == '__main__':
     # Extract the camera poses
     est_trajectory = np.array([camera.pose[:3, 3] for camera in est_cameras])
 
-    plot_trajectory(est_trajectory, save_path='plots/est_trajectory.png')
+    plot_trajectory(est_trajectory, save_path=est_model_path)

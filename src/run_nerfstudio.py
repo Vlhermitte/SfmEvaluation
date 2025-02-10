@@ -9,15 +9,6 @@ from tqdm import tqdm
 from data.read_write_model import read_model, write_model
 
 def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
-    # First copy the images to the results directory if they are not already there
-    # _logger.info("Checking if images are in the results directory...")
-    # if not os.path.exists(results_path + "/images"):
-    #     _logger.info("Copying images to the results directory...")
-    #     cp_cmd = f"cp -r {dataset_path}/images {results_path}"
-    #     subprocess.run(cp_cmd, shell=True)
-    # else:
-    #     _logger.info("Images are already in the results directory.")
-
     # Downscaling images by a factor of 2, 4 and 8
     _logger.info(f"Downscaling images in {dataset_path}")
     for factor in [2, 4, 8]:
@@ -63,18 +54,11 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
         f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu True "
         f"{'--pipeline.datamanager.dataloader-num-workers 8' if method == 'nerfacto' else ''} "
         f"{'--viewer.make-share-url True' if viz else ''} "
-        f" --output-dir {results_path}/nerfstudio "
-        f"colmap --images-path {dataset_path}/images --colmap-path {results_path}/colmap/sparse/0 "
+        f"--output-dir {results_path}/nerfstudio "
+        f"colmap --images-path {dataset_path}/images --colmap-path {results_path}"
     )
     subprocess.run(train_cmd, shell=True)
 
-    # Move the trained model to the results directory
-    # _logger.info("Moving the trained model to the results directory...")
-    # if not os.path.exists(results_path + f"/{method}"):
-    #     os.makedirs(results_path + f"/{method}", exist_ok=True)
-    # mv_cmd = f"mv {results_path}/nerfstudio/{method}/* {results_path}/{method}"
-    # subprocess.run(mv_cmd, shell=True)
-    #
     # # Evaluate the NeRF model
     # _logger.info("Evaluating the NeRF model...")
     # eval_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-eval --load-config {results_path}/{method}/config.yml "
@@ -112,7 +96,7 @@ if __name__ == '__main__':
         "--dataset-path",
         type=str,
         required=False,
-        default="../../datasets/MipNerf360/garden",
+        default="../data/datasets/MipNerf360/garden",
         help="path to the dataset containing images"
     )
 
@@ -120,8 +104,8 @@ if __name__ == '__main__':
         "--results-path",
         type=str,
         required=False,
-        default="../../results/glomap/MipNerf360/garden",
-        help="path to the results directory containing the images and colmap model under 'colmap/sparse/0'"
+        default="../data/results/glomap/MipNerf360/garden/colmap/sparse/0",
+        help="path to the results directory containing colmap files."
     )
     parser.add_argument(
         "--method",
@@ -144,12 +128,17 @@ if __name__ == '__main__':
     method = args.method
     viz = args.viz
 
-    # check that results_path/colmap/sparse/0 exists
-    if not os.path.exists(results_path + "/colmap/sparse/0"):
-        _logger.error(f"Error: The path {results_path}/colmap/sparse/0 does not exist. Please check the results path and try again.")
+    # Check that the images are present in the dataset path
+    if not os.path.exists(os.path.join(dataset_path, "images")):
+        _logger.error(f"Error: The dataset at {dataset_path} does not contain images. Please check the dataset path and try again.")
+        exit(1)
+
+    # Check that colmap model exists (i.e .bin/.txt files)
+    if not os.path.exists(os.path.join(results_path, "images.bin")):
+        _logger.error(f"Error: The colmap model at {results_path} does not exist. Please check the results path and try again.")
         exit(1)
 
     # Sanity check on colmap model
-    sanity_check_colmap(results_path + "/colmap/sparse/0")
+    sanity_check_colmap(results_path)
 
     run_nerfstudio(dataset_path, results_path, method, viz)

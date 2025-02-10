@@ -68,8 +68,8 @@ def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], pe
 
 
 if __name__ == '__main__':
-    from evaluation.utils.read_write_model import read_model
-    from evaluation.utils.common import get_cameras_info
+    from data.read_write_model import read_model
+    from utils.common import get_cameras_info
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -77,14 +77,14 @@ if __name__ == '__main__':
         "--gt-model-path",
         type=str,
         required=False,
-        default="../datasets/ETH3D/courtyard/dslr_calibration_jpg",
+        default="../../data/datasets/ETH3D/courtyard/dslr_calibration_jpg",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
         "--est-model-path",
         type=str,
         required=False,
-        default="../results/glomap/courtyard/sparse/0",
+        default="../../data/results/glomap/courtyard/colmap/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
     args = parser.parse_args()
