@@ -32,16 +32,19 @@ if [ "$(ls -A $out_dir)" ]; then
     fi
 fi
 
-# Check image format in the scene directory (png, jpg, JPG, etc.)
-image_format=$(ls $scene | head -n 1 | rev | cut -d'.' -f1 | rev)
-
-# check if scene basename is images
-if [ $(basename $scene) != "images" ]; then
-    echo "Scene directory should be named 'images'"
+# check if the scene directory has a subdirectory named 'images'
+if [ -d "$scene/images" ]; then
+    scene="$scene/images"
+# else if the scene directory is already the 'images' directory
+elif [ "$(basename $scene)" == "images" ]; then
+    scene=$scene
+else
+    echo "Scene directory does not have a subdirectory named 'images'"
     exit 1
 fi
-# remove basename from scene (VGGSfm expects the scene directory to be named 'images')
-scene=$(dirname $scene)
+
+# Check image format in the scene directory (png, jpg, JPG, etc.)
+image_format=$(ls $scene | head -n 1 | rev | cut -d'.' -f1 | rev)
 
 conda_env="vggsfm_tmp"
 echo "Activating conda environment: $conda_env"
