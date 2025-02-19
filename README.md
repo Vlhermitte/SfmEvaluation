@@ -51,7 +51,7 @@ bash scripts/evaluate.sh
 ```
 The script expects results stored in:
 ```
-data/results/<method>/ETH3D/<scene>/sparse/0
+data/results/<method>/ETH3D/<scene>/colmap/sparse/0
 ```
 For details, see [`evaluate.sh`](scripts/evaluate.sh) in the [`scripts`](scripts) directory.
 
@@ -79,7 +79,7 @@ To evaluate relative camera poses, use:
 python src/main.py --gt-model-path <PATH_TO_GT_MODEL> --est-model-path <PATH_TO_EST_MODEL>
 ```
 - `<PATH_TO_GT_MODEL>`: Path to ground truth model (e.g., `data/ETH3D/courtyard/sparse/0`).
-- `<PATH_TO_EST_MODEL>`: Path to estimated model (e.g., `data/results/glomap/ETH3D/courtyard/sparse/0`).
+- `<PATH_TO_EST_MODEL>`: Path to estimated model (e.g., `data/results/glomap/ETH3D/courtyard/colmap/sparse/0`).
 
 📌 **Note:** Files in `<PATH_TO_GT_MODEL>` and `<PATH_TO_EST_MODEL>` must be in **COLMAP format** (`.txt/.bin`).
 
@@ -106,7 +106,7 @@ To train and evaluate novel view synthesis, use:
 python src/run_nerfstudio.py --dataset-path <PATH_TO_SCENE_IMAGES> --results-path <PATH_TO_RESULTS> --method <METHOD>
 ```
 - `<PATH_TO_SCENE_IMAGES>`: Path to dataset containing scene images.
-- `<PATH_TO_RESULTS>`: Path to SfM method results (e.g., `data/results/glomap/ETH3D/courtyard/sparse/0`).
+- `<PATH_TO_RESULTS>`: Path to SfM method results (e.g., `data/results/glomap/ETH3D/courtyard/colmap/sparse/0`).
 - `<METHOD> (Optional)`: Method to use for novel view synthesis (`nerfacto` or `splatfacto`). Default is `nerfacto`.
 
 📌 **Note:** Files in `<PATH_TO_RESULTS>` must be in **COLMAP format** (`.txt/.bin`).
