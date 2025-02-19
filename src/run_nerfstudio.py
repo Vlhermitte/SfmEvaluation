@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from data.read_write_model import read_model, write_model
 
-def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
+def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfacto', viz: bool=False) -> None:
     # Downscaling images by a factor of 2, 4 and 8
     _logger.info(f"Downscaling images in {dataset_path}")
     for factor in [2, 4, 8]:
@@ -47,24 +47,28 @@ def run_nerfstudio(dataset_path, results_path, method='nerfacto', viz=False):
     # Set the number of GPUs to use for training
     CUDA_VISIBLE_DEVICES = f"CUDA_VISIBLE_DEVICES={','.join([str(i) for i in range(num_gpus)])}"
 
-    # Train the NeRF model TODO: Investigate using Zip-NeRF for better quality
+    # Train the NeRF model
     _logger.info(f"Training the model using : {method}")
     train_cmd = (
         f"{CUDA_VISIBLE_DEVICES} ns-train {method} "
         f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu True "
         f"{'--viewer.make-share-url True' if viz else ''} "
-        f"--output-dir {results_path}/nerfstudio "
+        f"--output-dir {results_path} "
         f"colmap --images-path {dataset_path}/images --colmap-path {results_path}"
     )
     subprocess.run(train_cmd, shell=True)
 
     # # Evaluate the NeRF model
-    # _logger.info("Evaluating the NeRF model...")
-    # eval_cmd = (f"{CUDA_VISIBLE_DEVICES} ns-eval --load-config {results_path}/{method}/config.yml "
-    #        f"--output-dir {results_path}/{method}/eval.json")
-    # subprocess.run(eval_cmd, shell=True)
+    _logger.info("Evaluating the NeRF model...")
+    eval_cmd = (
+        f"{CUDA_VISIBLE_DEVICES} ns-eval "
+        f"--load-config {results_path}/{method}/config.yml "
+        f"--output-path {results_path}/{method}/eval.json "
+        f"--render-output-path {results_path}/{method}/renders"
+    )
+    subprocess.run(eval_cmd, shell=True)
 
-def sanity_check_colmap(path):
+def sanity_check_colmap(path: Path) -> None:
     # read the colmap model
     cameras, images, points3D = read_model(path)
 
