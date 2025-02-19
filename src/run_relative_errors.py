@@ -154,11 +154,14 @@ if __name__ == '__main__':
     est_model_path = args.est_model_path
 
     try:
-        _logger.info(f"Reading estimated model {est_model_path}")
-        # Estimated model
-        est_cameras_type, images, est_points3D = read_model(est_model_path, ext=detect_colmap_format(est_model_path))
-        # Ground truth model
+        _logger.info(f"Reading ground truth model {gt_model_path}")
         gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, ext=detect_colmap_format(gt_model_path))
+    except:
+        _logger.error(f"Warning: Evaluation failed for {gt_model_path}. Please check the input model paths and try again.")
+
+    try:
+        _logger.info(f"Reading estimated model {est_model_path}")
+        est_cameras_type, images, est_points3D = read_model(est_model_path, ext=detect_colmap_format(est_model_path))
     except:
         _logger.error(f"Warning: Evaluation failed for {est_model_path}. Please check the input model paths and try again.")
         exit(1)
@@ -223,6 +226,3 @@ if __name__ == '__main__':
             'RTE_10': RTE_10,
             'RTE_30': RTE_30
         }, f, indent=4)
-
-
-    # abs_results = run_abs_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)

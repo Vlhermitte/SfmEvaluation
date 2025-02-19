@@ -76,7 +76,7 @@ For implementation details, see [`evaluate_relative_errors`](src/evaluation/rela
 #### Running Relative Pose Evaluation
 To evaluate relative camera poses, use:
 ```
-python src/main.py --gt-model-path <PATH_TO_GT_MODEL> --est-model-path <PATH_TO_EST_MODEL>
+python src/run_relative_errors.py --gt-model-path <PATH_TO_GT_MODEL> --est-model-path <PATH_TO_EST_MODEL>
 ```
 - `<PATH_TO_GT_MODEL>`: Path to ground truth model (e.g., `data/ETH3D/courtyard/sparse/0`).
 - `<PATH_TO_EST_MODEL>`: Path to estimated model (e.g., `data/results/glomap/ETH3D/courtyard/colmap/sparse/0`).
