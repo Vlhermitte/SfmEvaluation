@@ -5,13 +5,15 @@
 - [Installation](#installation)
 - [Usage](#usage)
 - [Evaluation Protocol](#evaluation-protocol)
-    - [Camera Pose Error](#camera-pose-error)
+    - [Relative Pose Evaluation](#relative-pose-evaluation)
+    - [Absolute Pose Evaluation (In Progress)](#absolute-pose-evaluation-in-progress)
     - [Novel View Synthesis (In Progress)](#novel-view-synthesis-in-progress)
 
 ## Overview
 This project provides tools for reading, writing, and evaluating Structure-from-Motion (SfM) models.
 The evaluation protocol consists of the following components:
-- **Camera Pose Error**
+- **Relative Pose Error**
+- **Absolute Pose Error** *(in progress)*
 - **Novel View Synthesis** *(in progress)*
 
 ## Installation
@@ -31,7 +33,7 @@ This script will clone the following repositories:
 - **GLOMAP**
 - **VGGSfm**
 - **Flowmap**
-- **Ace0**
+- **AceZero**
 
 ### Step 3: Install Dependencies
 Each cloned repository contains a README file with installation instructions.
@@ -39,32 +41,26 @@ Follow these steps for each method:
 - Most methods require creating a virtual environment and installing dependencies using **conda** or **pip**.
 - **GLOMAP** requires compilation or downloading precompiled binaries (Windows only).
 
+To run the Novel View Synthesis evaluation, you need to install [NerfStudio](https://docs.nerf.studio/quickstart/installation.html)
+
 ## Usage
 ### Running Evaluation on All Results
-To evaluate all results, run:
+To evaluate all **relative camera poses** results, run:
 ```bash
 bash scripts/evaluate.sh
 ```
 The script expects results stored in:
 ```
-data/results/<method>/ETH3D/<scene>/colmap/sparse/0
+data/results/<method>/ETH3D/<scene>/sparse/0
 ```
 For details, see [`evaluate.sh`](scripts/evaluate.sh) in the [`scripts`](scripts) directory.
 
 ### Running Individual Evaluations
-Use [`main.py`](src/main.py) to evaluate a single model:
-```
-python src/main.py --gt-model-path <path_to_gt_model> --est-model-path <path_to_estimated_model>
-```
-
-### Absolute Pose Evaluation *(Under Development)*
-An **absolute pose evaluation** script is currently in progress. See [`absolute_error_evaluation.py`](src/evaluation/absolute_error_evaluation.py).
-- Uses the **Kabsch-Umeyama algorithm** to align estimated and ground truth camera poses.
-- Computes **absolute rotation and translation errors**.
+If you want to run an individual evaluation, see bellow [Evaluation Protocol](#evaluation-protocol)
 
 ## Evaluation Protocol
 
-### Camera Pose Error
+### Relative Pose Evaluation
 The evaluation assesses **relative rotation error (RRE)** and **relative translation error (RTE)**, computed as follows:
 
 #### Formulation
@@ -77,13 +73,29 @@ For each image pair \(i\) and \(j\):
 ```
 For implementation details, see [`evaluate_relative_errors`](src/evaluation/relative_error_evaluation.py).
 
+#### Running Relative Pose Evaluation
+To evaluate relative camera poses, use:
+```
+python src/main.py --gt-model-path <PATH_TO_GT_MODEL> --est-model-path <PATH_TO_EST_MODEL>
+```
+- `<PATH_TO_GT_MODEL>`: Path to ground truth model (e.g., `data/ETH3D/courtyard/sparse/0`).
+- `<PATH_TO_EST_MODEL>`: Path to estimated model (e.g., `data/results/glomap/ETH3D/courtyard/sparse/0`).
+
+📌 **Note:** Files in `<PATH_TO_GT_MODEL>` and `<PATH_TO_EST_MODEL>` must be in **COLMAP format** (`.txt/.bin`).
+
+### Absolute Pose Evaluation *(In Progress)*
+🚧 **This feature is still under development.** 🚧
+
+An **absolute pose evaluation** script is currently in progress. See [`absolute_error_evaluation.py`](src/evaluation/absolute_error_evaluation.py).
+- Uses the **Kabsch-Umeyama algorithm** to align estimated and ground truth camera poses.
+- Computes **absolute rotation and translation errors**.
+
 ### Novel View Synthesis *(In Progress)*
+🚧 **This feature is still under development.** 🚧
+
 This protocol evaluates the quality of **novel view synthesis** by comparing rendered images to ground truth images.
 - **Nerfstudio** is used to generate novel views via **NeRF** or **Gaussian Splatting**.
 - Evaluation is performed using **PSNR** and **SSIM**.
-
-### Current Status
-🚧 **This feature is still under development.** 🚧
 
 The script [`run_nerfstudio.py`](src/run_nerfstudio.py) only trains using either **nerfacto** or **splatfacto** methods.
 The evaluation part will come later.
@@ -94,14 +106,14 @@ To train and evaluate novel view synthesis, use:
 python src/run_nerfstudio.py --dataset-path <PATH_TO_SCENE_IMAGES> --results-path <PATH_TO_RESULTS> --method <METHOD>
 ```
 - `<PATH_TO_SCENE_IMAGES>`: Path to dataset containing scene images.
-- `<PATH_TO_RESULTS>`: Path to SfM method results (e.g., `data/results/glomap/ETH3D/courtyard/colmap/sparse/0`).
+- `<PATH_TO_RESULTS>`: Path to SfM method results (e.g., `data/results/glomap/ETH3D/courtyard/sparse/0`).
 - `<METHOD> (Optional)`: Method to use for novel view synthesis (`nerfacto` or `splatfacto`). Default is `nerfacto`.
 
 📌 **Note:** Files in `<PATH_TO_RESULTS>` must be in **COLMAP format** (`.txt/.bin`).
 
 
 ## TODO
-- [x] Implement relative rotation and translation error evaluation
+- [x] Implement relative pose error evaluation
 - [ ] Implement absolute pose error evaluation
 - [ ] Implement novel view synthesis evaluation
 
