@@ -47,12 +47,17 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
     # Set the number of GPUs to use for training
     CUDA_VISIBLE_DEVICES = f"CUDA_VISIBLE_DEVICES={','.join([str(i) for i in range(num_gpus)])}"
 
+    # Detect the number of images in the dataset (if less than 1000, images will be loaded on GPU)
+    num_images = len(os.listdir(os.path.join(dataset_path, "images")))
+
     # Train the NeRF model
     _logger.info(f"Training the model using : {method}")
     train_cmd = (
         f"{CUDA_VISIBLE_DEVICES} ns-train {method} "
-        f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu True "
+        f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu {'True' if num_images <= 1000 else 'False'} "
+        f"--pipeline.model.camera-optimizer.mode off " # We do not want to optimize the camera parameters
         f"{'--viewer.make-share-url True' if viz else ''} "
+        f"--viewer.quit-on-train-completion True "
         f"--output-dir {results_path} "
         f"colmap --images-path {dataset_path}/images --colmap-path {results_path}"
     )
