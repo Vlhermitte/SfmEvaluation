@@ -11,6 +11,7 @@ from data.read_write_model import read_model, write_model
 def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfacto', viz: bool=False) -> None:
     # Downscaling images by a factor of 2, 4 and 8
     _logger.info(f"Downscaling images in {dataset_path}")
+    # TODO: Compute the downscaling factors automatically such that the max dimension is <1600px
     for factor in [2, 4, 8]:
         if not os.path.exists(os.path.join(dataset_path, f"images_{factor}")):
             for image_name in tqdm(os.listdir(os.path.join(dataset_path, "images")), desc=f"Downscaling images by a factor of {factor}"):
@@ -58,6 +59,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--pipeline.model.camera-optimizer.mode off " # We do not want to optimize the camera parameters
         f"{'--viewer.make-share-url True' if viz else ''} "
         f"--viewer.quit-on-train-completion True "
+        f"--experiment-name nerfstudio " # To store the results in a directory nerfstudio instead of the default name 'unnamed'
         f"--output-dir {results_path} "
         f"colmap --images-path {dataset_path}/images --colmap-path {results_path}"
     )
@@ -67,9 +69,9 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
     _logger.info("Evaluating the NeRF model...")
     eval_cmd = (
         f"{CUDA_VISIBLE_DEVICES} ns-eval "
-        f"--load-config {results_path}/{method}/config.yml "
-        f"--output-path {results_path}/{method}/eval.json "
-        f"--render-output-path {results_path}/{method}/renders"
+        f"--load-config {results_path}/nerfstudio/{method}/config.yml "
+        f"--output-path {results_path}/nerfstudio/{method}/eval.json "
+        f"--render-output-path {results_path}/nerfstudio/{method}/renders"
     )
     subprocess.run(eval_cmd, shell=True)
 
