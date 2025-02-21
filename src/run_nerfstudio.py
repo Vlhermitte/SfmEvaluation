@@ -80,6 +80,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--viewer.quit-on-train-completion True "
         f"--experiment-name nerfstudio " # To store the results in a directory nerfstudio instead of the default name 'unnamed'
         f"--output-dir {results_path} "
+        f"--timestamp run "
         # DataParser Args
         f"colmap --images-path {dataset_path}/images --colmap-path {results_path} "
     )
@@ -89,9 +90,9 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
     _logger.info("Evaluating the NeRF model...")
     eval_cmd = (
         f"{CUDA_VISIBLE_DEVICES} ns-eval "
-        f"--load-config {results_path}/nerfstudio/{method}/config.yml "
-        f"--output-path {results_path}/nerfstudio/{method}/eval.json "
-        f"--render-output-path {results_path}/nerfstudio/{method}/renders"
+        f"--load-config {results_path}/nerfstudio/{method}/run/config.yml "
+        f"--output-path {results_path}/nerfstudio/{method}/run/eval.json "
+        f"--render-output-path {results_path}/nerfstudio/{method}/run/renders"
     )
     subprocess.run(eval_cmd, shell=True)
 
