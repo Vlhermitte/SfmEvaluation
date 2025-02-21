@@ -4,29 +4,46 @@ import sys
 import argparse
 import logging
 from pathlib import Path
+from PIL import Image
 from tqdm import tqdm
 
 from data.read_write_model import read_model, write_model
 
+
+def compute_downscale_factor(dataset_path: Path, max_resolution: int=1600) -> int:
+    # Find the max dimension of the images
+    downscaling_factor = 1
+    for image_name in os.listdir(os.path.join(dataset_path, "images")):
+        image_path = os.path.join(dataset_path, "images", image_name)
+        img = Image.open(image_path)
+        height, width = img.size
+        max_dim = max(height, width)
+        if max_dim // downscaling_factor > max_resolution:
+            downscaling_factor += 1
+    return downscaling_factor
+
+def downscale_images(dataset_path: Path, factor: int) -> None:
+    if not os.path.exists(os.path.join(dataset_path, f"images_{factor}")):
+        for image_name in tqdm(os.listdir(os.path.join(dataset_path, "images")), desc=f"Downscaling images by a factor of {factor}"):
+            image_path = os.path.join(dataset_path, "images", image_name)
+            image_out = os.path.join(dataset_path, f"images_{factor}", image_name)
+            if not os.path.exists(os.path.dirname(image_out)):
+                os.makedirs(os.path.dirname(image_out), exist_ok=True)
+            ffmpeg_cmd = (
+                f'ffmpeg -y -noautorotate -i "{image_path}" '
+                f'-q:v 2 -vf scale=iw/{factor}:-1:flags=neighbor '
+                f'-frames:v 1 -update 1 -f image2 "{image_out}" -loglevel quiet'
+            )
+            subprocess.run(ffmpeg_cmd, shell=True)
+    else:
+        _logger.info(f"Downscaled images_{factor} are already in {dataset_path}")
+
 def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfacto', viz: bool=False) -> None:
-    # Downscaling images by a factor of 2, 4 and 8
-    _logger.info(f"Downscaling images in {dataset_path}")
-    # TODO: Compute the downscaling factors automatically such that the max dimension is <1600px
-    for factor in [2, 4, 8]:
-        if not os.path.exists(os.path.join(dataset_path, f"images_{factor}")):
-            for image_name in tqdm(os.listdir(os.path.join(dataset_path, "images")), desc=f"Downscaling images by a factor of {factor}"):
-                image_path = os.path.join(dataset_path, "images", image_name)
-                image_out = os.path.join(dataset_path, f"images_{factor}", image_name)
-                if not os.path.exists(os.path.dirname(image_out)):
-                    os.makedirs(os.path.dirname(image_out), exist_ok=True)
-                ffmpeg_cmd = (
-                    f'ffmpeg -y -noautorotate -i "{image_path}" '
-                    f'-q:v 2 -vf scale=iw/{factor}:-1:flags=neighbor '
-                    f'-frames:v 1 -update 1 -f image2 "{image_out}" -loglevel quiet'
-                )
-                subprocess.run(ffmpeg_cmd, shell=True)
-        else:
-            _logger.info(f"Downscaled images_{factor} are already in {dataset_path}")
+    _logger.info(f"Compute downscaling factor for {dataset_path} ...")
+    # max resolution of 1600px, which is the default of nerfstudio
+    downscale_factor = compute_downscale_factor(dataset_path, max_resolution=1600)
+    _logger.info(f"Downscaling factor found : {downscale_factor}")
+    downscale_images(dataset_path, downscale_factor)
 
     # Find how many CUDA GPUs are available
     _logger.info("Checking for available CUDA GPUs...")
@@ -53,7 +70,9 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
 
     # Train the NeRF model
     _logger.info(f"Training the model using : {method}")
+    # The nerfstudio Args order is important: 1. Nerfstudio Args 2. DataParser Args
     train_cmd = (
+        # Nerfstudio Args
         f"{CUDA_VISIBLE_DEVICES} ns-train {method} "
         f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu {'True' if num_images <= 1000 else 'False'} "
         f"--pipeline.model.camera-optimizer.mode off " # We do not want to optimize the camera parameters
@@ -61,7 +80,8 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--viewer.quit-on-train-completion True "
         f"--experiment-name nerfstudio " # To store the results in a directory nerfstudio instead of the default name 'unnamed'
         f"--output-dir {results_path} "
-        f"colmap --images-path {dataset_path}/images --colmap-path {results_path}"
+        # DataParser Args
+        f"colmap --images-path {dataset_path}/images --colmap-path {results_path} "
     )
     subprocess.run(train_cmd, shell=True)
 
