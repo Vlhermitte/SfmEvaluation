@@ -46,7 +46,7 @@ SCENES=(
 cd /home.nfs/lhermval/SfmEvaluation
 
 # Base output directory
-OUT_DIR="results/vggsfm"
+OUT_DIR="data/results/vggsfm"
 
 # Run the VGGSfm pipeline for each scene
 for SCENE in "${SCENES[@]}"; do

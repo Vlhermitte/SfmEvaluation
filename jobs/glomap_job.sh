@@ -31,7 +31,7 @@ SCENES=(
 
 
 # Base output directory
-OUT_DIR="results/glomap"
+OUT_DIR="data/results/glomap"
 
 # Run the Glomap pipeline for each scene
 for SCENE in "${SCENES[@]}"; do

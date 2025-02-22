@@ -50,7 +50,7 @@ SCENES=(
 cd /home.nfs/lhermval/SfmEvaluation/flowmap
 
 # Base output directory
-OUT_DIR="../results/flowmap"
+OUT_DIR="../data/results/flowmap"
 
 # Run the FlowMap pipeline for each scene
 for SCENE in "${SCENES[@]}"; do

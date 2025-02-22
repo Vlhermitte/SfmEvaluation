@@ -46,7 +46,7 @@ SCENES=(
 cd /home.nfs/lhermval/SfmEvaluation/acezero
 
 # Base output directory
-OUT_DIR="../results/acezero"
+OUT_DIR="../data/results/acezero"
 
 # Run the FlowMap pipeline for each scene
 for SCENE in "${SCENES[@]}"; do
@@ -58,7 +58,10 @@ for SCENE in "${SCENES[@]}"; do
         echo "Output directory exists. Overwritting scene: $SCENE"
     fi
 
-    python ace_zero.py "../datasets/ETH3D/$SCENE/images/*.JPG" $OUTPUT_DIR --export_point_cloud True
+    # Check image format in the scene directory (png, jpg, JPG, etc.)
+    image_format=$(ls ../data/datasets/ETH3D/$SCENE/images | head -n 1 | rev | cut -d'.' -f1 | rev)
+
+    python ace_zero.py "../data/datasets/ETH3D/$SCENE/images/*.$image_format" $OUTPUT_DIR --export_point_cloud True
     python convert_to_colmap.py --src_dir $OUTPUT_DIR
 
     if [ $? -eq 0 ]; then
