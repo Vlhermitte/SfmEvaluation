@@ -43,4 +43,6 @@ conda activate $conda_env || { echo "Failed to activate conda environment: $cond
 
 cd acezero
 
-python ace_zero.py "../$scene/*.$image_format" ../$out_dir --export_point_cloud True
+python ace_zero.py "../$scene/images/*.$image_format" ../$out_dir --export_point_cloud True
+
+python convert_to_colmap.py --src_dir ../$out_dir
