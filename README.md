@@ -8,6 +8,7 @@
     - [Relative Pose Evaluation](#relative-pose-evaluation)
     - [Absolute Pose Evaluation (In Progress)](#absolute-pose-evaluation-in-progress)
     - [Novel View Synthesis (In Progress)](#novel-view-synthesis-in-progress)
+    - 
 
 ## Overview
 This project provides tools for reading, writing, and evaluating Structure-from-Motion (SfM) models.
@@ -111,11 +112,29 @@ python src/run_nerfstudio.py --dataset-path <PATH_TO_SCENE_IMAGES> --results-pat
 
 📌 **Note:** Files in `<PATH_TO_RESULTS>` must be in **COLMAP format** (`.txt/.bin`).
 
+### 3D Triangulation Evaluation *(In Progress)*
+🚧 **This feature is still under development.** 🚧
+
+This protocol evaluates the quality of 3D triangulation using the [ETH3D Multi-view evaluation tool](https://github.com/ETH3D/multi-view-evaluation).
+
+The evaluation assesses the completeness and accuracy of the reconstructed 3D model compared to the ground truth.
+
+#### Running 3D Triangulation Evaluation
+To evaluate 3D triangulation, use:
+```
+python src/run_triangulation.py --ply_path <PATH_TO_RECONSTRUCTION_PLY> --mlp_path <PATH_TO_GROUND_TRUTH_MLP>
+```
+
+- `<PATH_TO_RECONSTRUCTION_PLY>`: Path to the reconstructed 3D model file (e.g., `data/results/glomap/ETH3D/courtyard/model.ply`).
+- `<PATH_TO_GROUND_TRUTH_MLP>`: Path to the ground truth MLP file (e.g., `data/datasets/ETH3D/courtyard/dslr_scan_eval/scan_alignment.mlp`).
+
+The evaluation results, including completeness, accuracy, and F1-scores, will be saved in `evaluation_results.txt` in the same directory as the reconstruction PLY file.
 
 ## TODO
 - [x] Implement relative pose error evaluation
 - [ ] Implement absolute pose error evaluation
 - [ ] Implement novel view synthesis evaluation
+- [ ] Implement 3D triangulation evaluation
 
 
 # Resources
