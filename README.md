@@ -130,6 +130,8 @@ python src/run_triangulation.py --ply_path <PATH_TO_RECONSTRUCTION_PLY> --mlp_pa
 
 The evaluation results, including completeness, accuracy, and F1-scores, will be saved in `evaluation_results.txt` in the same directory as the reconstruction PLY file.
 
+📌 **Note:** This evaluation protocol is used for the **ETH3D dataset** as it requires the ground truth MLP file.
+
 ## TODO
 - [x] Implement relative pose error evaluation
 - [ ] Implement absolute pose error evaluation
