@@ -71,12 +71,12 @@ For each image pair \(i\) and \(j\):
 ```math
   t_{rel} = t_j - (R_{rel} \cdot t_i)
 ```
-For implementation details, see [`evaluate_relative_errors`](src/evaluation/relative_error_evaluation.py).
+For implementation details, see [`relative_error_evaluation`](src/evaluation/relative_error_evaluation.py).
 
 #### Running Relative Pose Evaluation
 To evaluate relative camera poses, use:
 ```
-python src/run_relative_errors.py --gt-model-path <PATH_TO_GT_MODEL> --est-model-path <PATH_TO_EST_MODEL>
+python src/run_camera_poses.py --gt-model-path <PATH_TO_GT_MODEL> --est-model-path <PATH_TO_EST_MODEL>
 ```
 - `<PATH_TO_GT_MODEL>`: Path to ground truth model (e.g., `data/ETH3D/courtyard/sparse/0`).
 - `<PATH_TO_EST_MODEL>`: Path to estimated model (e.g., `data/results/glomap/ETH3D/courtyard/colmap/sparse/0`).
@@ -121,6 +121,7 @@ python src/run_nerfstudio.py --dataset-path <PATH_TO_SCENE_IMAGES> --results-pat
 # Resources
 - [COLMAP](https://colmap.github.io/)
 - [ETH3D](https://www.eth3d.net/)
+- [Multi-View Stereo Evaluation](https://github.com/ETH3D/multi-view-evaluation)
 - [Tanks and Temples](https://www.tanksandtemples.org/)
 - [MipNerf](https://jonbarron.info/mipnerf360/)
 - [TUM RGB-D SLAM tools](https://cvg.cit.tum.de/data/datasets/rgbd-dataset/tools/)

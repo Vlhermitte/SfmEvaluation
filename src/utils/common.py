@@ -17,7 +17,7 @@ class Camera:
     - pose: np.array, pose matrix
     - params: np.array, camera parameters (COLMAP sensor parameters, see https://colmap.github.io/cameras.html)
     """
-    def __init__(self, image, type, qvec, tvec):
+    def __init__(self, image, type, qvec, tvec, is_valid=True):
         self.image = image
         self.type = type
         self.R = quaternion2rotation(qvec)
@@ -31,12 +31,13 @@ class Camera:
         self.P = self.K @ np.hstack((self.R, self.t.reshape(-1, 1)))
         self.pose = np.hstack((self.R, self.t.reshape(-1, 1)))
         self.params = type.params
+        self.is_valid = is_valid # flag used if we add a dummy camera to the estimated cameras
 
     def __eq__(self, other):
         return self.image == other.image
 
     def __repr__(self):
-        return f'Camera: {self.image} Type: {self.type.model}'
+        return f'Camera: {self.image} Type: {self.type.model} {", NOT VALID" if not self.is_valid else ""}'
 
     def __str__(self):
         return f'Camera: {self.image}'

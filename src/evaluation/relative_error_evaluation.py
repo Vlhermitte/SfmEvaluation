@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from tqdm import tqdm
 from typing import List, Dict
 
 from utils.common import Camera
@@ -106,28 +107,30 @@ def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]
     """
     results = {'relative_rotation_error': [], 'relative_translation_error': [], 'relative_translation_angle': []}
 
-    for i in range(len(gt_cameras) - 1):
-        if i >= len(est_cameras) - 1:  # Handle missing images
+    # Evaluate on all possible pairs from all images (not just consecutive pairs)
+    pairs = [(i, j) for i in range(len(gt_cameras)) for j in range(i + 1, len(gt_cameras))]
+    for i, j in tqdm(pairs, desc='Evaluating relative errors'):
+        # if cameras.is_valid
+        if gt_cameras[i].is_valid and gt_cameras[j].is_valid:
+            # Compute relative transformations
+            R_rel_est = est_cameras[j].R @ est_cameras[i].R.T  # R.T = R^-1
+            R_rel_gt = gt_cameras[j].R @ gt_cameras[i].R.T
+
+            t_rel_est = est_cameras[j].t - (R_rel_est @ est_cameras[i].t)
+            t_rel_gt = gt_cameras[j].t - (R_rel_gt @ gt_cameras[i].t)
+
+            # Evaluate errors
+            rotation_error = evaluate_rotation_matrices(R_rel_gt, R_rel_est)
+            translation_error = evaluate_translation_error(t_rel_gt, t_rel_est)
+            translation_angle = evaluate_translation_angle(t_rel_gt, t_rel_est)
+
+            results['relative_rotation_error'].append(rotation_error)
+            results['relative_translation_error'].append(translation_error)
+            results['relative_translation_angle'].append(translation_angle)
+        else:
             # Assign high values for missing cameras
             results['relative_rotation_error'].append(180.0)
             results['relative_translation_error'].append(1000.0)
             results['relative_translation_angle'].append(180.0)
-            continue
-        j = i + 1
-        # Compute relative transformations
-        R_rel_est = est_cameras[j].R @ est_cameras[i].R.T   # R.T = R^-1
-        R_rel_gt = gt_cameras[j].R @ gt_cameras[i].R.T
-
-        t_rel_est = est_cameras[j].t - (R_rel_est @ est_cameras[i].t)
-        t_rel_gt = gt_cameras[j].t - (R_rel_gt @ gt_cameras[i].t)
-
-        # Evaluate errors
-        rotation_error = evaluate_rotation_matrices(R_rel_gt, R_rel_est)
-        translation_error = evaluate_translation_error(t_rel_gt, t_rel_est)
-        translation_angle = evaluate_translation_angle(t_rel_gt, t_rel_est)
-
-        results['relative_rotation_error'].append(rotation_error)
-        results['relative_translation_error'].append(translation_error)
-        results['relative_translation_angle'].append(translation_angle)
 
     return results
