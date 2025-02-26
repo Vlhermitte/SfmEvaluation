@@ -16,6 +16,7 @@ The evaluation protocol consists of the following components:
 - **Relative Pose Error**
 - **Absolute Pose Error** *(in progress)*
 - **Novel View Synthesis** *(in progress)*
+- **3D Triangulation** *(in progress)*
 
 ## Installation
 To set up the project, execute the following scripts:
