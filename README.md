@@ -8,7 +8,7 @@
     - [Relative Pose Evaluation](#relative-pose-evaluation)
     - [Absolute Pose Evaluation (In Progress)](#absolute-pose-evaluation-in-progress)
     - [Novel View Synthesis (In Progress)](#novel-view-synthesis-in-progress)
-    - 
+    - [3D Triangulation Evaluation (In Progress)](#3d-triangulation-evaluation-in-progress)
 
 ## Overview
 This project provides tools for reading, writing, and evaluating Structure-from-Motion (SfM) models.
