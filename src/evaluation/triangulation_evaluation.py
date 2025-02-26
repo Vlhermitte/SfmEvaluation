@@ -18,7 +18,7 @@ def evaluate_multiview(ply_path: Path, mlp_path: Path):
         f"--ground_truth_mlp_path {mlp_path} "
         f"--tolerances 0.01,0.02,0.05,0.1,0.2,0.5 "
     )
-    results_file = ply_path.parent / "evaluation_results.txt"
+    results_file = ply_path.parent / "multiview_results.txt"
     start = time.time()
     with open(results_file, "w") as results_file:
         subprocess.run(cmd, shell=True, stdout=results_file)

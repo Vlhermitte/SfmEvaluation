@@ -128,7 +128,7 @@ python src/run_triangulation.py --ply_path <PATH_TO_RECONSTRUCTION_PLY> --mlp_pa
 - `<PATH_TO_RECONSTRUCTION_PLY>`: Path to the reconstructed 3D model file (e.g., `data/results/glomap/ETH3D/courtyard/model.ply`).
 - `<PATH_TO_GROUND_TRUTH_MLP>`: Path to the ground truth MLP file (e.g., `data/datasets/ETH3D/courtyard/dslr_scan_eval/scan_alignment.mlp`).
 
-The evaluation results, including completeness, accuracy, and F1-scores, will be saved in `evaluation_results.txt` in the same directory as the reconstruction PLY file.
+The evaluation results, including completeness, accuracy, and F1-scores, will be saved in `multiview_results.txt` in the same directory as the reconstruction PLY file.
 
 📌 **Note:** This evaluation protocol is used for the **ETH3D dataset** as it requires the ground truth MLP file.
 
