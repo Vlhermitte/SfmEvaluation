@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 import os
 import sys
@@ -22,21 +23,51 @@ def compute_downscale_factor(dataset_path: Path, max_resolution: int=1600) -> in
             downscaling_factor += 1
     return downscaling_factor
 
+
+def downscale_single_image(image_path: Path, output_path: Path, factor: int) -> None:
+    """Downscale a single image using ffmpeg."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    ffmpeg_cmd = [
+        "ffmpeg", "-y", "-noautorotate",
+        "-i", str(image_path),
+        "-q:v", "2",
+        "-vf", f"scale=iw/{factor}:-1:flags=neighbor",
+        "-frames:v", "1", "-update", "1",
+        "-f", "image2", str(output_path),
+        "-loglevel", "quiet"
+    ]
+    subprocess.run(ffmpeg_cmd, check=True)
+
+
 def downscale_images(dataset_path: Path, factor: int) -> None:
-    if not os.path.exists(os.path.join(dataset_path, f"images_{factor}")):
-        for image_name in tqdm(os.listdir(os.path.join(dataset_path, "images")), desc=f"Downscaling images by a factor of {factor}"):
-            image_path = os.path.join(dataset_path, "images", image_name)
-            image_out = os.path.join(dataset_path, f"images_{factor}", image_name)
-            if not os.path.exists(os.path.dirname(image_out)):
-                os.makedirs(os.path.dirname(image_out), exist_ok=True)
-            ffmpeg_cmd = (
-                f'ffmpeg -y -noautorotate -i "{image_path}" '
-                f'-q:v 2 -vf scale=iw/{factor}:-1:flags=neighbor '
-                f'-frames:v 1 -update 1 -f image2 "{image_out}" -loglevel quiet'
-            )
-            subprocess.run(ffmpeg_cmd, shell=True)
+    """Downscale all images in the dataset by the given factor."""
+    assert factor > 0, "Downscaling factor should be greater than 0"
+
+    images_dir = Path(dataset_path) / "images"
+    downscaled_dir = Path(dataset_path) / f"images_{factor}"
+
+    assert images_dir.exists(), f"Images not found in {dataset_path}"
+    assert shutil.which("ffmpeg"), "ffmpeg not found in PATH. Please install ffmpeg to downscale images."
+
+    # If the downscaled directory doesn't exist, create it and process all images.
+    if not downscaled_dir.exists():
+        downscaled_dir.mkdir(parents=True, exist_ok=True)
+        images_to_process = list(os.listdir(images_dir))
     else:
-        _logger.info(f"Downscaled images_{factor} are already in {dataset_path}")
+        # Compare filenames to determine which images need processing.
+        original_images = set(os.listdir(images_dir))
+        processed_images = set(os.listdir(downscaled_dir))
+        if original_images == processed_images:
+            _logger.info(f"Downscaled images_{factor} are already in {dataset_path}")
+            return
+        _logger.info(f"{len(original_images) - len(processed_images)} missing images in images_{factor}")
+        images_to_process = list(original_images - processed_images)
+
+    # Process images that need downscaling.
+    for image_name in tqdm(images_to_process, desc=f"Downscaling images by a factor of {factor}"):
+        image_path = images_dir / image_name
+        image_out = downscaled_dir / image_name
+        downscale_single_image(image_path, image_out, factor)
 
 def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfacto', viz: bool=False) -> None:
     _logger.info(f"Compute downscaling factor for {dataset_path} ...")
