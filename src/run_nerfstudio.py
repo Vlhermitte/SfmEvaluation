@@ -102,28 +102,28 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
     # Train the NeRF model
     _logger.info(f"Training the model using : {method}")
     # The nerfstudio Args order is important: 1. Nerfstudio Args 2. DataParser Args
-    train_cmd = [
+    train_cmd = (
         # Nerfstudio Args
-        f"{CUDA_VISIBLE_DEVICES} ns-train {method}",
-        f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu {'True' if num_images <= 1000 else 'False'}",
-        f"--pipeline.model.camera-optimizer.mode off ", # We do not want to optimize the camera parameters
-        f"{'--viewer.make-share-url True' if viz else ''}",
-        f"--viewer.quit-on-train-completion True",
-        f"--experiment-name nerfstudio", # To store the results in a directory nerfstudio instead of the default name 'unnamed'
-        f"--output-dir {results_path}",
-        f"--timestamp run",
+        f"{CUDA_VISIBLE_DEVICES} ns-train {method} "
+        f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu {'True' if num_images <= 1000 else 'False'} "
+        f"--pipeline.model.camera-optimizer.mode off " # We do not want to optimize the camera parameters
+        f"{'--viewer.make-share-url True' if viz else ''} "
+        f"--viewer.quit-on-train-completion True "
+        f"--experiment-name nerfstudio " # To store the results in a directory nerfstudio instead of the default name 'unnamed'
+        f"--output-dir {results_path} "
+        f"--timestamp run "
         # DataParser Args
         f"colmap --images-path {dataset_path}/images --colmap-path {results_path}"
-    ]
+    )
     subprocess.run(train_cmd, shell=True)
 
     # # Evaluate the NeRF model
     _logger.info("Evaluating the NeRF model...")
     eval_cmd = [
         f"{CUDA_VISIBLE_DEVICES} ns-eval "
-        f"--load-config {results_path}/nerfstudio/{method}/run/config.yml",
-        f"--output-path {results_path}/nerfstudio/{method}/run/eval.json",
-        f"--render-output-path {results_path}/nerfstudio/{method}/run/renders",
+        f"--load-config {results_path}/nerfstudio/{method}/run/config.yml "
+        f"--output-path {results_path}/nerfstudio/{method}/run/eval.json "
+        f"--render-output-path {results_path}/nerfstudio/{method}/run/renders"
     ]
     subprocess.run(eval_cmd, shell=True)
 
