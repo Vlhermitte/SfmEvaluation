@@ -196,7 +196,8 @@ if __name__ == '__main__':
         exit(1)
 
     # Check that colmap model exists (i.e .bin/.txt files)
-    if not os.path.exists(os.path.join(results_path, "images.bin")):
+    if not (os.path.exists(os.path.join(results_path, "images.bin")) or os.path.exists(
+            os.path.join(results_path, "images.txt"))):
         _logger.error(f"Error: The colmap model at {results_path} does not exist. Please check the results path and try again.")
         exit(1)
 
