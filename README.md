@@ -6,8 +6,9 @@
 - [Evaluation Protocols](#evaluation-protocols)
     - [Relative Pose Evaluation](#relative-pose-evaluation)
     - [Absolute Pose Evaluation (In Progress)](#absolute-pose-evaluation-in-progress)
-    - [Novel View Synthesis (In Progress)](#novel-view-synthesis-in-progress)
+    - [Novel View Synthesis](#novel-view-synthesis-in-progress)
     - [3D Triangulation Evaluation (In Progress)](#3d-triangulation-evaluation-in-progress)
+- [Scripts](#scripts)
 
 ## Overview
 This project provides tools for reading, writing, and evaluating Structure-from-Motion (SfM) models.
@@ -76,7 +77,7 @@ An **absolute pose evaluation** script is currently in progress. See [`absolute_
 - Uses the **Kabsch-Umeyama algorithm** to align estimated and ground truth camera poses.
 - Computes **absolute rotation and translation errors**.
 
-### Novel View Synthesis *(In Progress)*
+### Novel View Synthesis
 🚧 **This feature is still under development.** 🚧
 
 This protocol evaluates the quality of **novel view synthesis** by comparing rendered images to ground truth images.
