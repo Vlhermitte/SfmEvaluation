@@ -15,7 +15,7 @@ This project provides tools for reading, writing, and evaluating Structure-from-
 The evaluation protocol consists of the following components:
 - **Relative Pose Error**
 - **Absolute Pose Error** *(in progress)*
-- **Novel View Synthesis** *(in progress)*
+- **Novel View Synthesis**
 - **3D Triangulation** *(in progress)*
 
 ## Installation
@@ -78,14 +78,11 @@ An **absolute pose evaluation** script is currently in progress. See [`absolute_
 - Computes **absolute rotation and translation errors**.
 
 ### Novel View Synthesis
-🚧 **This feature is still under development.** 🚧
-
 This protocol evaluates the quality of **novel view synthesis** by comparing rendered images to ground truth images.
 - **Nerfstudio** is used to generate novel views via **NeRF** or **Gaussian Splatting**.
-- Evaluation is performed using **PSNR** and **SSIM**.
+- Evaluation is performed using **PSNR**, **SSIM** and **LPIPS** metrics.
 
 The script [`run_nerfstudio.py`](src/run_nerfstudio.py) only trains using either **nerfacto** or **splatfacto** methods.
-The evaluation part will come later.
 
 #### Running Novel View Synthesis
 To train and evaluate novel view synthesis, use:
