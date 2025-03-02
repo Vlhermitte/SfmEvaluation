@@ -179,7 +179,7 @@ if __name__ == '__main__':
         print(f'RTE_30 (%): {RTE_30}')
 
     # Write auc to txt file
-    with open(f'{est_model_path}/auc.json', 'w') as f:
+    with open(f'{est_model_path}/rel_auc.json', 'w') as f:
         json.dump({
             'Missing_cameras': number_of_missing_cameras,
             'Auc_3': Auc_3,
