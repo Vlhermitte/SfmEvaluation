@@ -32,8 +32,6 @@ if [ "$(ls -A $out_dir)" ]; then
     fi
 fi
 
-# Check image format in the scene directory (png, jpg, JPG, etc.)
-image_format=$(ls $scene | head -n 1 | rev | cut -d'.' -f1 | rev)
 
 conda_env="flowmap"
 echo "Activating conda environment: $conda_env"
@@ -43,4 +41,9 @@ conda activate $conda_env || { echo "Failed to activate conda environment: $cond
 cd flowmap
 
 # run the FlowMap pipeline
+start_time=$(date +%s)
 python3 -m flowmap.overfit dataset=images dataset.images.root=../$scene  output_dir=../$out_dir
+end_time=$(date +%s)
+elapsed_time=$(( end_time - start_time ))
+
+echo "Elapsed time: $elapsed_time seconds" >> ../$out_dir/time.txt

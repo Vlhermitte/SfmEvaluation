@@ -43,8 +43,6 @@ else
     exit 1
 fi
 
-# Check image format in the scene directory (png, jpg, JPG, etc.)
-image_format=$(ls $scene | head -n 1 | rev | cut -d'.' -f1 | rev)
 
 conda_env="vggsfm_tmp"
 echo "Activating conda environment: $conda_env"
@@ -52,4 +50,10 @@ source "$(conda info --base)/etc/profile.d/conda.sh" || { echo "Failed to source
 conda activate $conda_env || { echo "Failed to activate conda environment: $conda_env"; exit 1; }
 
 # run the VGG-SfM pipeline
+start_time=$(date +%s)
 python ./vggsfm/demo.py query_method=sp+aliked camera_type=SIMPLE_RADIAL SCENE_DIR=$scene OUTPUT_DIR=$out_dir
+
+end_time=$(date +%s)
+elapsed_time=$(( end_time - start_time ))
+
+echo "Elapsed time: $elapsed_time seconds" >> ${out_dir}/time.txt

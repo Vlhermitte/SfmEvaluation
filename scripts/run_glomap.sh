@@ -65,8 +65,11 @@ if [ -d "$out_dir" ] && [ "$(ls -A "$out_dir")" ]; then
     esac
 fi
 
-# Init colmap database 
 
+
+start_time=$(date +%s)
+
+# Init colmap database
 DATABASE=${out_dir}/sample_reconstruction.db
 # If database does not exist, create a new database
 if [ ! -f ${DATABASE} ]; then
@@ -88,6 +91,11 @@ glomap mapper \
     --database_path ${DATABASE} \
     --image_path ${scene} \
     --output_path ${out_dir}/sparse
+
+end_time=$(date +%s)
+elapsed_time=$(( end_time - start_time ))
+
+echo "Elapsed time: $elapsed_time seconds" >> ${out_dir}/time.txt
 
 # Disable for now
 #mkdir ${out_dir}/dense
