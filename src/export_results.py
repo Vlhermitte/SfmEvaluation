@@ -1,10 +1,12 @@
 import json
 import pandas as pd
 import os
+from pathlib import Path
 
+from config import ETH3D_SCENES, METHODS, RESULTS_PATH, COLMAP_FORMAT
 
 # Read the JSON file
-def read_json(json_file):
+def read_json(json_file: Path):
     if not os.path.exists(json_file):
         print(f"File not found: {json_file}")
         return None
@@ -18,39 +20,11 @@ def read_json(json_file):
 
 
 if __name__ == '__main__':
-    SCENES = (
-        "courtyard",
-        "delivery_area",
-        "electro",
-        "facade",
-        "kicker",
-        "meadow",
-        "office",
-        "pipes",
-        "playground",
-        "relief",
-        "relief_2",
-        "terrace",
-        "terrains",
-    )
-
-    methods = ['Glomap', 'VGGSfm', 'FlowMap', 'AceZero']
     rows = []
-
-    for scene in SCENES:
-        for method in methods:
+    for scene in ETH3D_SCENES:
+        for method in METHODS:
             # Construct the file path
-            if str.lower(method) == 'glomap':
-                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/colmap/sparse/0/rel_auc.json'
-            elif str.lower(method) == 'flowmap':
-                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/colmap/sparse/0/rel_auc.json'
-            elif str.lower(method) == 'vggsfm':
-                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/colmap/sparse/0/rel_auc.json'
-            elif str.lower(method) == 'acezero':
-                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/colmap/sparse/0/rel_auc.json'
-            else:
-                print(f"Invalid method: {str.lower(method)}")
-                continue
+            json_file = Path(RESULTS_PATH / str.lower(method) / 'ETH3D' / scene / COLMAP_FORMAT / 'rel_auc.json')
 
             # Read the JSON file
             data = read_json(json_file)
@@ -92,7 +66,7 @@ if __name__ == '__main__':
     df = pd.DataFrame(rows)
 
     # Save the results to a CSV file
-    output_csv = '../data/results/relative_poses_eval.csv'
+    output_csv = RESULTS_PATH / 'relative_poses_eval.csv'
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     df.to_csv(output_csv, index=False)
 
