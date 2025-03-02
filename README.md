@@ -3,8 +3,7 @@
 ## Table of Contents
 - [Overview](#overview)
 - [Installation](#installation)
-- [Usage](#usage)
-- [Evaluation Protocol](#evaluation-protocol)
+- [Evaluation Protocols](#evaluation-protocols)
     - [Relative Pose Evaluation](#relative-pose-evaluation)
     - [Absolute Pose Evaluation (In Progress)](#absolute-pose-evaluation-in-progress)
     - [Novel View Synthesis (In Progress)](#novel-view-synthesis-in-progress)
@@ -45,22 +44,7 @@ Follow these steps for each method:
 
 To run the Novel View Synthesis evaluation, you need to install [NerfStudio](https://docs.nerf.studio/quickstart/installation.html)
 
-## Usage
-### Running Evaluation on All Results
-To evaluate all **relative camera poses** results, run:
-```bash
-bash scripts/evaluate.sh
-```
-The script expects results stored in:
-```
-data/results/<method>/ETH3D/<scene>/colmap/sparse/0
-```
-For details, see [`evaluate.sh`](scripts/evaluate.sh) in the [`scripts`](scripts) directory.
-
-### Running Individual Evaluations
-If you want to run an individual evaluation, see bellow [Evaluation Protocol](#evaluation-protocol)
-
-## Evaluation Protocol
+## Evaluation Protocols
 
 ### Relative Pose Evaluation
 The evaluation assesses **relative rotation error (RRE)** and **relative translation error (RTE)**, computed as follows:
@@ -133,10 +117,39 @@ The evaluation results, including completeness, accuracy, and F1-scores, will be
 
 📌 **Note:** This evaluation protocol is used for the **ETH3D dataset** as it requires the ground truth MLP file.
 
+## Scripts
+
+We provide scripts to run evaluations. However, those script expect the results to be stored in a specific directory structure.
+If you decide to save your results in a different structure, you can create your own script or modify the provided scripts.
+
+### Running Evaluation on All Results
+To evaluate all **Relative Camera Poses** results, run:
+```
+bash scripts/camera_poses.sh
+```
+
+To evaluate all **Novel View Synthesis** results, run:
+```
+bash scripts/nerfstudio.sh <METHOD>
+```
+- `<METHOD> (Optional)`: Method to use for novel view synthesis (`nerfacto` or `splatfacto`). Default is `nerfacto`.
+
+This script will take a long time to run, as it trains a model for each scene and evaluates it.
+
+---
+The scripts expect results stored in:
+```
+data/results/<method>/ETH3D/<scene>/colmap/sparse/0
+```
+For details, see the scripts in the [`scripts`](scripts) directory.
+
+### Running Individual Evaluations
+If you want to run an individual evaluation, see above [Evaluation Protocol](#evaluation-protocol)
+
 ## TODO
 - [x] Implement relative pose error evaluation
 - [ ] Implement absolute pose error evaluation
-- [ ] Implement novel view synthesis evaluation
+- [x] Implement novel view synthesis evaluation
 - [ ] Implement 3D triangulation evaluation
 
 
