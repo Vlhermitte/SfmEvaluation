@@ -125,7 +125,7 @@ if __name__ == '__main__':
     rel_results, abs_results = evaluator.run_camera_evaluator()
 
     # Novel view synthesis evaluation
-    # ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator()
-    #
-    # # Triangulation evaluation
-    # tolerances, completenesses, accuracies, f1_scores = evaluator.run_triangulation_evaluator()
+    ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator()
+
+    # Triangulation evaluation
+    tolerances, completenesses, accuracies, f1_scores = evaluator.run_triangulation_evaluator()
