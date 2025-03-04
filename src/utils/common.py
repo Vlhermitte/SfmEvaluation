@@ -30,7 +30,10 @@ class Camera:
         self.K[1, 2] = type.height / 2
         self.K[2, 2] = 1
         self.P = self.K @ np.hstack((self.R, self.t.reshape(-1, 1)))
-        self.pose = np.hstack((self.R, self.t.reshape(-1, 1)))
+        self.pose = np.vstack((
+            np.hstack((self.R, self.t.reshape(-1, 1))),
+            np.array([0, 0, 0, 1])
+        ))
         self.params = type.params
         self.is_valid = is_valid # flag used if we add a dummy camera to the estimated cameras
 

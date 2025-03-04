@@ -22,16 +22,23 @@ def run_rel_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], 
                     Camera(gt_camera.image, gt_camera.type, np.array([0, 0, 0, 1]), np.array([1, 1, 1]), is_valid=False)
                 )
 
-    # Sort the cameras in estimated cameras based on the image name to match the ground truth
-    est_cameras = sorted(est_cameras, key=lambda camera: camera.image)
-    gt_cameras = sorted(gt_cameras, key=lambda camera: camera.image)
-
     # Evaluating
     results = evaluate_relative_errors(est_cameras=est_cameras, gt_cameras=gt_cameras)
 
     return results
 
 def run_abs_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], verbose: bool = False) -> dict:
+    if len(est_cameras) != len(gt_cameras):
+        if verbose:
+            print('Missing cameras in the estimated model. Adding dummy cameras with invalid poses.')
+        # For every gt_cameras not in est_cameras, add a corresponding camera with in_valid=False
+        for gt_camera in gt_cameras:
+            if gt_camera not in est_cameras:
+                # Note: it is important to have a non-zero tvec to avoid division by zero in the trajectory alignment
+                est_cameras.append(
+                    Camera(gt_camera.image, gt_camera.type, np.array([0, 0, 0, 1]), np.array([1, 1, 1]), is_valid=False)
+                )
+
     # Evaluate pose error
     results = evaluate_camera_pose(est_cameras, gt_cameras, perform_alignment=True)
 
@@ -83,14 +90,14 @@ if __name__ == '__main__':
         "--gt-model-path",
         type = str,
         required = False,
-        default="../data/datasets/MipNerf360/garden/sparse/0",
+        default="../data/datasets/ETH3D/courtyard/dslr_calibration_jpg",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
         "--est-model-path",
         type=str,
         required=False,
-        default="../data/results/glomap/MipNerf360/garden/colmap/sparse/0",
+        default="../data/results/glomap/ETH3D/courtyard/colmap/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
@@ -189,62 +196,11 @@ if __name__ == '__main__':
     ####################################################################################################################
     # Absolute errors evaluation                                                                                       #
     ####################################################################################################################
+    # TODO: Fix the absolute error evaluation (The rotation error seems correct but the translation error is not)
     abs_results = run_abs_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
 
     with open(f'{est_model_path}/absolute_results.json', 'w') as f:
         json.dump(abs_results, f, indent=4)
 
-    # Compute AUC for rotation and translation errors
-    Auc_30, normalized_histogram = compute_auc(abs_results['rotation_error'], abs_results['translation_error'])
-    Auc_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
-    Auc_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
-    Auc_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
 
-    if verbose:
-        print(f"Auc_3  (%): {Auc_3}")
-        print(f"Auc_5  (%): {Auc_5}")
-        print(f"Auc_10 (%): {Auc_10}")
-        print(f"Auc_30 (%): {Auc_30}")
-
-    # RRE auc
-    RRE_30, normalized_histogram = compute_auc(abs_results['rotation_error'], None)
-    RRE_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
-    RRE_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
-    RRE_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
-
-    if verbose:
-        print(f'RRE_3  (%): {RRE_3}')
-        print(f'RRE_5  (%): {RRE_5}')
-        print(f'RRE_10 (%): {RRE_10}')
-        print(f'RRE_30 (%): {RRE_30}')
-
-    # RTE auc
-    RTE_30, normalized_histogram = compute_auc(None, abs_results['translation_error'])
-    RTE_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
-    RTE_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
-    RTE_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
-
-    if verbose:
-        print(f'RTE_3  (%): {RTE_3}')
-        print(f'RTE_5  (%): {RTE_5}')
-        print(f'RTE_10 (%): {RTE_10}')
-        print(f'RTE_30 (%): {RTE_30}')
-
-    # Write auc to txt file
-    with open(f'{est_model_path}/abs_auc.json', 'w') as f:
-        json.dump({
-            'Missing_cameras': number_of_missing_cameras,
-            'Auc_3': Auc_3,
-            'Auc_5': Auc_5,
-            'Auc_10': Auc_10,
-            'Auc_30': Auc_30,
-            'RRE_3': RRE_3,
-            'RRE_5': RRE_5,
-            'RRE_10': RRE_10,
-            'RRE_30': RRE_30,
-            'RTE_3': RTE_3,
-            'RTE_5': RTE_5,
-            'RTE_10': RTE_10,
-            'RTE_30': RTE_30
-        }, f, indent=4)
 

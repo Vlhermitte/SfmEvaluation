@@ -105,6 +105,12 @@ def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]
     Returns:
         dict: A dictionary with the relative_rotation_error and relative_translation_error lists.
     """
+    assert len(gt_cameras) == len(est_cameras), "Number of estimated and ground truth cameras should be the same."
+
+    # Sort the cameras in estimated cameras based on the image name to match the ground truth
+    est_cameras = sorted(est_cameras, key=lambda camera: camera.image)
+    gt_cameras = sorted(gt_cameras, key=lambda camera: camera.image)
+
     results = {'relative_rotation_error': [], 'relative_translation_error': [], 'relative_translation_angle': []}
 
     # Evaluate on all possible pairs from all images (not just consecutive pairs)
