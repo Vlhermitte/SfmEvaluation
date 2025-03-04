@@ -10,3 +10,4 @@ dependencies:
   - tqdm
   - ffmpeg
   - pip
+    - opencv-python
