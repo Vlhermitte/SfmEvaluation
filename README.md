@@ -164,12 +164,14 @@ tolerances, completenesses, accuracies, f1_scores = evaluator.run_triangulation_
 ```
 More details can be found in the [`evaluator.py`](src/evaluator.py) file.
 
+## Done
+- [x] Implement relative pose error evaluation
+- [x] Implement novel view synthesis evaluation
 
 ## TODO
-- [x] Implement relative pose error evaluation
-- [ ] Implement absolute pose error evaluation
-- [x] Implement novel view synthesis evaluation
-- [ ] Implement 3D triangulation evaluation
+- [ ] Fix absolute pose error evaluation (Maybe try using Procrustes instead of Kabsch)
+- [ ] Implement 3D triangulation evaluation (For Tank and Temples dataset)
+- [ ] Use more datasets
 
 
 # Resources
