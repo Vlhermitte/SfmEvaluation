@@ -144,6 +144,27 @@ For details, see the scripts in the [`scripts`](scripts) directory.
 ### Running Individual Evaluations
 If you want to run an individual evaluation, see above [Evaluation Protocol](#evaluation-protocol)
 
+---
+#### 🚧 Experimental 🚧
+We also provide a class that can be used to integrate the evaluation into your own code easily.
+It can be used as follows:
+```python
+from src.evaluator import Evaluator
+
+evaluator = Evaluator(gt_model_path="<PATH_TO_GT_MODEL>", est_model_path="<PATH_TO_EST_MODEL>", image_path="<PATH_TO_IMAGES>")
+
+# Camera poses evaluation
+rel_results, abs_results = evaluator.run_camera_evaluator()
+
+# Novel view synthesis evaluation
+ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator()
+
+# Triangulation evaluation (For ETH3D dataset)
+tolerances, completenesses, accuracies, f1_scores = evaluator.run_triangulation_evaluator()
+```
+More details can be found in the [`evaluator.py`](src/evaluator.py) file.
+
+
 ## TODO
 - [x] Implement relative pose error evaluation
 - [ ] Implement absolute pose error evaluation
