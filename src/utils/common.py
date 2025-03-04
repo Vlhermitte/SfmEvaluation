@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 from utils.geometry import quaternion2rotation
 
@@ -55,3 +56,10 @@ def get_cameras_info(cameras_type, images) -> list:
         cameras.append(camera)
 
     return cameras
+
+def detect_colmap_format(path: str) -> str:
+    for ext in ['.txt', '.bin']:
+        if os.path.isfile(os.path.join(path, "cameras" + ext)) and os.path.isfile(os.path.join(path, "images" + ext)):
+            # print("Detected model format: '" + ext + "'")
+            return ext
+    raise ValueError("No .txt or .bin format not found in the specified path")

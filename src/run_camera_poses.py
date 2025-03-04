@@ -1,21 +1,14 @@
 import argparse
-import os
 import logging
 import json
 import numpy as np
 from typing import Tuple, List
 
-from utils.common import Camera, get_cameras_info
+from utils.common import Camera, get_cameras_info, detect_colmap_format
 from data.read_write_model import read_model
 from evaluation.absolute_error_evaluation import evaluate_camera_pose
 from evaluation.relative_error_evaluation import evaluate_relative_errors
 
-def detect_colmap_format(path: str) -> str:
-    for ext in ['.txt', '.bin']:
-        if os.path.isfile(os.path.join(path, "cameras" + ext)) and os.path.isfile(os.path.join(path, "images" + ext)):
-            # print("Detected model format: '" + ext + "'")
-            return ext
-    raise ValueError("No .txt or .bin format not found in the specified path")
 
 def run_rel_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], verbose: bool = False) -> Tuple[dict, dict]:
     if len(est_cameras) != len(gt_cameras):
