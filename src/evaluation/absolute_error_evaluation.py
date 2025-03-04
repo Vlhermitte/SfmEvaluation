@@ -38,7 +38,7 @@ def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], pe
         alignment_transformation, alignment_scale = ransac_kabsch(gt_poses, est_poses, estimate_scale=True)
 
         if alignment_transformation is None:
-            print("Alignment requested but failed. Setting all pose errors to infinity.")
+            print("Alignment failed. Setting all pose errors to infinity.")
             alignment_transformation = None
             alignment_scale = 1.0
     else:
