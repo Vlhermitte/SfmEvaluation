@@ -73,9 +73,11 @@ class Evaluator:
     def run_triangulation_evaluator(self, ply_path: Path=None, mlp_path: Path=None) -> Tuple[list, list, list, list]:
         """
         Run the triangulation evaluation.
+        :param ply_path: Path, the path to the .ply file.
+        :param mlp_path: Path, the path to the .mlp file.
         :return: tolerances, completenesses, accuracies, f1_scores.
         """
-        # Make sure the args are of type Path
+        # If the paths are not provided, try to find the .ply and .mlp files
         if ply_path is None:
             # Find a .ply file. If none then error
             ply_files = list(self.est_model_path.glob("*.ply"))
@@ -96,6 +98,7 @@ class Evaluator:
         if not mlp_path.exists():
             raise FileNotFoundError(f"Error: The .mlp file does not exist in {mlp_path}")
 
+        # Run the evaluation
         evaluate_multiview(ply_path, mlp_path)
         if os.path.exists(ply_path.parent / "multiview_results.txt"):
             self._logger.info(f"Results saved in {ply_path.parent / 'multiview_results.txt'}")
