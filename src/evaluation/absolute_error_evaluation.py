@@ -38,7 +38,7 @@ def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], pe
 
         if alignment_transformation is None:
             print("Alignment requested but failed. Setting all pose errors to infinity.")
-            alignment_transformation = np.eye(4)
+            alignment_transformation = None
             alignment_scale = 1.0
     else:
         alignment_transformation = np.eye(4)
@@ -48,20 +48,24 @@ def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], pe
     rotation_errors = []
     translation_errors = []
     for est_pose, gt_pose in zip(est_poses, gt_poses):
-        gt_pose = alignment_transformation @ gt_pose
+        if alignment_transformation is None:
+            rotation_errors.append(np.inf)
+            translation_errors.append(np.inf)
+        else:
+            gt_pose = alignment_transformation @ gt_pose
 
-        # Compute translation error
-        t_err = np.linalg.norm(gt_pose[:3, 3] - est_pose[:3, 3])
-        t_err = t_err / alignment_scale
-        translation_errors.append(t_err)
+            # Compute translation error
+            t_err = np.linalg.norm(gt_pose[:3, 3] - est_pose[:3, 3])
+            t_err = t_err / alignment_scale
+            translation_errors.append(t_err)
 
-        # Compute rotation error
-        R_rel = gt_pose[:3, :3] @ est_pose[:3, :3].T
-        angle = cv2.Rodrigues(R_rel)[0]
-        angle = np.linalg.norm(angle)
-        # Convert to degrees
-        angle = np.degrees(angle)
-        rotation_errors.append(angle)
+            # Compute rotation error
+            R_err = gt_pose[:3, :3] @ est_pose[:3, :3].T
+            angle = cv2.Rodrigues(R_err)[0]
+            angle = np.linalg.norm(angle)
+            # Convert to degrees
+            angle = np.degrees(angle)
+            rotation_errors.append(angle)
 
     return {'rotation_error': rotation_errors, 'translation_error': translation_errors}
 
