@@ -29,9 +29,6 @@ def run_rel_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], 
     # Evaluating
     results = evaluate_relative_errors(est_cameras=est_cameras, gt_cameras=gt_cameras)
 
-    with open(f'{est_model_path}/relative_results.json', 'w') as f:
-        json.dump(results, f, indent=4)
-
     return results
 
 def run_abs_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], verbose: bool = False) -> dict:
@@ -41,9 +38,6 @@ def run_abs_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], 
     if verbose:
         print(f"Rotation error: {results['rotation_error']}\n")
         print(f"Translation error: {results['translation_error']}")
-
-    with open(f'{est_model_path}/absolute_results.json', 'w') as f:
-        json.dump(results, f, indent=4)
 
     return results
 
@@ -137,6 +131,9 @@ if __name__ == '__main__':
     ####################################################################################################################
     rel_results = run_rel_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
 
+    with open(f'{est_model_path}/relative_results.json', 'w') as f:
+        json.dump(rel_results, f, indent=4)
+
     # Define thresholds
     # Compute AUC for rotation and translation errors
     Auc_30, normalized_histogram = compute_auc(rel_results['relative_rotation_error'], rel_results['relative_translation_angle'])
@@ -193,3 +190,6 @@ if __name__ == '__main__':
     # Absolute errors evaluation                                                                                       #
     ####################################################################################################################
     # abs_results = run_abs_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
+
+    # with open(f'{est_model_path}/absolute_results.json', 'w') as f:
+    #     json.dump(abs_results, f, indent=4)
