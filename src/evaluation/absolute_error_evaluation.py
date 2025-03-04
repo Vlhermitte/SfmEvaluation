@@ -3,7 +3,7 @@ import cv2
 from typing import List, Dict
 
 from utils.common import Camera
-from utils.alignment import estimate_alignment
+from utils.alignment import ransac_kabsch
 
 
 def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], perform_alignment: bool = True) -> Dict:
@@ -34,7 +34,7 @@ def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], pe
 
     if perform_alignment:
         # Alignment needs a list of pose correspondences with confidences
-        alignment_transformation, alignment_scale = estimate_alignment(est_poses, gt_poses, estimate_scale=True)
+        alignment_transformation, alignment_scale = ransac_kabsch(est_poses, gt_poses, estimate_scale=True)
 
         if alignment_transformation is None:
             print("Alignment requested but failed. Setting all pose errors to infinity.")
