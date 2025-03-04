@@ -10,6 +10,9 @@ from tqdm import tqdm
 
 from data.read_write_model import read_model, write_model
 
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.INFO)
+_logger.addHandler(logging.StreamHandler(sys.stdout))
 
 def compute_downscale_factor(dataset_path: Path, max_resolution: int=1600) -> int:
     # Find the max dimension of the images
@@ -86,7 +89,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         _logger.info(f"Found {num_gpus} CUDA GPUs.")
     except Exception:
         _logger.error("CUDA not found. NerfStudio requires CUDA to run.")
-        # exit(1)
+        return None
 
     # Splatfacto does not support multi-gpus
     if method == 'splatfacto' and num_gpus > 1:
@@ -150,9 +153,6 @@ def sanity_check_colmap(path: Path) -> None:
 
 
 if __name__ == '__main__':
-    _logger = logging.getLogger(__name__)
-    _logger.setLevel(logging.INFO)
-    _logger.addHandler(logging.StreamHandler(sys.stdout))
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset-path",
