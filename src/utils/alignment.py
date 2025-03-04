@@ -83,7 +83,7 @@ def ransac_kabsch(
 
         # Calculate the inliers based on the estimated transformation
         inliers = get_inliers(T, gt_poses, est_poses, inlier_threshold_t, inlier_threshold_r)
-        score = len(inliers) / len(est_poses)
+        score = np.sum(inliers) / len(est_poses)
 
         if score > best_score:
             candidate_T = T
