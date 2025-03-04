@@ -40,7 +40,13 @@ def run_abs_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], 
                 )
 
     # Evaluate pose error
-    results = evaluate_camera_pose(est_cameras, gt_cameras, perform_alignment=True)
+    results = evaluate_camera_pose(
+        est_cameras=est_cameras,
+        gt_cameras=gt_cameras,
+        R_threshold=5,
+        t_threshold=10,
+        perform_alignment=True
+    )
 
     if verbose:
         print(f"Rotation error: {results['rotation_error']}\n")
@@ -90,14 +96,14 @@ if __name__ == '__main__':
         "--gt-model-path",
         type = str,
         required = False,
-        default="../data/datasets/ETH3D/courtyard/dslr_calibration_jpg",
+        default="../data/datasets/MipNerf360/garden/sparse/0",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
         "--est-model-path",
         type=str,
         required=False,
-        default="../data/results/glomap/ETH3D/courtyard/colmap/sparse/0",
+        default="../data/results/glomap/MipNerf360/garden/colmap/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
@@ -136,62 +142,62 @@ if __name__ == '__main__':
     ####################################################################################################################
     # Relative errors evaluation                                                                                       #
     ####################################################################################################################
-    rel_results = run_rel_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
-
-    with open(f'{est_model_path}/relative_results.json', 'w') as f:
-        json.dump(rel_results, f, indent=4)
-
-    # Define thresholds
-    # Compute AUC for rotation and translation errors
-    Auc_30, normalized_histogram = compute_auc(rel_results['relative_rotation_error'], rel_results['relative_translation_angle'])
-    Auc_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
-    Auc_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
-    Auc_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
-    if verbose:
-        print(f"Auc_3  (%): {Auc_3}")
-        print(f"Auc_5  (%): {Auc_5}")
-        print(f"Auc_10 (%): {Auc_10}")
-        print(f"Auc_30 (%): {Auc_30}")
-
-    # RRE auc
-    RRE_30, normalized_histogram = compute_auc(rel_results['relative_rotation_error'], None)
-    RRE_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
-    RRE_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
-    RRE_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
-    if verbose:
-        print(f'RRE_3  (%): {RRE_3}')
-        print(f'RRE_5  (%): {RRE_5}')
-        print(f'RRE_10 (%): {RRE_10}')
-        print(f'RRE_30 (%): {RRE_30}')
-
-    # RTE auc
-    RTE_30, normalized_histogram = compute_auc(None, rel_results['relative_translation_angle'])
-    RTE_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
-    RTE_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
-    RTE_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
-    if verbose:
-        print(f'RTE_3  (%): {RTE_3}')
-        print(f'RTE_5  (%): {RTE_5}')
-        print(f'RTE_10 (%): {RTE_10}')
-        print(f'RTE_30 (%): {RTE_30}')
-
-    # Write auc to txt file
-    with open(f'{est_model_path}/rel_auc.json', 'w') as f:
-        json.dump({
-            'Missing_cameras': number_of_missing_cameras,
-            'Auc_3': Auc_3,
-            'Auc_5': Auc_5,
-            'Auc_10': Auc_10,
-            'Auc_30': Auc_30,
-            'RRE_3': RRE_3,
-            'RRE_5': RRE_5,
-            'RRE_10': RRE_10,
-            'RRE_30': RRE_30,
-            'RTE_3': RTE_3,
-            'RTE_5': RTE_5,
-            'RTE_10': RTE_10,
-            'RTE_30': RTE_30
-        }, f, indent=4)
+    # rel_results = run_rel_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
+    #
+    # with open(f'{est_model_path}/relative_results.json', 'w') as f:
+    #     json.dump(rel_results, f, indent=4)
+    #
+    # # Define thresholds
+    # # Compute AUC for rotation and translation errors
+    # Auc_30, normalized_histogram = compute_auc(rel_results['relative_rotation_error'], rel_results['relative_translation_angle'])
+    # Auc_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
+    # Auc_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
+    # Auc_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
+    # if verbose:
+    #     print(f"Auc_3  (%): {Auc_3}")
+    #     print(f"Auc_5  (%): {Auc_5}")
+    #     print(f"Auc_10 (%): {Auc_10}")
+    #     print(f"Auc_30 (%): {Auc_30}")
+    #
+    # # RRE auc
+    # RRE_30, normalized_histogram = compute_auc(rel_results['relative_rotation_error'], None)
+    # RRE_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
+    # RRE_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
+    # RRE_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
+    # if verbose:
+    #     print(f'RRE_3  (%): {RRE_3}')
+    #     print(f'RRE_5  (%): {RRE_5}')
+    #     print(f'RRE_10 (%): {RRE_10}')
+    #     print(f'RRE_30 (%): {RRE_30}')
+    #
+    # # RTE auc
+    # RTE_30, normalized_histogram = compute_auc(None, rel_results['relative_translation_angle'])
+    # RTE_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
+    # RTE_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
+    # RTE_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
+    # if verbose:
+    #     print(f'RTE_3  (%): {RTE_3}')
+    #     print(f'RTE_5  (%): {RTE_5}')
+    #     print(f'RTE_10 (%): {RTE_10}')
+    #     print(f'RTE_30 (%): {RTE_30}')
+    #
+    # # Write auc to txt file
+    # with open(f'{est_model_path}/rel_auc.json', 'w') as f:
+    #     json.dump({
+    #         'Missing_cameras': number_of_missing_cameras,
+    #         'Auc_3': Auc_3,
+    #         'Auc_5': Auc_5,
+    #         'Auc_10': Auc_10,
+    #         'Auc_30': Auc_30,
+    #         'RRE_3': RRE_3,
+    #         'RRE_5': RRE_5,
+    #         'RRE_10': RRE_10,
+    #         'RRE_30': RRE_30,
+    #         'RTE_3': RTE_3,
+    #         'RTE_5': RTE_5,
+    #         'RTE_10': RTE_10,
+    #         'RTE_30': RTE_30
+    #     }, f, indent=4)
 
     ####################################################################################################################
     # Absolute errors evaluation                                                                                       #

@@ -56,7 +56,7 @@ def ransac_kabsch(
         estimate_scale: bool = True,
         inlier_threshold_r: float = 5,
         inlier_threshold_t: float = 0.1,
-        confidence: float = 0.99,
+        confidence: float = 0.95,
         max_iterations: int = 10000
 ) -> Tuple[np.ndarray, float]:
     """

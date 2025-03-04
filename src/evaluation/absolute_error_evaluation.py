@@ -2,16 +2,23 @@ import numpy as np
 import cv2
 from typing import List, Dict
 
-from utils.common import Camera
+from utils.common import Camera, detect_colmap_format
 from utils.alignment import ransac_kabsch
 
 
-def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], perform_alignment: bool = True) -> Dict:
+def evaluate_camera_pose(
+        est_cameras: List[Camera],
+        gt_cameras: List[Camera],
+        R_threshold: float = 5,
+        t_threshold: float = 0.1,
+        perform_alignment: bool = True) -> Dict:
     """
     Evaluate the absolute pose error between the ground truth and estimated camera poses.
     Args:
         est_cameras (List[Camera]): List of estimated camera poses.
         gt_cameras (List[Camera]): List of ground truth camera poses.
+        R_threshold (float): Rotation threshold in degrees.
+        t_threshold (float): Translation threshold in meters.
         perform_alignment (bool): Whether to estimate the alignment between the estimated and ground truth poses.
 
     Returns:
@@ -35,7 +42,13 @@ def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], pe
 
     if perform_alignment:
         # Alignment needs a list of pose correspondences with confidences
-        alignment_transformation, alignment_scale = ransac_kabsch(gt_poses, est_poses, estimate_scale=True)
+        alignment_transformation, alignment_scale = ransac_kabsch(
+            est_poses=est_poses,
+            gt_poses=gt_poses,
+            inlier_threshold_r=R_threshold,
+            inlier_threshold_t=t_threshold,
+            estimate_scale=True
+        )
 
         if alignment_transformation is None:
             print("Alignment failed. Setting all pose errors to infinity.")
@@ -69,7 +82,7 @@ def evaluate_camera_pose(est_cameras: List[Camera], gt_cameras: List[Camera], pe
             angle = np.degrees(angle)
             rotation_errors.append(angle)
 
-            if angle <= 5 and t_err <= 0.1:
+            if angle <= R_threshold and t_err <= t_threshold:
                 accuracy += 1
 
     accuracy = accuracy / len(est_cameras)
@@ -103,9 +116,9 @@ if __name__ == '__main__':
     gt_model_path = args.gt_model_path
     est_model_path = args.est_model_path
 
-    est_cameras_type, images, est_points3D = read_model(est_model_path)
+    est_cameras_type, images, est_points3D = read_model(est_model_path, detect_colmap_format(est_model_path))
     # Ground truth model
-    gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, '.txt')
+    gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, detect_colmap_format(gt_model_path))
 
     # Create Open3D point cloud and get R and t for estimated and ground truth models
     est_cameras = get_cameras_info(est_cameras_type, images)
