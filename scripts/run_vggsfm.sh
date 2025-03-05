@@ -56,7 +56,7 @@ conda activate $conda_env || { echo "Failed to activate conda environment: $cond
 
 # run the VGG-SfM pipeline
 start_time=$(date +%s)
-python ./vggsfm/demo.py query_method=sp+aliked camera_type=SIMPLE_RADIAL SCENE_DIR=$scene OUTPUT_DIR=$out_dir
+python vggsfm/demo.py query_method=sp+aliked camera_type=SIMPLE_RADIAL SCENE_DIR=$scene OUTPUT_DIR=$out_dir
 
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))
