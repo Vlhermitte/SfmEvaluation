@@ -2,7 +2,7 @@
 #SBATCH --job-name=nerfstudio_job      # Job name
 #SBATCH --output=nerfstudio_out.log    # Standard output log
 #SBATCH --error=nerfstudio_err.log     # Standard error log
-#SBATCH --time=12:00:00                # Time limit (hh:mm:ss)
+#SBATCH --time=12:00:00                # Time lim
 #SBATCH --partition=1day               # Use the '1day' partition
 #SBATCH --gres=gpu:a16:1               # Request 1 GPU (a16)
 #SBATCH --mem=16G                      # Memory allocation
@@ -40,6 +40,12 @@ SFM_METHODS=(
     "acezero"
     "glomap"
 )
+
+if [ ! -z "$SLURM_JOB_ID" ]; then
+  cd ~/SfmEvaluation
+else
+  cd "$(dirname "$0")/.."
+fi
 
 DATASET_PATH="data/datasets"
 RESULTS_PATH="data/results"
