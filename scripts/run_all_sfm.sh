@@ -1,5 +1,13 @@
 #!/bin/bash
 
+#SBATCH --job-name=all_sfm
+#SBATCH --output=all_sfm.out
+#SBATCH --error=all_sfm.err
+#SBATCH --time=12:00:00             # Request 12 hours of runtime
+#SBATCH --partition=1day            # Use the '1day' partition
+#SBATCH --gres=gpu:a16:1            # Request 1 GPU (a16)
+#SBATCH --mem=32G                   # Request 32 GB of RAM
+#SBATCH --cpus-per-task=12          # Request 12 CPUs
 
 ETH3D_SCENES=(
     "courtyard"
@@ -58,4 +66,5 @@ for sfm_method in "${SFM_METHODS[@]}"; do
     echo "${sfm_method}: Processing ${scene}"
     bash ./run_${sfm_method}.sh ../data/datasets/MipNerf360/${scene}/images ../data/results/${sfm_method}/MipNerf360/${scene}/colmap/sparse/0
   done
+  echo ##############################################################################################################################
 done
