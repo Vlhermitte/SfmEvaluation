@@ -53,10 +53,7 @@ for SCENE in "${ETH3D_SCENES[@]}"; do
     fi
     start_time=$(date +%s)
 
-    python vggsfm/demo.py \
-      query_method=sp+aliked camera_type=SIMPLE_RADIAL \
-      SCENE_DIR=${DATASETS_DIR}/ETH3D/$SCENE/ \  # vggsfm assume image to be an images directory
-      OUTPUT_DIR=${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0
+    python vggsfm/demo.py query_method=sp+aliked camera_type=SIMPLE_RADIAL SCENE_DIR=${DATASETS_DIR}/ETH3D/$SCENE/ OUTPUT_DIR=${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0
 
     end_time=$(date +%s)
     elapsed_time=$(( end_time - start_time ))
@@ -83,10 +80,7 @@ for SCENE in "${MIP_NERF_360_SCENE[@]}"; do
     fi
     start_time=$(date +%s)
 
-    python vggsfm/demo.py \
-      query_method=sp+aliked camera_type=SIMPLE_RADIAL \
-      SCENE_DIR=${DATASETS_DIR}/MipNerf360/$SCENE/ \  # vggsfm assume image to be an images directory
-      OUTPUT_DIR=${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0
+    python vggsfm/demo.py query_method=sp+aliked camera_type=SIMPLE_RADIAL SCENE_DIR=${DATASETS_DIR}/MipNerf360/$SCENE/ OUTPUT_DIR=${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0
 
     end_time=$(date +%s)
     echo "Elapsed time: $elapsed_time seconds" >> ${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0/time.txt
