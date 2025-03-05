@@ -70,12 +70,14 @@ for sfm_method in "${SFM_METHODS[@]}"; do
           --dataset-path ${SCENE_PATH} \
           --results-path ${COLMAP_PATH} \
           --method ${METHOD}
+          --viz False
     else
       # Run the Nerfstudio pipeline directly
       python src/run_nerfstudio.py \
           --dataset-path ${SCENE_PATH} \
           --results-path ${COLMAP_PATH} \
           --method ${METHOD}
+          --viz False
     fi
   done
 done
