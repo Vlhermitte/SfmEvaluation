@@ -39,16 +39,14 @@ MIP_NERF_360_SCENE=(
 
 SFM_METHODS=(
     "vggsfm"
-    "flowmap"
-    "acezero"
-    "glomap"
 )
 
 if [ ! -z "$SLURM_JOB_ID" ]; then
   cd ~/SfmEvaluation
   base_data_path=~/SfmEvaluation/data
 else
-  base_data_path=../data
+  cd "$(dirname "$0")/.."
+  base_data_path=data
 fi
 
 for sfm_method in "${SFM_METHODS[@]}"; do
