@@ -9,28 +9,6 @@
 #SBATCH --mem=32G                   # Request 32 GB of RAM
 #SBATCH --cpus-per-task=12          # Request 12 CPUs
 
-export ENV_NAME=vggsfm_tmp
-export PYTHON_VERSION=3.10
-export PYTORCH_VERSION=2.1.0
-export CUDA_VERSION=12.1
-
-conda install --force-reinstall pytorch=$PYTORCH_VERSION torchvision pytorch-cuda=$CUDA_VERSION -c pytorch -c nvidia
-conda install --force-reinstall pytorch3d=0.7.5 -c pytorch3d
-
-conda install -c fvcore -c iopath -c conda-forge fvcore iopath
-
-pip install --force-reinstall hydra-core --upgrade
-pip install --force-reinstall omegaconf opencv-python einops visdom tqdm scipy plotly scikit-learn imageio gradio trimesh huggingface_hub ffmpeg
-
-git clone https://github.com/jytime/LightGlue.git dependency/LightGlue
-
-cd dependency/LightGlue/
-python -m pip install -e .  # editable mode
-cd ../../
-
-pip install --force-reinstall numpy==1.26.3
-pip install --force-reinstall pycolmap==3.10.0 pyceres==2.3
-pip install --force-reinstall poselib==2.0.2
 
 ETH3D_SCENES=(
     "courtyard"
