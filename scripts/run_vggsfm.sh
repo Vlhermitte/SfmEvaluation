@@ -38,11 +38,11 @@ if [ "$(ls -A $out_dir)" ]; then
 fi
 
 # check if the scene directory has a subdirectory named 'images'
-if [ -d "$scene/images" ]; then
-    scene="$scene/images"
+if [ -d "$scene/images" ]; then # keep the scene directory as is
+    scene="$scene"
 # else if the scene directory is already the 'images' directory
-elif [ "$(basename $scene)" == "images" ]; then
-    scene=$scene
+elif [ "$(basename $scene)" == "images" ]; then # go up one level
+    scene="$(dirname $scene)"
 else
     echo "Scene directory does not have a subdirectory named 'images'"
     exit 1
