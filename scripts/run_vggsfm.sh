@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ ! -z "$SLURM_JOB_ID" ]; then
+    echo "Running on a Slurm-managed system. Loading required modules..."
+    modules load Anaconda3
+fi
+
 scene=$1
 out=$2
 
