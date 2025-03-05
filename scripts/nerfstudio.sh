@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run the evaluation script evaluation/main.py
-SCENES=(
+ETH3D_SCENES=(
     "courtyard"
     "delivery_area"
     "electro"
@@ -17,52 +17,52 @@ SCENES=(
     "terrains"
 )
 
+MIP_NERF_360_SCENE=(
+  "bicycle"
+  "bonsai"
+  "counter"
+  "garden"
+  "kitchen"
+  "room"
+  "stump"
+)
+
+SFM_METHODS=(
+    "vggsfm"
+    "flowmap"
+    "acezero"
+    "glomap"
+)
+
 # Get arg or default is nerfacto
 METHOD=${1:-"nerfacto"}
 
 # Make sure we are in the root directory of the project
 cd "$(dirname "$0")/.." || exit
 
-# VGGSfm
-for scene in "${SCENES[@]}"; do
-  # Check if the estimated model exists
-  if [ ! -d "data/results/vggsfm/ETH3D/${scene}/colmap/sparse/0" ]; then
-    echo "Warning: VGGSfm model not found for ${scene}. Skipping..."
-    continue
-  fi
-  echo "VGGSfm: Processing ${scene}"
-  python src/run_nerfstudio.py --dataset-path data/datasets/ETH3D/${scene} --results-path data/results/vggsfm/ETH3D/${scene}/colmap/sparse/0 --method ${METHOD}
+# ETH3D
+for sfm_method in "${SFM_METHODS[@]}"; do
+  for scene in "${ETH3D_SCENES[@]}"; do
+    # Check if the estimated model exists
+    if [ ! -d "data/results/${sfm_method}/ETH3D/${scene}/colmap/sparse/0" ]; then
+      echo "Warning: ${sfm_method} model not found for ${scene}. Skipping..."
+      continue
+    fi
+    echo "${sfm_method}: Processing ${scene}"
+    python src/run_nerfstudio.py --dataset-path data/datasets/ETH3D/${scene} --results-path data/results/${sfm_method}/ETH3D/${scene}/colmap/sparse/0 --method ${METHOD}
+  done
 done
 
-# Flowmap
-for scene in "${SCENES[@]}"; do
-  # Check if the estimated model exists
-  if [ ! -d "data/results/flowmap/ETH3D/${scene}/colmap/sparse/0" ]; then
-    echo "Warning: Flowmap model not found for ${scene}. Skipping..."
-    continue
-  fi
-  echo "Flowmap: Processing ${scene}"
-  python src/run_nerfstudio.py --dataset-path data/datasets/ETH3D/${scene} --results-path data/results/flowmap/ETH3D/${scene}/colmap/sparse/0 --method ${METHOD}
+# MipNerf360
+for sfm_method in "${SFM_METHODS[@]}"; do
+  for scene in "${MIP_NERF_360_SCENE[@]}"; do
+    # Check if the estimated model exists
+    if [ ! -d "data/results/${sfm_method}/MipNerf360/${scene}/colmap/sparse/0" ]; then
+      echo "Warning: ${sfm_method} model not found for ${scene}. Skipping..."
+      continue
+    fi
+    echo "${sfm_method}: Processing ${scene}"
+    python src/run_nerfstudio.py --dataset-path data/datasets/MipNerf360/${scene} --results-path data/results/${sfm_method}/MipNerf360/${scene}/colmap/sparse/0 --method ${METHOD}
+  done
 done
 
-# AceZero
-for scene in "${SCENES[@]}"; do
-  # Check if the estimated model exists
-  if [ ! -d "data/results/acezero/ETH3D/${scene}/colmap/sparse/0" ]; then
-    echo "Warning: AceZero model not found for ${scene}. Skipping..."
-    continue
-  fi
-  echo "AceZero: Processing ${scene}"
-  python src/run_nerfstudio.py --dataset-path data/datasets/ETH3D/${scene} --results-path data/results/acezero/ETH3D/${scene}/colmap/sparse/0 --method ${METHOD}
-done
-
-# Glomap
-for scene in "${SCENES[@]}"; do
-  # Check if the estimated model exists
-  if [ ! -d "data/results/glomap/ETH3D/${scene}/colmap/sparse/0" ]; then
-    echo "Warning: Glomap model not found for ${scene}. Skipping..."
-    continue
-  fi
-  echo "Glomap: Processing ${scene}"
-  python src/run_nerfstudio.py --dataset-path data/datasets/ETH3D/${scene} --results-path data/results/glomap/ETH3D/${scene}/colmap/sparse/0 --method ${METHOD}
-done
