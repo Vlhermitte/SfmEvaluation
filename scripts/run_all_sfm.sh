@@ -7,7 +7,9 @@
 #SBATCH --partition=1day            # Use the '1day' partition
 #SBATCH --gres=gpu:a16:1            # Request 1 GPU (a16)
 #SBATCH --mem=32G                   # Request 32 GB of RAM
-#SBATCH --cpus-per-task=12          # Request 12 CPUs
+#SBATCH --cpus-per-task=8          # Request 8 CPUs
+#SBATCH --mail-user=lhermval@cvut.cz
+#SBATCH --mail-type=ALL
 
 ETH3D_SCENES=(
     "courtyard"
