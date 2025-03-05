@@ -59,7 +59,7 @@ for sfm_method in "${SFM_METHODS[@]}"; do
       continue
     fi
     echo "${sfm_method}: Processing ${scene}"
-    bash script/run_${sfm_method}.sh ${base_data_path}/datasets/ETH3D/${scene}/images ${base_data_path}/results/${sfm_method}/ETH3D/${scene}/colmap/sparse/0
+    bash scripts/run_${sfm_method}.sh ${base_data_path}/datasets/ETH3D/${scene}/images ${base_data_path}/results/${sfm_method}/ETH3D/${scene}/colmap/sparse/0
   done
 done
 
@@ -72,7 +72,7 @@ for sfm_method in "${SFM_METHODS[@]}"; do
       continue
     fi
     echo "${sfm_method}: Processing ${scene}"
-    bash script/run_${sfm_method}.sh ${base_data_path}/datasets/MipNerf360/${scene}/images ${base_data_path}/results/${sfm_method}/MipNerf360/${scene}/colmap/sparse/0
+    bash scripts/run_${sfm_method}.sh ${base_data_path}/datasets/MipNerf360/${scene}/images ${base_data_path}/results/${sfm_method}/MipNerf360/${scene}/colmap/sparse/0
   done
   echo ##############################################################################################################################
 done
