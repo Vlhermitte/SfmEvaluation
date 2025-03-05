@@ -39,6 +39,9 @@ MIP_NERF_360_SCENE=(
 
 SFM_METHODS=(
     "vggsfm"
+    "flowmap"
+    "acezero"
+    "glomap"
 )
 
 if [ ! -z "$SLURM_JOB_ID" ]; then
