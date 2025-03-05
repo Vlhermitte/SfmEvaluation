@@ -49,11 +49,12 @@ conda activate $conda_env || { echo "Failed to activate conda environment: $cond
 cd acezero
 
 # Timing execution
+parent_dir=$(dirname $out_dir)
 start_time=$(date +%s)
-python ace_zero.py "$scene/*.$image_format" $out_dir --export_point_cloud True
+python ace_zero.py "$scene/*.$image_format" $parent_dir/acezero_format --export_point_cloud True
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))
 
 echo "Elapsed time: $elapsed_time seconds" >> $out_dir/time.txt
 
-python convert_to_colmap.py --src_dir $out_dir
+python convert_to_colmap.py --src_dir $parent_dir/acezero_format --dst_dir $out_dir
