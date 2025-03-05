@@ -69,14 +69,14 @@ for sfm_method in "${SFM_METHODS[@]}"; do
       apptainer exec --nvccli nerfstudio.sif python src/run_nerfstudio.py \
           --dataset-path ${SCENE_PATH} \
           --results-path ${COLMAP_PATH} \
-          --method ${METHOD}
+          --method ${METHOD} \
           --viz False
     else
       # Run the Nerfstudio pipeline directly
       python src/run_nerfstudio.py \
           --dataset-path ${SCENE_PATH} \
           --results-path ${COLMAP_PATH} \
-          --method ${METHOD}
+          --method ${METHOD} \
           --viz False
     fi
   done
