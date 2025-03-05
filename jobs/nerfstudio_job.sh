@@ -43,13 +43,15 @@ SFM_METHODS=(
 
 if [ ! -z "$SLURM_JOB_ID" ]; then
   cd ~/SfmEvaluation
+  DATASET_PATH=~/SfmEvaluation/data/datasets
+  RESULTS_PATH=~/SfmEvaluation/data/results
 else
   cd "$(dirname "$0")/.."
+  DATASET_PATH=data/datasets
+  RESULTS_PATH=data/results
 fi
 
-DATASET_PATH="data/datasets"
-RESULTS_PATH="data/results"
-METHOD="nerfacto"
+METHOD=nerfacto
 
 # ETH3D scenes
 for sfm_method in "${SFM_METHODS[@]}"; do
