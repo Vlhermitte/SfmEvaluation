@@ -9,25 +9,7 @@
 #SBATCH --mem=32G                   # Request 32 GB of RAM
 #SBATCH --cpus-per-task=12          # Request 12 CPUs
 
-# Go to SfmEvaluation directory
-cd /home.nfs/lhermval/SfmEvaluation
-
-source ~/miniconda3/etc/profile.d/conda.sh || { echo "Failed to source conda.sh"; exit 1; }
-
-# Check if the 'flowmap' conda environment exists
-if conda env list | grep -q '^vggsfm_tmp'; then
-    echo "Activating the existing 'vggsfm_tmp' environment..."
-    conda activate vggsfm_tmp || { echo "Failed to activate conda environment: vggsfm_tmp"; exit 1; }
-else
-    echo "Creating a new 'vggsfm_tmp' conda environment..."
-    cd /home.nfs/lhermval/SfmEvaluation/vggsfm
-    source install.sh
-    python -m pip install -e .
-    cd /home.nfs/lhermval/SfmEvaluation/
-fi
-
-# Run flowmap on all scene.
-SCENES=(
+ETH3D_SCENES=(
     "courtyard"
     "delivery_area"
     "electro"
@@ -43,25 +25,42 @@ SCENES=(
     "terrains"
 )
 
-cd /home.nfs/lhermval/SfmEvaluation
+MIP_NERF_360_SCENE=(
+  "bicycle"
+  "bonsai"
+  "counter"
+  "garden"
+  "kitchen"
+  "room"
+  "stump"
+)
+
+DATASETS_DIR="data/datasets"
 
 # Base output directory
 OUT_DIR="data/results/vggsfm"
 
 # Run the VGGSfm pipeline for each scene
-for SCENE in "${SCENES[@]}"; do
+for SCENE in "${ETH3D_SCENES[@]}"; do
     echo "Processing scene: $SCENE"
-    OUTPUT_DIR="${OUT_DIR}/${SCENE}"
 
     # Check if the output directory already exists
-    if [ -d "$OUTPUT_DIR" ]; then
+    if [ -d "${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0" ]; then
         echo "Output directory exists. Overwritting scene: $SCENE"
+    else
+        mkdir -p ${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0
     fi
+    start_time=$(date +%s)
 
-    python ./vggsfm/demo.py \
+    python vggsfm/demo.py \
       query_method=sp+aliked camera_type=SIMPLE_RADIAL \
-      SCENE_DIR=datasets/ETH3D/$SCENE/ \  # vggsfm assume image to be an images directory
-      OUTPUT_DIR=$OUTPUT_DIR/colmap/
+      SCENE_DIR=${DATASETS_DIR}/ETH3D/$SCENE/ \  # vggsfm assume image to be an images directory
+      OUTPUT_DIR=${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0
+
+    end_time=$(date +%s)
+    elapsed_time=$(( end_time - start_time ))
+
+    echo "Elapsed time: $elapsed_time seconds" >> ${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0/time.txt
 
     if [ $? -eq 0 ]; then
         echo "Finished processing scene: $SCENE"
@@ -71,5 +70,31 @@ for SCENE in "${SCENES[@]}"; do
 done
 
 echo "All scenes processed."
+
+for SCENE in "${MIP_NERF_360_SCENE[@]}"; do
+    echo "Processing scene: $SCENE"
+
+    # Check if the output directory already exists
+    if [ -d "${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0" ]; then
+        echo "Output directory exists. Overwritting scene: $SCENE"
+    else
+        mkdir -p ${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0
+    fi
+    start_time=$(date +%s)
+
+    python vggsfm/demo.py \
+      query_method=sp+aliked camera_type=SIMPLE_RADIAL \
+      SCENE_DIR=${DATASETS_DIR}/MipNerf360/$SCENE/ \  # vggsfm assume image to be an images directory
+      OUTPUT_DIR=${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0
+
+    end_time=$(date +%s)
+    echo "Elapsed time: $elapsed_time seconds" >> ${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0/time.txt
+
+    if [ $? -eq 0 ]; then
+        echo "Finished processing scene: $SCENE"
+    else
+        echo "Error occurred while processing scene: $SCENE"
+    fi
+done
 
 
