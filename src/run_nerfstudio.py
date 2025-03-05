@@ -112,7 +112,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--pipeline.model.camera-optimizer.mode off " # We do not want to optimize the camera parameters
         f"{'--viewer.make-share-url True' if viz else ''} "
         f"--viewer.quit-on-train-completion True "
-        f"--logging.local-writer.max-log-size={'10' if viz else '0'} " # Set to 0 to disable logging
+        f"--logging.local-writer.enable={'True' if viz else 'False'} " # Enable local writer for visualization
         f"--experiment-name nerfstudio " # To store the results in a directory nerfstudio instead of the default name 'unnamed'
         f"--output-dir {results_path} "
         f"--timestamp run "
