@@ -72,7 +72,7 @@ def downscale_images(dataset_path: Path, factor: int) -> None:
         image_out = downscaled_dir / image_name
         downscale_single_image(image_path, image_out, factor)
 
-def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfacto', viz: bool=False) -> None:
+def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfacto', viz: bool=True) -> None:
     _logger.info(f"Compute downscaling factor for {dataset_path} ...")
     # max resolution of 1600px, which is the default of nerfstudio
     downscale_factor = compute_downscale_factor(dataset_path, max_resolution=1600)
@@ -112,6 +112,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--pipeline.model.camera-optimizer.mode off " # We do not want to optimize the camera parameters
         f"{'--viewer.make-share-url True' if viz else ''} "
         f"--viewer.quit-on-train-completion True "
+        f"--logging.local-writer.max-log-size={'10' if viz else '0'} " # Set to 0 to disable logging
         f"--experiment-name nerfstudio " # To store the results in a directory nerfstudio instead of the default name 'unnamed'
         f"--output-dir {results_path} "
         f"--timestamp run "
@@ -180,7 +181,7 @@ if __name__ == '__main__':
         "--viz",
         type=bool,
         required=False,
-        default=False,
+        default=True,
         help="Whether to visualize the results"
     )
 
