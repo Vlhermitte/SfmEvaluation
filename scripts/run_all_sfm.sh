@@ -44,16 +44,22 @@ SFM_METHODS=(
     "glomap"
 )
 
+if [ ! -z "$SLURM_JOB_ID" ]; then
+  cd ~/SfmEvaluation
+  base_data_path=~/SfmEvaluation/data
+else
+  base_data_path=../data
+fi
 
 for sfm_method in "${SFM_METHODS[@]}"; do
   for scene in "${ETH3D_SCENES[@]}"; do
     # Check if the estimated model exists
-    if [ ! -d "../data/datasets/ETH3D/${scene}" ]; then
-      echo "Warning: No dataset found for ../data/datasets/ETH3D/${scene}. Skipping..."
+    if [ ! -d "${base_data_path}/datasets/ETH3D/${scene}" ]; then
+      echo "Warning: No dataset found for ${base_data_path}/datasets/ETH3D/${scene}. Skipping..."
       continue
     fi
     echo "${sfm_method}: Processing ${scene}"
-    bash ./run_${sfm_method}.sh ../data/datasets/ETH3D/${scene}/images ../data/results/${sfm_method}/ETH3D/${scene}/colmap/sparse/0
+    bash ./run_${sfm_method}.sh ${base_data_path}/datasets/ETH3D/${scene}/images ${base_data_path}/results/${sfm_method}/ETH3D/${scene}/colmap/sparse/0
   done
 done
 
@@ -61,12 +67,12 @@ done
 for sfm_method in "${SFM_METHODS[@]}"; do
   for scene in "${MIP_NERF_360_SCENE[@]}"; do
     # Check if the estimated model exists
-    if [ ! -d "../data/datasets/MipNerf360/${scene}" ]; then
-      echo "Warning: No dataset found for ../data/datasets/MipNerf360/${scene}. Skipping..."
+    if [ ! -d "${base_data_path}/datasets/MipNerf360/${scene}" ]; then
+      echo "Warning: No dataset found for ${base_data_path}/datasets/MipNerf360/${scene}. Skipping..."
       continue
     fi
     echo "${sfm_method}: Processing ${scene}"
-    bash ./run_${sfm_method}.sh ../data/datasets/MipNerf360/${scene}/images ../data/results/${sfm_method}/MipNerf360/${scene}/colmap/sparse/0
+    bash ./run_${sfm_method}.sh ${base_data_path}/datasets/MipNerf360/${scene}/images ${base_data_path}/results/${sfm_method}/MipNerf360/${scene}/colmap/sparse/0
   done
   echo ##############################################################################################################################
 done
