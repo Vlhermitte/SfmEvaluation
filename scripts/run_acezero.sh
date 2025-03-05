@@ -45,7 +45,7 @@ cd acezero
 
 # Timing execution
 start_time=$(date +%s)
-python ace_zero.py "../$scene/images/*.$image_format" ../$out_dir --export_point_cloud True
+python ace_zero.py "../$scene/*.$image_format" ../$out_dir --export_point_cloud True
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))
 
