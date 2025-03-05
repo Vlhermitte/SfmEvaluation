@@ -66,7 +66,7 @@ for sfm_method in "${SFM_METHODS[@]}"; do
 
     if [ ! -z "$SLURM_JOB_ID" ]; then
       # Run the Apptainer container with Nerfstudio
-      apptainer exec --nvccli nerstudio.sif python src/run_nerfstudio.py \
+      apptainer exec --nvccli nerfstudio.sif python src/run_nerfstudio.py \
           --dataset-path ${SCENE_PATH} \
           --results-path ${COLMAP_PATH} \
           --method ${METHOD}
