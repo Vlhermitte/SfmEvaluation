@@ -112,7 +112,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--pipeline.model.camera-optimizer.mode off " # We do not want to optimize the camera parameters
         f"{'--viewer.make-share-url True' if viz else ''} "
         f"--viewer.quit-on-train-completion True "
-        f"--logging.local-writer.enable={'True' if viz else 'False'} " # Enable local writer for visualization
+        f"--logging.local-writer.no-enable={'False' if viz else 'True'} " # Enable local writer for visualization
         f"--experiment-name nerfstudio " # To store the results in a directory nerfstudio instead of the default name 'unnamed'
         f"--output-dir {results_path} "
         f"--timestamp run "
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     dataset_path = args.dataset_path
     results_path = args.results_path
     method = args.method
-    viz = args.viz
+    viz = bool(args.viz)
 
     # Check that the images are present in the dataset path
     if not os.path.exists(os.path.join(dataset_path, "images")):
