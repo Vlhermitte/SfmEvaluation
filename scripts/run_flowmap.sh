@@ -47,8 +47,8 @@ cd flowmap
 
 # run the FlowMap pipeline
 start_time=$(date +%s)
-python3 -m flowmap.overfit dataset=images dataset.images.root=../$scene  output_dir=../$out_dir
+python3 -m flowmap.overfit dataset=images dataset.images.root=$scene  output_dir=$out_dir
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))
 
-echo "Elapsed time: $elapsed_time seconds" >> ../$out_dir/time.txt
+echo "Elapsed time: $elapsed_time seconds" >> $out_dir/time.txt
