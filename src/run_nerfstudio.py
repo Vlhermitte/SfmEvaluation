@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 from PIL import Image
 from tqdm import tqdm
+import time
 
 from data.read_write_model import read_model, write_model
 
@@ -42,7 +43,7 @@ def downscale_single_image(image_path: Path, output_path: Path, factor: int) -> 
     subprocess.run(ffmpeg_cmd, check=True)
 
 
-def downscale_images(dataset_path: Path, factor: int) -> None:
+def downscale_images(dataset_path: Path, factor: int, viz: bool=True) -> None:
     """Downscale all images in the dataset by the given factor."""
     assert factor > 0, "Downscaling factor should be greater than 0"
 
@@ -67,7 +68,7 @@ def downscale_images(dataset_path: Path, factor: int) -> None:
         images_to_process = list(original_images - processed_images)
 
     # Process images that need downscaling.
-    for image_name in tqdm(images_to_process, desc=f"Downscaling images by a factor of {factor}"):
+    for image_name in tqdm(images_to_process, desc=f"Downscaling images by a factor of {factor}", disable=not viz):
         image_path = images_dir / image_name
         image_out = downscaled_dir / image_name
         downscale_single_image(image_path, image_out, factor)
@@ -77,7 +78,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
     # max resolution of 1600px, which is the default of nerfstudio
     downscale_factor = compute_downscale_factor(dataset_path, max_resolution=1600)
     _logger.info(f"Downscaling factor found : {downscale_factor}")
-    downscale_images(dataset_path, downscale_factor)
+    downscale_images(dataset_path, downscale_factor, viz=viz)
 
     # Find how many CUDA GPUs are available
     _logger.info("Checking for available CUDA GPUs...")
@@ -104,6 +105,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
 
     # Train the NeRF model
     _logger.info(f"Training the model using : {method}")
+    start = time.time()
     # The nerfstudio Args order is important: 1. Nerfstudio Args 2. DataParser Args
     train_cmd = (
         # Nerfstudio Args
@@ -112,24 +114,31 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--pipeline.model.camera-optimizer.mode off " # We do not want to optimize the camera parameters
         f"{'--viewer.make-share-url True' if viz else ''} "
         f"--viewer.quit-on-train-completion True "
-        f"--logging.local-writer.enable {'True' if viz else 'False'} " # Enable local writer for visualization
         f"--experiment-name nerfstudio " # To store the results in a directory nerfstudio instead of the default name 'unnamed'
         f"--output-dir {results_path} "
         f"--timestamp run "
         # DataParser Args
         f"colmap --images-path {dataset_path}/images --colmap-path {results_path}"
     )
-    subprocess.run(train_cmd, shell=True)
+    stdout=subprocess.PIPE if viz else subprocess.DEVNULL
+    subprocess.run(train_cmd, shell=True, stdout=stdout, stderr=stdout)
+    end = time.time()
+    _logger.info(f"Training completed in {end-start:.2f} seconds.")
+    _logger.info(f"Results stored in {results_path}/nerfstudio/{method}/run/")
 
     # # Evaluate the NeRF model
     _logger.info("Evaluating the NeRF model...")
+    start = time.time()
     eval_cmd = [
         f"{CUDA_VISIBLE_DEVICES} ns-eval "
         f"--load-config {results_path}/nerfstudio/{method}/run/config.yml "
         f"--output-path {results_path}/nerfstudio/{method}/run/eval.json "
         f"--render-output-path {results_path}/nerfstudio/{method}/run/renders"
     ]
-    subprocess.run(eval_cmd, shell=True)
+    subprocess.run(eval_cmd, shell=True, stdout=stdout, stderr=stdout)
+    end = time.time()
+    _logger.info(f"Evaluation completed in {end-start:.2f} seconds.")
+    _logger.info(f"Results stored in {results_path}/nerfstudio/{method}/run/eval.json")
 
 def sanity_check_colmap(path: Path) -> None:
     # read the colmap model
@@ -159,7 +168,7 @@ if __name__ == '__main__':
         "--dataset-path",
         type=str,
         required=False,
-        default="../data/datasets/MipNerf360/garden",
+        default="../data/datasets/ETH3D/courtyard",
         help="path to the dataset containing images"
     )
 
@@ -167,7 +176,7 @@ if __name__ == '__main__':
         "--results-path",
         type=str,
         required=False,
-        default="../data/results/glomap/MipNerf360/garden/colmap/sparse/0",
+        default="../data/results/glomap/ETH3D/courtyard/colmap/sparse/0",
         help="path to the results directory containing colmap files."
     )
     parser.add_argument(
