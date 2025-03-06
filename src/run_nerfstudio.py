@@ -135,7 +135,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--output-path {results_path}/nerfstudio/{method}/run/eval.json "
         f"--render-output-path {results_path}/nerfstudio/{method}/run/renders"
     ]
-    subprocess.run(eval_cmd, shell=True, stdout=stdout, stderr=stdout)
+    subprocess.run(eval_cmd, shell=True)
     end = time.time()
     _logger.info(f"Evaluation completed in {end-start:.2f} seconds.")
     _logger.info(f"Results stored in {results_path}/nerfstudio/{method}/run/eval.json")
