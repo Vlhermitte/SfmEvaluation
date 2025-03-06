@@ -151,7 +151,7 @@ def sanity_check_colmap(path: Path) -> None:
     cameras, images, points3D = read_model(path, detect_colmap_format(path))
 
     # check that the model is not empty
-    if len(cameras) == 0 or len(images) == 0 or len(points3D) == 0:
+    if len(cameras) == 0 or len(images) == 0:
         _logger.error(f"Error: The colmap model at {path} is empty. Please check the results path and try again.")
         exit(1)
 
