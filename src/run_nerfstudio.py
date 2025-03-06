@@ -10,6 +10,7 @@ from tqdm import tqdm
 import time
 
 from data.read_write_model import read_model, write_model
+from utils.common import detect_colmap_format
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -136,9 +137,14 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--render-output-path {results_path}/nerfstudio/{method}/run/renders"
     ]
     subprocess.run(eval_cmd, shell=True)
+
     end = time.time()
-    _logger.info(f"Evaluation completed in {end-start:.2f} seconds.")
-    _logger.info(f"Results stored in {results_path}/nerfstudio/{method}/run/eval.json")
+    # Check if evaluation was successful
+    if not os.path.exists(f"{results_path}/nerfstudio/{method}/run/eval.json"):
+        _logger.error(f"Error: {results_path}/nerfstudio/{method}/run/eval.json not found. Evaluation failed.")
+    else:
+        _logger.info(f"Evaluation completed in {end-start:.2f} seconds.")
+        _logger.info(f"Results stored in {results_path}/nerfstudio/{method}/run/eval.json")
 
 def sanity_check_colmap(path: Path) -> None:
     # read the colmap model
