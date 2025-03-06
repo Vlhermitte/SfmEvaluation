@@ -75,6 +75,8 @@ def downscale_images(dataset_path: Path, factor: int, viz: bool=True) -> None:
         downscale_single_image(image_path, image_out, factor)
 
 def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfacto', viz: bool=True) -> None:
+    _logger.info(f"Running NeRFStudio for {results_path} ...")
+
     _logger.info(f"Compute downscaling factor for {dataset_path} ...")
     # max resolution of 1600px, which is the default of nerfstudio
     downscale_factor = compute_downscale_factor(dataset_path, max_resolution=1600)
