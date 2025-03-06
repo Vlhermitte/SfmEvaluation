@@ -148,6 +148,8 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         _logger.info(f"Evaluation completed in {end-start:.2f} seconds.")
         _logger.info(f"Results stored in {results_path}/nerfstudio/{method}/run/eval.json")
 
+    _logger.info("#"*50)
+
 def sanity_check_colmap(path: Path) -> None:
     # read the colmap model
     cameras, images, points3D = read_model(path, detect_colmap_format(path))
