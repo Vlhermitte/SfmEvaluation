@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH --job-name=vggsfm_ETH3D
-#SBATCH --output=vggsfm_ETH3D.out
-#SBATCH --error=vggsfm_ETH3D.err
+#SBATCH --job-name=vggsfm_job
+#SBATCH --output=vggsfm_job.out
+#SBATCH --error=vggsfm_job.err
 #SBATCH --time=08:00:00             # Request 8 hours of runtime
 #SBATCH --partition=1day            # Use the '1day' partition
 #SBATCH --gres=gpu:a16:1            # Request 1 GPU (a16)
