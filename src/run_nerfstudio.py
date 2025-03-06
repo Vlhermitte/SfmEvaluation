@@ -173,6 +173,16 @@ def sanity_check_colmap(path: Path) -> None:
 
 
 if __name__ == '__main__':
+    def str2bool(v):
+        if isinstance(v, bool):
+            return v
+        if v.lower() in ("yes", "true", "t", "1"):
+            return True
+        elif v.lower() in ("no", "false", "f", "0"):
+            return False
+        else:
+            raise argparse.ArgumentTypeError("Boolean value expected.")
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--dataset-path",
@@ -198,7 +208,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "--viz",
-        type=bool,
+        type=str2bool,
         required=False,
         default=True,
         help="Whether to visualize the results"
@@ -208,7 +218,7 @@ if __name__ == '__main__':
     dataset_path = args.dataset_path
     results_path = args.results_path
     method = args.method
-    viz = bool(args.viz)
+    viz = args.viz
 
     # Check that the images are present in the dataset path
     if not os.path.exists(os.path.join(dataset_path, "images")):
