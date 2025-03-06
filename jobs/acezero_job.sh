@@ -1,33 +1,16 @@
 #!/bin/bash
 
-#SBATCH --job-name=acezero_ETH3D
-#SBATCH --output=acezero_ETH3D.out
-#SBATCH --error=acezero_ETH3D.err
+#SBATCH --job-name=acezero_job
+#SBATCH --output=acezero_job.out
+#SBATCH --error=acezero_job.err
 #SBATCH --time=08:00:00             # Request 8 hours of runtime
 #SBATCH --partition=1day            # Use the '1day' partition
 #SBATCH --gres=gpu:a16:1            # Request 1 GPU (a16)
 #SBATCH --mem=32G                   # Request 32 GB of RAM
 #SBATCH --cpus-per-task=12          # Request 12 CPUs
 
-# Go to SfmEvaluation directory
-cd /home.nfs/lhermval/SfmEvaluation
 
-source ~/miniconda3/etc/profile.d/conda.sh || { echo "Failed to source conda.sh"; exit 1; }
-
-# Check if the 'flowmap' conda environment exists
-if conda env list | grep -q '^ace0'; then
-    echo "Activating the existing 'ace0' environment..."
-    conda activate ace0 || { echo "Failed to activate conda environment: ace0"; exit 1; }
-else
-    echo "Creating a new 'ace0' conda environment..."
-    cd acezero
-    conda create -n ace0 -f environment.yml
-    conda activate ace0
-    cd ..
-fi
-
-# Run flowmap on all scene.
-SCENES=(
+ETH3D_SCENES=(
     "courtyard"
     "delivery_area"
     "electro"
@@ -43,26 +26,44 @@ SCENES=(
     "terrains"
 )
 
-cd /home.nfs/lhermval/SfmEvaluation/acezero
+MIP_NERF_360_SCENE=(
+  "bicycle"
+  "bonsai"
+  "counter"
+  "garden"
+  "kitchen"
+  "room"
+  "stump"
+)
+
+DATASETS_DIR="data/datasets"
 
 # Base output directory
-OUT_DIR="../data/results/acezero"
+OUT_DIR="data/results/acezero"
 
-# Run the FlowMap pipeline for each scene
-for SCENE in "${SCENES[@]}"; do
+# Run the VGGSfm pipeline for each scene
+for SCENE in "${ETH3D_SCENES[@]}"; do
     echo "Processing scene: $SCENE"
-    OUTPUT_DIR="${OUT_DIR}/${SCENE}/acezero_format"
 
     # Check if the output directory already exists
-    if [ -d "$OUTPUT_DIR" ]; then
+    if [ -d "${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0" ]; then
         echo "Output directory exists. Overwritting scene: $SCENE"
+    else
+        mkdir -p ${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0
     fi
 
     # Check image format in the scene directory (png, jpg, JPG, etc.)
-    image_format=$(ls ../data/datasets/ETH3D/$SCENE/images | head -n 1 | rev | cut -d'.' -f1 | rev)
+    image_format=$(ls $SCENE | head -n 1 | rev | cut -d'.' -f1 | rev)
 
-    python ace_zero.py "../data/datasets/ETH3D/$SCENE/images/*.$image_format" $OUTPUT_DIR --export_point_cloud True
-    python convert_to_colmap.py --src_dir $OUTPUT_DIR
+    start_time=$(date +%s)
+
+    python acezero/ace_zero.py "${DATASETS_DIR}/ETH3D/$SCENE/images/*.$image_format" ${OUT_DIR}/ETH3D/${SCENE}/acezero_format --export_point_cloud True
+
+    end_time=$(date +%s)
+    elapsed_time=$(( end_time - start_time ))
+    echo "Elapsed time: $elapsed_time seconds" >> ${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0/time.txt
+
+    python acezero/convert_to_colmap.py --src_dir ${OUT_DIR}/ETH3D/${SCENE}/acezero_format --dst_dir ${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0
 
     if [ $? -eq 0 ]; then
         echo "Finished processing scene: $SCENE"
@@ -72,5 +73,35 @@ for SCENE in "${SCENES[@]}"; do
 done
 
 echo "All scenes processed."
+
+for SCENE in "${MIP_NERF_360_SCENE[@]}"; do
+    echo "Processing scene: $SCENE"
+
+    # Check if the output directory already exists
+    if [ -d "${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0" ]; then
+        echo "Output directory exists. Overwritting scene: $SCENE"
+    else
+        mkdir -p ${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0
+    fi
+
+    # Check image format in the scene directory (png, jpg, JPG, etc.)
+    image_format=$(ls $SCENE | head -n 1 | rev | cut -d'.' -f1 | rev)
+
+    start_time=$(date +%s)
+
+    python acezero/ace_zero.py "${DATASETS_DIR}/MipNerf360/$SCENE/images/*.$image_format" ${OUT_DIR}/MipNerf360/${SCENE}/acezero_format --export_point_cloud True
+
+    end_time=$(date +%s)
+    elapsed_time=$(( end_time - start_time ))
+    echo "Elapsed time: $elapsed_time seconds" >> ${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0/time.txt
+
+    python acezero/convert_to_colmap.py --src_dir ${OUT_DIR}/MipNerf360/${SCENE}/acezero_format --dst_dir ${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0
+
+    if [ $? -eq 0 ]; then
+        echo "Finished processing scene: $SCENE"
+    else
+        echo "Error occurred while processing scene: $SCENE"
+    fi
+done
 
 
