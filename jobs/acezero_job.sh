@@ -41,7 +41,7 @@ DATASETS_DIR="data/datasets"
 # Base output directory
 OUT_DIR="data/results/acezero"
 
-# Run the VGGSfm pipeline for each scene
+# ETH3D
 for SCENE in "${ETH3D_SCENES[@]}"; do
     echo "Processing scene: $SCENE"
 
@@ -72,8 +72,8 @@ for SCENE in "${ETH3D_SCENES[@]}"; do
     fi
 done
 
-echo "All scenes processed."
 
+# MIP_NERF_360
 for SCENE in "${MIP_NERF_360_SCENE[@]}"; do
     echo "Processing scene: $SCENE"
 
