@@ -95,7 +95,7 @@ glomap mapper \
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))
 
-echo "Elapsed time: $elapsed_time seconds" >> ${out_dir}/time.txt
+echo "Elapsed time: $elapsed_time seconds" >> ${out_dir}/sparse/0/time.txt
 
 # Disable for now
 #mkdir ${out_dir}/dense
