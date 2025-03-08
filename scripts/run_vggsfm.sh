@@ -1,5 +1,14 @@
 #!/bin/bash
 
+#SBATCH --job-name=vggsfm_job
+#SBATCH --output=vggsfm_job.out
+#SBATCH --error=vggsfm_job.err
+#SBATCH --time=04:00:00
+#SBATCH --partition=fast
+#SBATCH --gres=gpu:a16:1
+#SBATCH --mem=24G
+#SBATCH --cpus-per-task=8
+
 if [ ! -z "$SLURM_JOB_ID" ]; then
     echo "Running on a Slurm-managed system. Loading required modules..."
     module load Anaconda3
