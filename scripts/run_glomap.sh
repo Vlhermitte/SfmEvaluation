@@ -1,5 +1,14 @@
 #!/bin/bash
 
+#SBATCH --job-name=glomap_job
+#SBATCH --output=glomap_job.out
+#SBATCH --error=glomap_job.err
+#SBATCH --time=04:00:00
+#SBATCH --partition=fast
+#SBATCH --gres=gpu:a16:1
+#SBATCH --mem=24G
+#SBATCH --cpus-per-task=12
+
 # Check if the script is running on a Slurm device
 if [ ! -z "$SLURM_JOB_ID" ]; then
     echo "Running on a Slurm-managed system. Loading required modules..."
@@ -45,26 +54,27 @@ if [ ! -d $out_dir ]; then
     mkdir -p $out_dir
 fi
 
-# Check if the output directory is not empty and prompt for overwrite
-if [ -d "$out_dir" ] && [ "$(ls -A "$out_dir")" ]; then
-    echo "Output directory '$out_dir' is not empty. Do you want to overwrite? (y/n)"
-    read -r answer
-    case "$answer" in
-        y|Y)
-            echo "Overwriting '$out_dir'..."
-            rm -rf "$out_dir"/*  # Clear the directory
-            ;;
-        n|N)
-            echo "Exiting without making changes."
-            exit 1
-            ;;
-        *)
-            echo "Invalid input. Exiting."
-            exit 1
-            ;;
-    esac
+if [ -z "$SLURM_JOB_ID" ]; then
+  # Check if the output directory is not empty and prompt for overwrite
+  if [ -d "$out_dir" ] && [ "$(ls -A "$out_dir")" ]; then
+      echo "Output directory '$out_dir' is not empty. Do you want to overwrite? (y/n)"
+      read -r answer
+      case "$answer" in
+          y|Y)
+              echo "Overwriting '$out_dir'..."
+              rm -rf "$out_dir"/*  # Clear the directory
+              ;;
+          n|N)
+              echo "Exiting without making changes."
+              exit 1
+              ;;
+          *)
+              echo "Invalid input. Exiting."
+              exit 1
+              ;;
+      esac
+  fi
 fi
-
 
 
 start_time=$(date +%s)
