@@ -229,6 +229,42 @@ download_mipnerf360() {
 }
 
 #######################################
+# LaMAR Functions
+#######################################
+download_lamar() {
+    local lamar_dir="data/datasets/LaMAR"
+    local url="https://cvg-data.inf.ethz.ch/lamar/benchmark/"
+
+    echo "Processing LaMAR dataset..."
+
+    # Check if the dataset is already downloaded and extracted
+    if [ -d "${lamar_dir}" ] && [ "$(ls -A "${lamar_dir}")" ]; then
+        echo "LaMAR dataset already exists. Skipping download..."
+        return
+    fi
+
+    for scene in "CAB" "HGE" "LIN"; do
+      if [ ! -d "$scene.zip" ]; then
+        wget --progress=bar:force --show-progress "$url/$scene.zip" || {
+          echo "Failed to download LaMAR dataset"
+          return 1
+        }
+      else
+        echo "LaMAR dataset already exists. Skipping download..."
+      fi
+      verify_download "$scene.zip"
+      unzip -q "$scene.zip" -d "$lamar_dir" || {
+        echo "Extraction failed for LaMAR dataset"
+        return 1
+      }
+      rm "$scene.zip"
+    done
+
+    echo "LaMAR dataset downloaded and extracted to ${lamar_dir}"
+}
+
+
+#######################################
 # Main Execution
 #######################################
 main() {
@@ -238,8 +274,9 @@ main() {
     echo "Which dataset(s) do you want to download?"
     echo "1) ETH3D dataset"
     echo "2) MipNerf360 dataset"
-    echo "3) Both datasets"
-    read -rp "Enter your choice (1/2/3): " dataset_choice
+    echo "3) LaMAR dataset"
+    echo "4) All datasets"
+    read -rp "Enter your choice (1/2/3/4): " dataset_choice
     echo
 
     # Check for wget (required for both)
@@ -266,6 +303,14 @@ main() {
             download_mipnerf360
             ;;
         3)
+            # Check for unzip (required for LaMAR)
+            if ! command -v unzip >/dev/null; then
+                echo "Error: unzip is not installed. Please install unzip."
+                exit 1
+            fi
+            download_lamar
+            ;;
+        4)
             # Both datasets require their respective tools
             if ! command -v 7z >/dev/null; then
                 echo "Error: 7z is not installed. Please install 7z."
