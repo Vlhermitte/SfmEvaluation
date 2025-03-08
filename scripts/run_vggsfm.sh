@@ -38,12 +38,14 @@ if [ ! -d $out_dir ]; then
 fi
 
 # Check if the output directory is empty ask to overwrite
-if [ "$(ls -A $out_dir)" ]; then
-    echo "Output directory is not empty. Do you want to overwrite? (y/n)"
-    read answer
-    if [ "$answer" != "y" ]; then
-        exit 1
-    fi
+if [ -z "$SLURM_JOB_ID" ]; then
+  if [ "$(ls -A $out_dir)" ]; then
+      echo "Output directory is not empty. Do you want to overwrite? (y/n)"
+      read answer
+      if [ "$answer" != "y" ]; then
+          exit 1
+      fi
+  fi
 fi
 
 # check if the scene directory has a subdirectory named 'images'
