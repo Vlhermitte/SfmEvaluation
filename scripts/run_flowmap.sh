@@ -1,5 +1,14 @@
 #!/bin/bash
 
+#SBATCH --job-name=flowmap_job
+#SBATCH --output=flowmap_job.out
+#SBATCH --error=flowmap_job.err
+#SBATCH --time=04:00:00
+#SBATCH --partition=fast
+#SBATCH --gres=gpu:a16:1
+#SBATCH --mem=24G
+#SBATCH --cpus-per-task=12
+
 if [ ! -z "$SLURM_JOB_ID" ]; then
     echo "Running on a Slurm-managed system. Loading required modules..."
     module load Anaconda3
@@ -28,15 +37,16 @@ if [ ! -d $out_dir ]; then
     mkdir -p $out_dir
 fi
 
-# Check if the output directory is empty ask to overwrite
-if [ "$(ls -A $out_dir)" ]; then
-    echo "Output directory is not empty. Do you want to overwrite? (y/n)"
-    read answer
-    if [ "$answer" != "y" ]; then
-        exit 1
-    fi
+if [ -z "$SLURM_JOB_ID" ]; then
+  # Check if the output directory is empty ask to overwrite
+  if [ "$(ls -A $out_dir)" ]; then
+      echo "Output directory is not empty. Do you want to overwrite? (y/n)"
+      read answer
+      if [ "$answer" != "y" ]; then
+          exit 1
+      fi
+  fi
 fi
-
 
 conda_env="flowmap"
 echo "Activating conda environment: $conda_env"
