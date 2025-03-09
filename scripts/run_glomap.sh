@@ -34,6 +34,7 @@ fi
 
 scene=$1
 out=$2
+matcher=${3:-exhaustive_matcher}
 
 # Check if the scene and output directory are provided
 if [ -z "$scene" ]; then
@@ -92,8 +93,8 @@ if [ ! -f ${DATABASE} ]; then
 	--ImageReader.single_camera 1 \
 	--SiftExtraction.use_gpu 1
 
-  echo "COLMAP exhaustive_matcher..."
-  colmap exhaustive_matcher \
+  echo "COLMAP ${matcher}..."
+  colmap "${matcher}" \
     --database_path ${DATABASE} \
     --SiftMatching.use_gpu 1
 fi
