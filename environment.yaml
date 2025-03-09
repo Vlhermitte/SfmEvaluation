@@ -10,5 +10,6 @@ dependencies:
   - tqdm
   - ffmpeg
   - pip
-    - opencv-python
-    -e git+https://github.com/microsoft/lamar-benchmark.git#egg=lamar[scantools]
+  - pip:
+      - opencv-python
+      - git+https://github.com/Vlhermitte/lamar-benchmark.git#egg=lamar[scantools]
