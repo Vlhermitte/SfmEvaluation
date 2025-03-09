@@ -83,6 +83,8 @@ start_time=$(date +%s)
 DATABASE=${out_dir}/sample_reconstruction.db
 # If database does not exist, create a new database
 if [ ! -f ${DATABASE} ]; then
+  echo "Creating new database: ${DATABASE}"
+  echo "COLMAP feature_extractor..."
   colmap feature_extractor \
     --database_path ${DATABASE} \
     --image_path ${scene} \
@@ -90,6 +92,7 @@ if [ ! -f ${DATABASE} ]; then
 	--ImageReader.single_camera 1 \
 	--SiftExtraction.use_gpu 1
 
+  echo "COLMAP exhaustive_matcher..."
   colmap exhaustive_matcher \
     --database_path ${DATABASE} \
     --SiftMatching.use_gpu 1
@@ -97,6 +100,7 @@ fi
 
 # GLOMAP execution
 mkdir ${out_dir}/sparse
+echo "GLOMAP mapper..."
 glomap mapper \
     --database_path ${DATABASE} \
     --image_path ${scene} \
