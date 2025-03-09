@@ -100,7 +100,7 @@ if [ ! -f ${DATABASE} ]; then
 fi
 
 # GLOMAP execution
-mkdir ${out_dir}/sparse
+mkdir -p ${out_dir}/sparse
 echo "GLOMAP mapper..."
 glomap mapper \
     --database_path ${DATABASE} \
@@ -113,7 +113,7 @@ elapsed_time=$(( end_time - start_time ))
 echo "Elapsed time: $elapsed_time seconds" >> ${out_dir}/sparse/0/time.txt
 
 # Disable for now
-#mkdir ${out_dir}/dense
+#mkdir -p ${out_dir}/dense
 #colmap image_undistorter \
 #    --image_path ${scene} \
 #    --input_path ${out_dir}/sparse/0 \
