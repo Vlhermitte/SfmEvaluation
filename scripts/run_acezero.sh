@@ -57,15 +57,19 @@ echo "Activating conda environment: $conda_env"
 source "$(conda info --base)/etc/profile.d/conda.sh" || { echo "Failed to source conda.sh"; exit 1; }
 conda activate $conda_env || { echo "Failed to activate conda environment: $conda_env"; exit 1; }
 
-cd acezero
+cd acezero || { echo "Failed to change directory to acezero"; exit 1; }
 
 # Timing execution
 parent_dir=$(dirname $out_dir)
+mkdir -p ../$out_dir
+mkdir -p ../$parent_dir/acezero_format
+
+echo "Running ACE-Zero on $scene"
 start_time=$(date +%s)
-python ace_zero.py "$scene/*.$image_format" $parent_dir/acezero_format --export_point_cloud True
+python ace_zero.py "../$scene/*.$image_format" ../$parent_dir/acezero_format --export_point_cloud True
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))
 
-echo "Elapsed time: $elapsed_time seconds" >> $out_dir/time.txt
+echo "Elapsed time: $elapsed_time seconds" >> ../$out_dir/time.txt
 
-python convert_to_colmap.py --src_dir $parent_dir/acezero_format --dst_dir $out_dir
+python convert_to_colmap.py --src_dir ../$parent_dir/acezero_format --dst_dir ../$out_dir
