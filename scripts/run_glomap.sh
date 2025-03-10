@@ -18,7 +18,12 @@ if [ ! -z "$SLURM_JOB_ID" ]; then
     module load Eigen
     module load FLANN
     module load COLMAP
-    export PATH=~/SfmEvaluation/glomap/build/glomap/:$PATH
+    # Module load GLOMAP if available
+    if module avail GLOMAP &> /dev/null; then
+        module load GLOMAP
+    else
+      export PATH=~/SfmEvaluation/glomap/build/glomap/:$PATH
+    fi
 fi
 
 # Verify COLMAP and GLOMAP are executable
