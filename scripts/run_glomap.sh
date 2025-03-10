@@ -3,11 +3,6 @@
 #SBATCH --job-name=glomap_job
 #SBATCH --output=glomap_job.out
 #SBATCH --error=glomap_job.err
-#SBATCH --time=04:00:00
-#SBATCH --partition=fast
-#SBATCH --gres=gpu:a16:1
-#SBATCH --mem=32G
-#SBATCH --cpus-per-task=12
 
 # Check if the script is running on a Slurm device
 if [ ! -z "$SLURM_JOB_ID" ]; then
