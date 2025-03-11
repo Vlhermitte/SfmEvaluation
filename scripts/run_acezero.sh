@@ -20,6 +20,7 @@ log "Starting ACE-Zero pipeline"
 if [ -n "${SLURM_JOB_ID:-}" ]; then
     log "Running on a Slurm-managed system. Loading required modules..."
     module load Anaconda3 || { log "ERROR: Failed to load Anaconda3 module"; exit 1; }
+    module unload SciPy-bundle Pillow
 fi
 
 # Validate input arguments
@@ -28,6 +29,8 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
+# Ensure output directory exists
+mkdir -p "$2"
 scene=$(realpath "$1")  # Convert to absolute path
 out=$(realpath "$2")    # Convert to absolute path
 
@@ -40,8 +43,6 @@ if [ ! -d "$scene" ]; then
     exit 1
 fi
 
-# Ensure output directory exists
-mkdir -p "$out"
 
 # Check if output directory is empty (skip for SLURM jobs)
 if [ -z "${SLURM_JOB_ID:-}" ] && [ "$(ls -A "$out")" ]; then
@@ -86,6 +87,9 @@ if ! conda run -n "$conda_env" python ace_zero.py "$scene/*.$image_format" "$par
     log "ERROR: ACE-Zero execution failed"
     exit 1
 fi
+
+#conda activate "$conda_env"
+#python ace_zero.py "$scene/*.$image_format" "$parent_dir/acezero_format" --export_point_cloud True
 
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))

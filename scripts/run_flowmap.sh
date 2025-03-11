@@ -3,6 +3,7 @@
 #SBATCH --job-name=flowmap_job
 #SBATCH --output=flowmap_job.out
 #SBATCH --error=flowmap_job.err
+#SBATCH --ntasks-per-node=12
 
 # Function to print messages with timestamps
 log() {
@@ -15,6 +16,8 @@ log "Starting FlowMap pipeline"
 if [ -n "${SLURM_JOB_ID:-}" ]; then
     log "Running on a Slurm-managed system. Loading required modules..."
     module load Anaconda3 || { log "ERROR: Failed to load Anaconda3 module"; exit 1; }
+    source $(conda info --base)/etc/profile.d/conda.sh
+    #module load Hydra || { log "ERROR: Failed to load Hydra module"; exit 1; }
 fi
 
 # Validate input arguments
@@ -22,7 +25,8 @@ if [ $# -ne 2 ]; then
     echo "Usage: $0 <scene_dir> <output_dir>"
     exit 1
 fi
-
+# Ensure output directory exists
+mkdir -p "$2"
 scene=$(realpath "$1")  # Convert to absolute path
 out=$(realpath "$2")
 
@@ -35,8 +39,6 @@ if [ ! -d "$scene" ]; then
     exit 1
 fi
 
-# Ensure output directory exists
-mkdir -p "$out"
 
 # Check if output directory is empty (skip for SLURM jobs)
 if [ -z "${SLURM_JOB_ID:-}" ] && [ "$(ls -A "$out")" ]; then
@@ -63,10 +65,13 @@ cd flowmap || { log "ERROR: Failed to change directory to 'flowmap'"; exit 1; }
 # Run the FlowMap pipeline
 start_time=$(date +%s)
 
-if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene" output_dir="$out"; then
-    log "ERROR: FlowMap pipeline execution failed"
-    exit 1
-fi
+#if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene" output_dir="$out"; then
+#    log "ERROR: FlowMap pipeline execution failed"
+#    exit 1
+#fi
+
+conda activate
+python3 -m flowmap.overfit dataset=images dataset.images.root="$scene" output_dir="$out"
 
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))

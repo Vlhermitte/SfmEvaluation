@@ -20,6 +20,8 @@ if [ -z "$scene" ] || [ -z "$out" ]; then
     exit 1
 fi
 
+# Ensure the output directory exists
+mkdir -p "$out"
 scene=$(realpath "$scene")  # Convert to absolute path
 out=$(realpath "$out")
 
@@ -29,8 +31,7 @@ if [ ! -d "$scene" ]; then
     exit 1
 fi
 
-# Ensure the output directory exists
-mkdir -p "$out"
+
 
 # Check if output directory is empty (skip for SLURM jobs)
 if [ -z "${SLURM_JOB_ID:-}" ] && [ "$(ls -A "$out")" ]; then
@@ -65,10 +66,13 @@ fi
 log "Running VGG-SfM pipeline..."
 start_time=$(date +%s)
 
-if ! conda run -n "$conda_env" python vggsfm/demo.py query_method=sp+aliked camera_type=SIMPLE_RADIAL SCENE_DIR="$scene" OUTPUT_DIR="$out"; then
-    log "ERROR: VGG-SfM pipeline execution failed"
-    exit 1
-fi
+#if ! conda run -n "$conda_env" python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene" OUTPUT_DIR="$out"; then
+#    log "ERROR: VGG-SfM pipeline execution failed"
+#    exit 1
+#fi
+
+conda activate "$conda_env"
+python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene" OUTPUT_DIR="$out"
 
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))
