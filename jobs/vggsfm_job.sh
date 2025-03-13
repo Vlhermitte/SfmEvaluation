@@ -56,7 +56,8 @@ process_scene() {
     mkdir -p "$out_dir"
 
     start_time=$(date +%s)
-    if ! conda run -n "$conda_env" python vggsfm/demo.py query_method=sp+aliked camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir"; then
+    log "Running VGG-SfM pipeline on scene: $scene"
+    if ! conda run -n "$conda_env" python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir"; then
         log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
         return
     fi
