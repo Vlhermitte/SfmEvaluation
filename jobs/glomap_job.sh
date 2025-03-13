@@ -37,7 +37,7 @@ process_scene() {
     local dataset=$1
     local scene=$2
     local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
-    local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
+    local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse"
     local database="${OUT_DIR}/${dataset}/${scene}/colmap/sample_reconstruction.db"
 
     log "Processing scene: $scene from $dataset"
@@ -80,7 +80,7 @@ process_scene() {
     elapsed_time=$((end_time - start_time))
 
     # Check if the reconstruction was successful (cameras.bin, images.bin, points3D.bin)
-    if [ ! -f "${out_dir}/cameras.bin" ] || [ ! -f "${out_dir}/images.bin" ] || [ ! -f "${out_dir}/points3D.bin" ]; then
+    if [ ! -f "${out_dir}/0/cameras.bin" ] || [ ! -f "${out_dir}/0/images.bin" ] || [ ! -f "${out_dir}/0/points3D.bin" ]; then
         log "ERROR: GLOMAP pipeline execution failed for scene: $scene"
     fi
 
