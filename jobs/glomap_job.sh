@@ -57,14 +57,14 @@ process_scene() {
       echo "Creating new database: ${database}"
       echo "COLMAP feature_extractor..."
       colmap feature_extractor \
-        --database_path "${database}" \
-        --image_path "${scene}/images" \
+        --database_path ${database} \
+        --image_path ${scene}/images \
         --ImageReader.camera_model SIMPLE_RADIAL \
         --SiftExtraction.use_gpu 1
 
       echo "COLMAP ${matcher}..."
-      colmap "${matcher}" \
-        --database_path "${database}" \
+      colmap ${matcher} \
+        --database_path ${database} \
         --SiftMatching.use_gpu 1
     fi
 
@@ -72,9 +72,9 @@ process_scene() {
     mkdir -p "${out_dir}"
     echo "GLOMAP mapper..."
     glomap mapper \
-      --database_path "${database}" \
-      --image_path "${scene}/images" \
-      --output_path "${out_dir}"
+      --database_path ${database} \
+      --image_path ${scene}/images \
+      --output_path ${out_dir}
     end_time=$(date +%s)
 
     elapsed_time=$((end_time - start_time))
