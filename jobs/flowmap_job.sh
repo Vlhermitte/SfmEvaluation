@@ -29,6 +29,7 @@ MIP_NERF_360_SCENES=(
     "bicycle" "bonsai" "counter" "garden" "kitchen" "room" "stump"
 )
 
+mkdir -p data/results/flowmap
 DATASETS_DIR="$(realpath data/datasets)"
 OUT_DIR="$(realpath data/results/flowmap)"
 
