@@ -14,6 +14,14 @@ log() {
 
 log "Starting VGG-SfM pipeline"
 
+# Ensure SLURM environment loads required modules
+if [ -n "${SLURM_JOB_ID:-}" ]; then
+    log "Running on a Slurm-managed system. Loading required modules..."
+    module load Anaconda3 || { log "ERROR: Failed to load Anaconda3 module"; exit 1; }
+    source $(conda info --base)/etc/profile.d/conda.sh
+    module unload SciPy-bundle
+fi
+
 # Validate input arguments
 if [ -z "$scene" ] || [ -z "$out" ]; then
     echo "Usage: $0 <scene_dir> <output_dir>"
