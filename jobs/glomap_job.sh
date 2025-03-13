@@ -58,7 +58,7 @@ process_scene() {
       echo "COLMAP feature_extractor..."
       colmap feature_extractor \
         --database_path ${database} \
-        --image_path ${scene}/images \
+        --image_path ${scene_dir}/images \
         --ImageReader.camera_model SIMPLE_RADIAL \
         --SiftExtraction.use_gpu 1
 
@@ -73,7 +73,7 @@ process_scene() {
     echo "GLOMAP mapper..."
     glomap mapper \
       --database_path ${database} \
-      --image_path ${scene}/images \
+      --image_path ${scene_dir}/images \
       --output_path ${out_dir}
     end_time=$(date +%s)
 
