@@ -3,93 +3,78 @@
 #SBATCH --job-name=vggsfm_job
 #SBATCH --output=vggsfm_job.out
 #SBATCH --error=vggsfm_job.err
-#SBATCH --time=08:00:00             # Request 8 hours of runtime
-#SBATCH --partition=1day            # Use the '1day' partition
-#SBATCH --gres=gpu:a16:1            # Request 1 GPU (a16)
-#SBATCH --mem=32G                   # Request 32 GB of RAM
-#SBATCH --cpus-per-task=12          # Request 12 CPUs
 
+# Function to print messages with timestamps
+log() {
+    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
+}
 
+log "Starting VGG-SfM batch processing"
+
+# Ensure SLURM environment loads required modules
+if [ -n "${SLURM_JOB_ID:-}" ]; then
+    log "Running on a Slurm-managed system. Loading required modules..."
+    module load Anaconda3 || { log "ERROR: Failed to load Anaconda3 module"; exit 1; }
+    source $(conda info --base)/etc/profile.d/conda.sh
+    module unload SciPy-bundle
+fi
+
+# Define datasets
 ETH3D_SCENES=(
-    "courtyard"
-    "delivery_area"
-    "electro"
-    "facade"
-    "kicker"
-    "meadow"
-    "office"
-    "pipes"
-    "playground"
-    "relief"
-    "relief_2"
-    "terrace"
-    "terrains"
+    "courtyard" "delivery_area" "electro" "facade" "kicker" "meadow"
+    "office" "pipes" "playground" "relief" "relief_2" "terrace" "terrains"
 )
 
-MIP_NERF_360_SCENE=(
-  "bicycle"
-  "bonsai"
-  "counter"
-  "garden"
-  "kitchen"
-  "room"
-  "stump"
+MIP_NERF_360_SCENES=(
+    "bicycle" "bonsai" "counter" "garden" "kitchen" "room" "stump"
 )
 
-DATASETS_DIR="data/datasets"
+DATASETS_DIR="$(realpath data/datasets)"
+OUT_DIR="$(realpath data/results/vggsfm)"
 
-# Base output directory
-OUT_DIR="data/results/vggsfm"
+# Verify Conda environment exists
+conda_env="vggsfm_tmp"
+if ! conda env list | grep -q "$conda_env"; then
+    log "ERROR: Conda environment $conda_env not found."
+    exit 1
+fi
 
-# Run the VGGSfm pipeline for each scene
+# Process each scene
+process_scene() {
+    local dataset=$1
+    local scene=$2
+    local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
+    local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
+
+    log "Processing scene: $scene from $dataset"
+
+    if [ ! -d "$scene_dir" ]; then
+        log "ERROR: Scene directory does not exist: $scene_dir"
+        return
+    fi
+
+    mkdir -p "$out_dir"
+
+    start_time=$(date +%s)
+    if ! conda run -n "$conda_env" python vggsfm/demo.py query_method=sp+aliked camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir"; then
+        log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
+        return
+    fi
+    end_time=$(date +%s)
+
+    elapsed_time=$((end_time - start_time))
+    echo "Elapsed time: $elapsed_time seconds" >> "$out_dir/time.txt"
+    log "Finished processing scene: $scene in $elapsed_time seconds"
+}
+
+# Process ETH3D scenes
 for SCENE in "${ETH3D_SCENES[@]}"; do
-    echo "Processing scene: $SCENE"
-
-    # Check if the output directory already exists
-    if [ -d "${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0" ]; then
-        echo "Output directory exists. Overwritting scene: $SCENE"
-    else
-        mkdir -p ${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0
-    fi
-    start_time=$(date +%s)
-
-    python vggsfm/demo.py query_method=sp+aliked camera_type=SIMPLE_RADIAL SCENE_DIR=${DATASETS_DIR}/ETH3D/$SCENE/ OUTPUT_DIR=${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0
-
-    end_time=$(date +%s)
-    elapsed_time=$(( end_time - start_time ))
-
-    echo "Elapsed time: $elapsed_time seconds" >> ${OUT_DIR}/ETH3D/${SCENE}/colmap/sparse/0/time.txt
-
-    if [ $? -eq 0 ]; then
-        echo "Finished processing scene: $SCENE"
-    else
-        echo "Error occurred while processing scene: $SCENE"
-    fi
+    process_scene "ETH3D" "$SCENE"
 done
 
-echo "All scenes processed."
-
-for SCENE in "${MIP_NERF_360_SCENE[@]}"; do
-    echo "Processing scene: $SCENE"
-
-    # Check if the output directory already exists
-    if [ -d "${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0" ]; then
-        echo "Output directory exists. Overwritting scene: $SCENE"
-    else
-        mkdir -p ${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0
-    fi
-    start_time=$(date +%s)
-
-    python vggsfm/demo.py query_method=sp+aliked camera_type=SIMPLE_RADIAL SCENE_DIR=${DATASETS_DIR}/MipNerf360/$SCENE/ OUTPUT_DIR=${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0
-
-    end_time=$(date +%s)
-    echo "Elapsed time: $elapsed_time seconds" >> ${OUT_DIR}/MipNerf360/${SCENE}/colmap/sparse/0/time.txt
-
-    if [ $? -eq 0 ]; then
-        echo "Finished processing scene: $SCENE"
-    else
-        echo "Error occurred while processing scene: $SCENE"
-    fi
+# Process MipNeRF360 scenes
+for SCENE in "${MIP_NERF_360_SCENES[@]}"; do
+    process_scene "MipNerf360" "$SCENE"
 done
 
-
+log "All scenes processed."
