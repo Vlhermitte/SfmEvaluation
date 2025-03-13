@@ -64,7 +64,14 @@ process_scene() {
     end_time=$(date +%s)
 
     elapsed_time=$((end_time - start_time))
-    echo "Elapsed time: $elapsed_time seconds" >> "$out_dir/time.txt"
+
+    # Check if the reconstruction was successful (images.bin or images.txt should be present)
+    if [ ! -f "${out_dir}/images.bin" ] && [ ! -f "${out_dir}/images.txt" ]; then
+        log "ERROR: VGG-SFM pipeline execution failed for scene: $scene"
+    fi
+
+    gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
+    echo "Elapsed time: ${elapsed_time} seconds on ${gpu_name}" >> "${out_dir}/time.txt"
     log "Finished processing scene: $scene in $elapsed_time seconds"
 }
 
