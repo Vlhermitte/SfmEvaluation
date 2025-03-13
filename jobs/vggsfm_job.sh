@@ -67,7 +67,7 @@ process_scene() {
     elapsed_time=$((end_time - start_time))
 
     # Check if the reconstruction was successful (images.bin or images.txt should be present)
-    if [ ! -f "${out_dir}/images.bin" ] || [ ! -f "${out_dir}/images.txt" ]; then
+    if [ ! -f "${out_dir}/images.bin" ] && [ ! -f "${out_dir}/images.txt" ]; then
         log "ERROR: VGG-SFM pipeline execution failed for scene: $scene"
     fi
 
