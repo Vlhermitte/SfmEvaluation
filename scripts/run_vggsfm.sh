@@ -79,8 +79,8 @@ start_time=$(date +%s)
 #    exit 1
 #fi
 
-conda activate "$conda_env"
-python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene" OUTPUT_DIR="$out"
+# conda activate "$conda_env"
+conda run -n "$conda_env" python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene" OUTPUT_DIR="$out"
 
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))
