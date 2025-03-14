@@ -3,6 +3,13 @@
 #SBATCH --job-name=acezero_job
 #SBATCH --output=acezero_job.out
 #SBATCH --error=acezero_job.err
+#SBATCH --partition=gpu
+#SBATCH --time=24:00:00
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=12
+#SBATCH --mem=32G
+#SBATCH --mail-user=lhermval@cvut.cz
+#SBATCH --mail-type=ALL
 
 # Function to print messages with timestamps
 log() {
