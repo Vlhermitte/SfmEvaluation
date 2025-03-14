@@ -55,6 +55,7 @@ process_scene() {
     local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
     local acezero_format_dir="${OUT_DIR}/${dataset}/${scene}/acezero_format"
+    local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
 
     log "Processing scene: $scene from $dataset"
 
@@ -68,15 +69,26 @@ process_scene() {
     image_format=$(find "$scene_dir/images" -maxdepth 1 -type f | head -n 1 | rev | cut -d'.' -f1 | rev)
     log "Detected image format: .$image_format"
 
+    # Monitor VRAM usage during processing every 0.5 seconds
+    log "Starting VRAM monitoring for scene: $scene"
+    nvidia-smi --query-gpu=timestamp,memory.total,memory.used,memory.free --format=csv -l 0.5 >> "$vram_log" &
+    vram_pid=$!
+
     start_time=$(date +%s)
     log "Running Ace-Zero pipeline on scene: $scene"
     cd acezero || { log "ERROR: Failed to change directory to acezero"; exit 1; }
     if ! conda run -n "$conda_env" python ace_zero.py "$scene_dir/images/*.$image_format" "$acezero_format_dir" --export_point_cloud True; then
         log "ERROR: Ace-Zero pipeline execution failed for scene: $scene"
+        # Stop VRAM monitoring if the process fails
+        kill $vram_pid
     fi
     end_time=$(date +%s)
 
     elapsed_time=$((end_time - start_time))
+
+     # Stop VRAM monitoring
+    log "Stopping VRAM monitoring for scene: $scene"
+    kill $vram_pid
 
     echo "Elapsed time: ${elapsed_time} seconds on ${gpu_name}" >> "${out_dir}/time.txt"
     log "Finished processing scene: $scene in $elapsed_time seconds"
