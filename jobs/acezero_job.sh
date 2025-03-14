@@ -63,7 +63,8 @@ process_scene() {
 
     start_time=$(date +%s)
     log "Running Ace-Zero pipeline on scene: $scene"
-    if ! conda run -n "$conda_env" python acezero/ace_zero.py "$scene_dir/images/*.$image_format" "$acezero_format_dir" --export_point_cloud True; then
+    cd acezero || { log "ERROR: Failed to change directory to acezero"; exit 1; }
+    if ! conda run -n "$conda_env" python ace_zero.py "$scene_dir/images/*.$image_format" "$acezero_format_dir" --export_point_cloud True; then
         log "ERROR: Ace-Zero pipeline execution failed for scene: $scene"
         return
     fi
@@ -75,10 +76,10 @@ process_scene() {
     log "Finished processing scene: $scene in $elapsed_time seconds"
 
     log "Converting to COLMAP format..."
-    if ! conda run -n "$conda_env" python acezero/convert_to_colmap.py --src_dir "$acezero_format_dir" --dst_dir "$out_dir"; then
+    if ! conda run -n "$conda_env" python convert_to_colmap.py --src_dir "$acezero_format_dir" --dst_dir "$out_dir"; then
         log "ERROR: COLMAP conversion failed"
-        exit 1
     fi
+    cd ..
 }
 
 # Process ETH3D scenes
