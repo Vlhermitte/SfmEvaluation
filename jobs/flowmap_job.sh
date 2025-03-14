@@ -58,6 +58,7 @@ process_scene() {
     local scene=$2
     local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
+    local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
 
     log "Processing scene: $scene from $dataset"
 
@@ -71,14 +72,24 @@ process_scene() {
     image_format=$(find "$scene_dir/images" -maxdepth 1 -type f | head -n 1 | rev | cut -d'.' -f1 | rev)
     log "Detected image format: .$image_format"
 
+    # Monitor VRAM usage during processing every 0.5 seconds
+    log "Starting VRAM monitoring for scene: $scene"
+    nvidia-smi --query-gpu=timestamp,memory.total,memory.used,memory.free --format=csv -l 0.5 >> "$vram_log" &
+    vram_pid=$!
+
     start_time=$(date +%s)
     log "Running FlowMap pipeline on scene: $scene"
     if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir"; then
         log "ERROR: FlowMap pipeline execution failed for scene: $scene"
+        # Stop VRAM monitoring if the process fails
+        kill $vram_pid
     fi
     end_time=$(date +%s)
-
     elapsed_time=$((end_time - start_time))
+
+    # Stop VRAM monitoring
+    log "Stopping VRAM monitoring for scene: $scene"
+    kill $vram_pid
 
     # Check if the reconstruction was successful (either images.bin or images.txt should be present)
     if [ ! -f "${out_dir}/images.bin" ] && [ ! -f "${out_dir}/images.txt" ]; then
