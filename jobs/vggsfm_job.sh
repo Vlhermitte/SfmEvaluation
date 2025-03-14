@@ -9,7 +9,8 @@ log() {
     echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
 }
 
-log "Starting VGG-SfM batch processing"
+gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
+log "Starting VGG-SfM batch processing GPU: $gpu_name"
 
 # Ensure SLURM environment loads required modules
 if [ -n "${SLURM_JOB_ID:-}" ]; then
@@ -71,7 +72,6 @@ process_scene() {
         log "ERROR: VGG-SFM pipeline execution failed for scene: $scene"
     fi
 
-    gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
     echo "Elapsed time: ${elapsed_time} seconds on ${gpu_name}" >> "${out_dir}/time.txt"
     log "Finished processing scene: $scene in $elapsed_time seconds"
 }

@@ -8,8 +8,8 @@
 log() {
     echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
 }
-
-log "Starting FlowMap batch processing"
+gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
+log "Starting FlowMap batch processing GPU: $gpu_name"
 
 # Ensure SLURM environment loads required modules
 if [ -n "${SLURM_JOB_ID:-}" ]; then

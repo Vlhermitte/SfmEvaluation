@@ -11,7 +11,8 @@ log() {
 
 matcher=${1:-exhaustive_matcher}
 
-log "Starting GLOMAP batch processing"
+gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
+log "Starting GLOMAP batch processing GPU: $gpu_name"
 
 # Ensure SLURM environment loads required modules
 if [ -n "${SLURM_JOB_ID:-}" ]; then
