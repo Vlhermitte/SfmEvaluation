@@ -75,7 +75,6 @@ process_scene() {
     log "Running FlowMap pipeline on scene: $scene"
     if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir"; then
         log "ERROR: FlowMap pipeline execution failed for scene: $scene"
-        return
     fi
     end_time=$(date +%s)
 

@@ -73,7 +73,6 @@ process_scene() {
     cd acezero || { log "ERROR: Failed to change directory to acezero"; exit 1; }
     if ! conda run -n "$conda_env" python ace_zero.py "$scene_dir/images/*.$image_format" "$acezero_format_dir" --export_point_cloud True; then
         log "ERROR: Ace-Zero pipeline execution failed for scene: $scene"
-        return
     fi
     end_time=$(date +%s)
 
