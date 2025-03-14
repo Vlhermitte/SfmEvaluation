@@ -69,9 +69,10 @@ process_scene() {
     image_format=$(find "$scene_dir/images" -maxdepth 1 -type f | head -n 1 | rev | cut -d'.' -f1 | rev)
     log "Detected image format: .$image_format"
 
-    # Monitor VRAM usage during processing every 0.5 seconds
+    # Monitor VRAM usage during processing every seconds
     log "Starting VRAM monitoring for scene: $scene"
-    nvidia-smi --query-gpu=timestamp,memory.total,memory.used,memory.free --format=csv -l 0.5 >> "$vram_log" &
+    rm "$vram_log"
+    nvidia-smi --query-gpu=timestamp,memory.total,memory.used,memory.free --format=csv -l 1 >> "$vram_log" &
     vram_pid=$!
 
     start_time=$(date +%s)
@@ -79,14 +80,12 @@ process_scene() {
     cd acezero || { log "ERROR: Failed to change directory to acezero"; exit 1; }
     if ! conda run -n "$conda_env" python ace_zero.py "$scene_dir/images/*.$image_format" "$acezero_format_dir" --export_point_cloud True; then
         log "ERROR: Ace-Zero pipeline execution failed for scene: $scene"
-        # Stop VRAM monitoring if the process fails
-        kill $vram_pid
     fi
     end_time=$(date +%s)
 
     elapsed_time=$((end_time - start_time))
 
-     # Stop VRAM monitoring
+    # Stop VRAM monitoring
     log "Stopping VRAM monitoring for scene: $scene"
     kill $vram_pid
 

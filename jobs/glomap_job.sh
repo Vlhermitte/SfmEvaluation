@@ -3,6 +3,13 @@
 #SBATCH --job-name=glomap_job
 #SBATCH --output=glomap_job.out
 #SBATCH --error=glomap_job.err
+#SBATCH --partition=gpu
+#SBATCH --time=12:00:00
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=12
+#SBATCH --mem=32G
+#SBATCH --mail-user=lhermval@cvut.cz
+#SBATCH --mail-type=ALL
 
 # Function to print messages with timestamps
 log() {
@@ -41,6 +48,7 @@ process_scene() {
     local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse"
     local database="${OUT_DIR}/${dataset}/${scene}/colmap/sample_reconstruction.db"
+    local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
 
     log "Processing scene: $scene from $dataset"
 
@@ -50,6 +58,12 @@ process_scene() {
     fi
 
     mkdir -p "$out_dir"
+
+    # Monitor VRAM usage during processing every seconds
+    log "Starting VRAM monitoring for scene: $scene"
+    rm "$vram_log"
+    nvidia-smi --query-gpu=timestamp,memory.total,memory.used,memory.free --format=csv -l 1 >> "$vram_log" &
+    vram_pid=$!
 
     start_time=$(date +%s)
     log "Running GLOMAP pipeline on scene: $scene"
@@ -86,8 +100,10 @@ process_scene() {
         log "ERROR: GLOMAP pipeline execution failed for scene: $scene"
     fi
 
-    # Get GPU name
-    gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
+    # Stop VRAM monitoring
+    log "Stopping VRAM monitoring for scene: $scene"
+    kill $vram_pid
+
     echo "Elapsed time: ${elapsed_time} seconds on ${gpu_name}" >> "${out_dir}/time.txt"
     log "Finished processing scene: ${scene} in $elapsed_time seconds"
 }
