@@ -44,6 +44,8 @@ def evaluate_rotation_matrices(R_gt: np.ndarray, R_est: np.ndarray) -> float:
 
 def evaluate_translation_error(t_gt: np.ndarray, t_est: np.ndarray) -> float:
     """
+    **THIS FUNCTION IS NOT USED ANYMORE AND WILL BE REMOVED**
+
     Evaluate the relative translation error between the ground truth and estimated translation vectors.
 
     The translation error is computed as the Euclidean distance between the two translation vectors.
