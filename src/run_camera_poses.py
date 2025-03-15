@@ -96,14 +96,14 @@ if __name__ == '__main__':
         "--gt-model-path",
         type = str,
         required = False,
-        default="../data/datasets/MipNerf360/garden/sparse/0",
+        default="../data/datasets/ETH3D/courtyard/dslr_calibration_jpg",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
         "--est-model-path",
         type=str,
         required=False,
-        default="../data/results/glomap/MipNerf360/garden/colmap/sparse/0",
+        default="../data/results/glomap/ETH3D/courtyard/colmap/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
