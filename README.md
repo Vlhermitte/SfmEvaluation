@@ -181,4 +181,3 @@ More details can be found in the [`evaluator.py`](src/evaluator.py) file.
 - [Tanks and Temples](https://www.tanksandtemples.org/)
 - [MipNerf](https://jonbarron.info/mipnerf360/)
 - [TUM RGB-D SLAM tools](https://cvg.cit.tum.de/data/datasets/rgbd-dataset/tools/)
-- [Novel View Synthesis](https://arxiv.org/abs/1601.06950)
