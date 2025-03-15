@@ -21,11 +21,15 @@ The evaluation protocol consists of the following components:
 ## Installation
 To set up the project, execute the following scripts:
 
-### Step 1: Download the ETH3D Dataset
+### Step 1: Download the Datasets
 ```bash
 bash scripts/get_datasets.sh
 ```
-This script will download the **ETH3D dataset** required for evaluation.
+This script will prompt you to which dataset you want to download. You can choose between:
+- **ETH3D**
+- **MipNeRF360**
+- **LaMAR**
+- **All of them**
 
 ### Step 2: Clone Required Repositories
 ```bash
@@ -170,7 +174,7 @@ More details can be found in the [`evaluator.py`](src/evaluator.py) file.
 
 ## TODO
 - [ ] Fix absolute pose error evaluation (Maybe try using Procrustes instead of Kabsch)
-- [ ] Implement 3D triangulation evaluation (For Tank and Temples dataset)
+- [ ] Implement 3D triangulation evaluation (For Tanks and Temples dataset)
 - [ ] Use more datasets
 
 
