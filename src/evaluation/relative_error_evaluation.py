@@ -118,7 +118,7 @@ def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]
     # Evaluate on all possible pairs from all images (not just consecutive pairs)
     pairs = [(i, j) for i in range(len(gt_cameras)) for j in range(i + 1, len(gt_cameras))]
     for i, j in tqdm(pairs, desc='Evaluating relative errors'):
-        # Camera Object as is_valid attribute set to False if the camera was missing in the COLMAP file
+        # Camera Object has is_valid attribute set to False if the camera was missing in the COLMAP file
         if gt_cameras[i].is_valid and gt_cameras[j].is_valid:
             # Compute relative transformations
             R_rel_est = est_cameras[j].R @ est_cameras[i].R.T  # R.T = R^-1
