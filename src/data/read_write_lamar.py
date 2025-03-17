@@ -82,7 +82,7 @@ class LamarSessionProcessor:
 
         return cameras_sensors
 
-    def export_to_colmap(self, session_ids: Union[str, List[str]], saving_path: Optional[Path]):
+    def export_to_colmap(self, session_ids: Union[str, List[str]], saving_path: Optional[Path] = None):
         """
         Export camera trajectories for one or multiple sessions into COLMAP format files.
 
@@ -122,7 +122,7 @@ class LamarSessionProcessor:
                     qvec=q,
                     tvec=t,
                     camera_id=int(timestamp),  # Update this if a proper camera_id is available.
-                    name=f'{session_id}_{timestamp}.jpg',
+                    name=f'{timestamp}.jpg',
                     xys=[],
                     point3D_ids=[]
                 )
