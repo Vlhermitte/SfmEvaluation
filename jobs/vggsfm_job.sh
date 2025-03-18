@@ -1,75 +1,106 @@
 #!/bin/bash
 
-#SBATCH --job-name=vggsfm_ETH3D
-#SBATCH --output=vggsfm_ETH3D.out
-#SBATCH --error=vggsfm_ETH3D.err
-#SBATCH --time=08:00:00             # Request 8 hours of runtime
-#SBATCH --partition=1day            # Use the '1day' partition
-#SBATCH --gres=gpu:a16:1            # Request 1 GPU (a16)
-#SBATCH --mem=32G                   # Request 32 GB of RAM
-#SBATCH --cpus-per-task=12          # Request 12 CPUs
+#SBATCH --job-name=vggsfm_job
+#SBATCH --output=vggsfm_job.out
+#SBATCH --error=vggsfm_job.err
+#SBATCH --partition=gpu
+#SBATCH --time=12:00:00
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=12
+#SBATCH --mem=32G
+#SBATCH --mail-user=lhermval@cvut.cz
+#SBATCH --mail-type=ALL
 
-# Go to SfmEvaluation directory
-cd /home.nfs/lhermval/SfmEvaluation
+# Function to print messages with timestamps
+log() {
+    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
+}
 
-source ~/miniconda3/etc/profile.d/conda.sh || { echo "Failed to source conda.sh"; exit 1; }
+gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
+log "Starting VGG-SfM batch processing GPU: $gpu_name"
 
-# Check if the 'flowmap' conda environment exists
-if conda env list | grep -q '^vggsfm_tmp'; then
-    echo "Activating the existing 'vggsfm_tmp' environment..."
-    conda activate vggsfm_tmp || { echo "Failed to activate conda environment: vggsfm_tmp"; exit 1; }
-else
-    echo "Creating a new 'vggsfm_tmp' conda environment..."
-    cd /home.nfs/lhermval/SfmEvaluation/vggsfm
-    source install.sh
-    python -m pip install -e .
-    cd /home.nfs/lhermval/SfmEvaluation/
+# Ensure SLURM environment loads required modules
+if [ -n "${SLURM_JOB_ID:-}" ]; then
+    log "Running on a Slurm-managed system. Loading required modules..."
+    module load Anaconda3 || { log "ERROR: Failed to load Anaconda3 module"; exit 1; }
+    source $(conda info --base)/etc/profile.d/conda.sh
+    module unload SciPy-bundle
 fi
 
-# Run flowmap on all scene.
-SCENES=(
-    "courtyard"
-    "delivery_area"
-    "electro"
-    "facade"
-    "kicker"
-    "meadow"
-    "office"
-    "pipes"
-    "playground"
-    "relief"
-    "relief_2"
-    "terrace"
-    "terrains"
+# Define datasets
+ETH3D_SCENES=(
+    "courtyard" "delivery_area" "electro" "facade" "kicker" "meadow"
+    "office" "pipes" "playground" "relief" "relief_2" "terrace" "terrains"
 )
 
-cd /home.nfs/lhermval/SfmEvaluation
+MIP_NERF_360_SCENES=(
+    "bicycle" "bonsai" "counter" "garden" "kitchen" "room" "stump"
+)
 
-# Base output directory
-OUT_DIR="results/vggsfm"
+mkdir -p data/results/vggsfm
+DATASETS_DIR="$(realpath data/datasets)"
+OUT_DIR="$(realpath data/results/vggsfm)"
 
-# Run the VGGSfm pipeline for each scene
-for SCENE in "${SCENES[@]}"; do
-    echo "Processing scene: $SCENE"
-    OUTPUT_DIR="${OUT_DIR}/${SCENE}"
+# Verify Conda environment exists
+conda_env="vggsfm_tmp"
+if ! conda env list | grep -q "$conda_env"; then
+    log "ERROR: Conda environment $conda_env not found."
+    exit 1
+fi
 
-    # Check if the output directory already exists
-    if [ -d "$OUTPUT_DIR" ]; then
-        echo "Output directory exists. Overwritting scene: $SCENE"
+# Process each scene
+process_scene() {
+    local dataset=$1
+    local scene=$2
+    local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
+    local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
+    local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
+
+    log "Processing scene: $scene from $dataset"
+
+    if [ ! -d "$scene_dir" ]; then
+        log "ERROR: Scene directory does not exist: $scene_dir"
+        return
     fi
 
-    python ./vggsfm/demo.py \
-      query_method=sp+aliked camera_type=SIMPLE_RADIAL \
-      SCENE_DIR=datasets/ETH3D/$SCENE/ \  # vggsfm assume image to be an images directory
-      OUTPUT_DIR=$OUTPUT_DIR/colmap/
+    mkdir -p "$out_dir"
 
-    if [ $? -eq 0 ]; then
-        echo "Finished processing scene: $SCENE"
-    else
-        echo "Error occurred while processing scene: $SCENE"
+    # Monitor VRAM usage during processing every seconds
+    log "Starting VRAM monitoring for scene: $scene"
+    rm "$vram_log"
+    nvidia-smi --query-gpu=timestamp,memory.total,memory.used,memory.free --format=csv -l 1 >> "$vram_log" &
+    vram_pid=$!
+
+    start_time=$(date +%s)
+    log "Running VGG-SfM pipeline on scene: $scene"
+    if ! conda run -n "$conda_env" python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir"; then
+        log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
     fi
+    end_time=$(date +%s)
+
+    elapsed_time=$((end_time - start_time))
+
+    # Check if the reconstruction was successful (images.bin or images.txt should be present)
+    if [ ! -f "${out_dir}/images.bin" ] && [ ! -f "${out_dir}/images.txt" ]; then
+        log "ERROR: VGG-SFM pipeline execution failed for scene: $scene"
+    fi
+
+    # Stop VRAM monitoring
+    log "Stopping VRAM monitoring for scene: $scene"
+    kill $vram_pid
+
+    echo "Elapsed time: ${elapsed_time} seconds on ${gpu_name}" >> "${out_dir}/time.txt"
+    log "Finished processing scene: $scene in $elapsed_time seconds"
+}
+
+# Process ETH3D scenes
+for SCENE in "${ETH3D_SCENES[@]}"; do
+    process_scene "ETH3D" "$SCENE"
 done
 
-echo "All scenes processed."
+# Process MipNeRF360 scenes
+for SCENE in "${MIP_NERF_360_SCENES[@]}"; do
+    process_scene "MipNerf360" "$SCENE"
+done
 
-
+log "All scenes processed."

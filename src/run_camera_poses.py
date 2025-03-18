@@ -1,92 +1,58 @@
 import argparse
-import os
 import logging
 import json
 import numpy as np
 from typing import Tuple, List
 
-from utils.common import Camera, get_cameras_info
+from utils.common import Camera, get_cameras_info, detect_colmap_format
 from data.read_write_model import read_model
 from evaluation.absolute_error_evaluation import evaluate_camera_pose
 from evaluation.relative_error_evaluation import evaluate_relative_errors
 
-def detect_colmap_format(path: str) -> str:
-    for ext in ['.txt', '.bin']:
-        if os.path.isfile(os.path.join(path, "cameras" + ext)) and os.path.isfile(os.path.join(path, "images" + ext)):
-            # print("Detected model format: '" + ext + "'")
-            return ext
-    raise ValueError("No .txt or .bin format not found in the specified path")
 
 def run_rel_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], verbose: bool = False) -> Tuple[dict, dict]:
     if len(est_cameras) != len(gt_cameras):
-        # Interpolate missing cameras in the estimated set using neighboring cameras
-        # if verbose:
-        #     print('Missing cameras in the estimated model. Interpolating...')
-        # est_cameras = interpolate_missing_cameras(est_cameras, gt_cameras)
         if verbose:
-            print('Missing cameras in the estimated model. Assigning high values for missing cameras...')
-        # For every gt_cameras not in est_cameras, assign high values
+            print('Missing cameras in the estimated model. Adding dummy cameras with invalid poses.')
+        # For every gt_cameras not in est_cameras, add a corresponding camera with in_valid=False
         for gt_camera in gt_cameras:
             if gt_camera not in est_cameras:
+                # Note: it is important to have a non-zero tvec to avoid division by zero in the trajectory alignment
                 est_cameras.append(
-                    Camera(gt_camera.image, gt_camera.type, np.array([0, 0, 0, 1]), np.array([1000, 1000, 1000]))
+                    Camera(gt_camera.image, gt_camera.type, np.array([0, 0, 0, 1]), np.array([1, 1, 1]), is_valid=False)
                 )
-
-    # Sort the cameras in estimated cameras based on the image name to match the ground truth
-    est_cameras = sorted(est_cameras, key=lambda camera: camera.image)
-    gt_cameras = sorted(gt_cameras, key=lambda camera: camera.image)
 
     # Evaluating
     results = evaluate_relative_errors(est_cameras=est_cameras, gt_cameras=gt_cameras)
 
-    with open(f'{est_model_path}/relative_results.json', 'w') as f:
-        json.dump(results, f, indent=4)
-
     return results
 
 def run_abs_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], verbose: bool = False) -> dict:
+    if len(est_cameras) != len(gt_cameras):
+        if verbose:
+            print('Missing cameras in the estimated model. Adding dummy cameras with invalid poses.')
+        # For every gt_cameras not in est_cameras, add a corresponding camera with in_valid=False
+        for gt_camera in gt_cameras:
+            if gt_camera not in est_cameras:
+                # Note: it is important to have a non-zero tvec to avoid division by zero in the trajectory alignment
+                est_cameras.append(
+                    Camera(gt_camera.image, gt_camera.type, np.array([0, 0, 0, 1]), np.array([1, 1, 1]), is_valid=False)
+                )
+
     # Evaluate pose error
-    results = evaluate_camera_pose(est_cameras, gt_cameras, perform_alignment=True)
+    results = evaluate_camera_pose(
+        est_cameras=est_cameras,
+        gt_cameras=gt_cameras,
+        R_threshold=5,
+        t_threshold=10,
+        perform_alignment=True
+    )
 
     if verbose:
         print(f"Rotation error: {results['rotation_error']}\n")
         print(f"Translation error: {results['translation_error']}")
 
-    with open(f'{est_model_path}/absolute_results.json', 'w') as f:
-        json.dump(results, f, indent=4)
-
     return results
-
-def report_metrics(results, verbose: bool = False) -> tuple[dict, dict]:
-    """
-    Compute mean, median, and percentages below thresholds.
-    """
-    rotation_errors = results['relative_rotation_error']
-    translation_errors = results['relative_translation_error']
-
-    rotation_errors = np.array(rotation_errors)
-    translation_errors = np.array(translation_errors)
-
-    # Compute mean and median
-    mean_rotation_error = np.mean(rotation_errors)
-    median_rotation_error = np.median(rotation_errors)
-    mean_translation_error = np.mean(translation_errors)
-    median_translation_error = np.median(translation_errors)
-
-    # Compute percentage below thresholds
-    thresholds = [1, 2, 5, 10]
-    rotation_percentages = [np.sum(rotation_errors < threshold) / len(rotation_errors) * 100 for threshold in thresholds]
-    translation_percentages = [np.sum(translation_errors < threshold) / len(translation_errors) * 100 for threshold in thresholds]
-
-    # Save as json file
-    stats = {
-        'mean_rotation_error': mean_rotation_error,
-        'median_rotation_error': median_rotation_error,
-        'mean_translation_error': mean_translation_error,
-        'median_translation_error': median_translation_error,
-        'rotation_percentages': rotation_percentages,
-        'translation_percentages': translation_percentages
-    }
 
 def compute_auc(R_error, t_error, max_threshold=30):
     """
@@ -173,7 +139,13 @@ if __name__ == '__main__':
     # Find how many camera were not registered in the estimated model
     number_of_missing_cameras = len(gt_cameras) - len(est_cameras)
 
+    ####################################################################################################################
+    # Relative errors evaluation                                                                                       #
+    ####################################################################################################################
     rel_results = run_rel_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
+
+    with open(f'{est_model_path}/relative_results.json', 'w') as f:
+        json.dump(rel_results, f, indent=4)
 
     # Define thresholds
     # Compute AUC for rotation and translation errors
@@ -210,7 +182,7 @@ if __name__ == '__main__':
         print(f'RTE_30 (%): {RTE_30}')
 
     # Write auc to txt file
-    with open(f'{est_model_path}/auc.json', 'w') as f:
+    with open(f'{est_model_path}/rel_auc.json', 'w') as f:
         json.dump({
             'Missing_cameras': number_of_missing_cameras,
             'Auc_3': Auc_3,
@@ -226,3 +198,15 @@ if __name__ == '__main__':
             'RTE_10': RTE_10,
             'RTE_30': RTE_30
         }, f, indent=4)
+
+    ####################################################################################################################
+    # Absolute errors evaluation                                                                                       #
+    ####################################################################################################################
+    # TODO: Fix the absolute error evaluation (The rotation error seems correct but the translation error is not)
+    abs_results = run_abs_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
+
+    with open(f'{est_model_path}/absolute_results.json', 'w') as f:
+        json.dump(abs_results, f, indent=4)
+
+
+

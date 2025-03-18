@@ -50,18 +50,18 @@ def get_inliers(T, poses_gt, poses_est, inlier_threshold_t, inlier_threshold_r):
     # intersection of both
     return np.logical_and(inliers_r, inliers_t)
 
-def estimate_alignment(
+def ransac_kabsch(
         est_poses: list,
         gt_poses: list,
         estimate_scale: bool = True,
         inlier_threshold_r: float = 5,
         inlier_threshold_t: float = 0.1,
-        confidence: float = 0.99,
+        confidence: float = 0.95,
         max_iterations: int = 10000
 ) -> Tuple[np.ndarray, float]:
     """
     Estimate the alignment between the estimated and ground truth poses using
-    RANSAC and Kabsch algorithm as model estimation.
+    LO-RANSAC and Kabsch algorithm as model estimation.
     """
     best_model = None
     best_score = 0
@@ -83,18 +83,45 @@ def estimate_alignment(
 
         # Calculate the inliers based on the estimated transformation
         inliers = get_inliers(T, gt_poses, est_poses, inlier_threshold_t, inlier_threshold_r)
-        score = len(inliers) / len(est_poses)
+        score = np.sum(inliers) / len(est_poses)
 
         if score > best_score:
-            best_model = T
-            best_score = score
-            best_scale = scale
+            candidate_T = T
+            candidate_scale = scale
+            candidate_inliers = inliers
+            candidate_score = score
 
-            # Update max_iterations based on the number of inliers
-            w = np.sum(inliers) / len(est_poses)
-            eps = np.finfo(float).eps  # To prevent division by zero
-            max_iterations = min(max_iterations,
-                                 np.log(1 - confidence) / (np.log(1 - max(w, eps) ** sample_size) + eps))
+            # Local optimization
+            for _ in range(10):
+                inlier_indices = np.where(candidate_inliers)[0]
+                if len(inlier_indices) < sample_size:
+                    break
+                # Re-estimate transformation using all inlier correspondences
+                est_inliers = [est_poses[i] for i in inlier_indices]
+                gt_inliers = [gt_poses[i] for i in inlier_indices]
+                T_refined, scale_refined = kabsch(
+                    np.array([pose[:3, 3] for pose in est_inliers]),
+                    np.array([pose[:3, 3] for pose in gt_inliers]),
+                    estimate_scale=estimate_scale
+                )
+                new_inliers = get_inliers(T_refined, gt_poses, est_poses, inlier_threshold_t, inlier_threshold_r)
+                new_score = np.sum(new_inliers) / len(est_poses)
+
+                if new_score > candidate_score:
+                    candidate_T, candidate_scale = T_refined, scale_refined
+                    candidate_inliers, candidate_score = new_inliers, new_score
+
+            # Update best model if local optimization improved the score
+            if candidate_score > best_score:
+                best_model, best_scale, best_score = candidate_T, candidate_scale, candidate_score
+
+                # Update max_iterations based on the new inlier ratio
+                w = candidate_score  # fraction of inliers
+                eps = np.finfo(float).eps  # prevent division by zero
+                max_iterations = min(
+                    max_iterations,
+                    np.log(1 - confidence) / (np.log(1 - max(w, eps) ** sample_size) + eps)
+                )
 
     return best_model, best_scale
 

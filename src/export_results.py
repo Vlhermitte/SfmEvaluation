@@ -1,10 +1,12 @@
 import json
 import pandas as pd
 import os
+from pathlib import Path
 
+from config import ETH3D_SCENES, METHODS, RESULTS_PATH, COLMAP_FORMAT
 
 # Read the JSON file
-def read_json(json_file):
+def read_json(json_file: Path):
     if not os.path.exists(json_file):
         print(f"File not found: {json_file}")
         return None
@@ -18,58 +20,24 @@ def read_json(json_file):
 
 
 if __name__ == '__main__':
-    SCENES = (
-        "courtyard",
-        "delivery_area",
-        "electro",
-        "facade",
-        "kicker",
-        "meadow",
-        "office",
-        "pipes",
-        "playground",
-        "relief",
-        "relief_2",
-        "terrace",
-        "terrains",
-    )
-
-    # Initialize the DataFrame with appropriate columns
-    df = pd.DataFrame(columns=['Scene', 'Method', 'Missing cameras',
-                               'Auc@3', 'Auc@5', 'Auc@10', 'Auc@30',
-                               'RRE@3', 'RRE@5', 'RRE@10', 'RRE@30',
-                               'RTE@3', 'RTE@5', 'RTE@10', 'RTE@30'])
-
-    methods = ['Glomap', 'VGGSfm', 'FlowMap', 'AceZero']
-
-    for scene in SCENES:
-        for method in methods:
+    rows = []
+    for scene in ETH3D_SCENES:
+        for method in METHODS:
             # Construct the file path
-            if str.lower(method) == 'glomap':
-                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/sparse/0/auc.json'
-            elif str.lower(method) == 'flowmap':
-                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/colmap/sparse/0/auc.json'
-            elif str.lower(method) == 'vggsfm':
-                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/sparse/auc.json'
-            elif str.lower(method) == 'acezero':
-                json_file = f'../data/results/{str.lower(method)}/ETH3D/{scene}/sparse/auc.json'
-            else:
-                print(f"Invalid method: {str.lower(method)}")
-                continue
+            json_file = Path(RESULTS_PATH / str.lower(method) / 'ETH3D' / scene / COLMAP_FORMAT / 'rel_auc.json')
 
             # Read the JSON file
             data = read_json(json_file)
 
             if data is None:
-                # Append a row indicating missing data
-                df.loc[len(df)] = {
+                rows.append({
                     'Scene': scene,
                     'Method': method,
                     'Missing cameras': None,
                     'Auc@3': None, 'Auc@5': None, 'Auc@10': None, 'Auc@30': None,
                     'RRE@3': None, 'RRE@5': None, 'RRE@10': None, 'RRE@30': None,
                     'RTE@3': None, 'RTE@5': None, 'RTE@10': None, 'RTE@30': None,
-                }
+                })
                 continue
 
             # Extract values from JSON
@@ -91,11 +59,14 @@ if __name__ == '__main__':
                 'RTE@30': data.get('RTE_30', None),
             }
 
-            # Append the row to the DataFrame
-            df.loc[len(df)] = row
+            # Append the row to the list
+            rows.append(row)
+
+    # Create the DataFrame from the list of rows
+    df = pd.DataFrame(rows)
 
     # Save the results to a CSV file
-    output_csv = '../data/results/results.csv'
+    output_csv = RESULTS_PATH / 'relative_poses_eval.csv'
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     df.to_csv(output_csv, index=False)
 

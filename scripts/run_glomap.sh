@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#SBATCH --job-name=glomap_job
+#SBATCH --output=glomap_job.out
+#SBATCH --error=glomap_job.err
+
 # Check if the script is running on a Slurm device
 if [ ! -z "$SLURM_JOB_ID" ]; then
     echo "Running on a Slurm-managed system. Loading required modules..."
@@ -9,7 +13,12 @@ if [ ! -z "$SLURM_JOB_ID" ]; then
     module load Eigen
     module load FLANN
     module load COLMAP
-    export PATH=~/SfmEvaluation/glomap/build/glomap/:$PATH
+    # Module load GLOMAP if available
+    if module avail GLOMAP &> /dev/null; then
+        module load GLOMAP
+    else
+      export PATH=~/SfmEvaluation/glomap/build/glomap/:$PATH
+    fi
 fi
 
 # Verify COLMAP and GLOMAP are executable
@@ -25,6 +34,7 @@ fi
 
 scene=$1
 out=$2
+matcher=${3:-exhaustive_matcher}
 
 # Check if the scene and output directory are provided
 if [ -z "$scene" ]; then
@@ -45,31 +55,37 @@ if [ ! -d $out_dir ]; then
     mkdir -p $out_dir
 fi
 
-# Check if the output directory is not empty and prompt for overwrite
-if [ -d "$out_dir" ] && [ "$(ls -A "$out_dir")" ]; then
-    echo "Output directory '$out_dir' is not empty. Do you want to overwrite? (y/n)"
-    read -r answer
-    case "$answer" in
-        y|Y)
-            echo "Overwriting '$out_dir'..."
-            rm -rf "$out_dir"/*  # Clear the directory
-            ;;
-        n|N)
-            echo "Exiting without making changes."
-            exit 1
-            ;;
-        *)
-            echo "Invalid input. Exiting."
-            exit 1
-            ;;
-    esac
+if [ -z "$SLURM_JOB_ID" ]; then
+  # Check if the output directory is not empty and prompt for overwrite
+  if [ -d "$out_dir" ] && [ "$(ls -A "$out_dir")" ]; then
+      echo "Output directory '$out_dir' is not empty. Do you want to overwrite? (y/n)"
+      read -r answer
+      case "$answer" in
+          y|Y)
+              echo "Overwriting '$out_dir'..."
+              rm -rf "$out_dir"/*  # Clear the directory
+              ;;
+          n|N)
+              echo "Exiting without making changes."
+              exit 1
+              ;;
+          *)
+              echo "Invalid input. Exiting."
+              exit 1
+              ;;
+      esac
+  fi
 fi
 
-# Init colmap database 
 
+start_time=$(date +%s)
+
+# Init colmap database
 DATABASE=${out_dir}/sample_reconstruction.db
 # If database does not exist, create a new database
 if [ ! -f ${DATABASE} ]; then
+  echo "Creating new database: ${DATABASE}"
+  echo "COLMAP feature_extractor..."
   colmap feature_extractor \
     --database_path ${DATABASE} \
     --image_path ${scene} \
@@ -77,20 +93,27 @@ if [ ! -f ${DATABASE} ]; then
 	--ImageReader.single_camera 1 \
 	--SiftExtraction.use_gpu 1
 
-  colmap exhaustive_matcher \
+  echo "COLMAP ${matcher}..."
+  colmap "${matcher}" \
     --database_path ${DATABASE} \
     --SiftMatching.use_gpu 1
 fi
 
 # GLOMAP execution
-mkdir ${out_dir}/sparse
+mkdir -p ${out_dir}/sparse
+echo "GLOMAP mapper..."
 glomap mapper \
     --database_path ${DATABASE} \
     --image_path ${scene} \
     --output_path ${out_dir}/sparse
 
+end_time=$(date +%s)
+elapsed_time=$(( end_time - start_time ))
+
+echo "Elapsed time: $elapsed_time seconds" >> ${out_dir}/sparse/0/time.txt
+
 # Disable for now
-#mkdir ${out_dir}/dense
+#mkdir -p ${out_dir}/dense
 #colmap image_undistorter \
 #    --image_path ${scene} \
 #    --input_path ${out_dir}/sparse/0 \

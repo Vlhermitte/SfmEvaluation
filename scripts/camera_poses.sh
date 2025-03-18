@@ -28,7 +28,7 @@ for scene in "${SCENES[@]}"; do
     continue
   fi
   echo "VGGSfm: Processing ${scene}"
-  python src/run_relative_errors.py --est-model-path data/results/vggsfm/ETH3D/${scene}/colmap/sparse/0 --gt-model-path data/datasets/ETH3D/${scene}/dslr_calibration_jpg
+  python src/run_camera_poses.py --est-model-path data/results/vggsfm/ETH3D/${scene}/colmap/sparse/0 --gt-model-path data/datasets/ETH3D/${scene}/dslr_calibration_jpg
 done
 
 # Flowmap
@@ -39,7 +39,7 @@ for scene in "${SCENES[@]}"; do
     continue
   fi
   echo "Flowmap: Processing ${scene}"
-  python src/run_relative_errors.py --est-model-path data/results/flowmap/ETH3D/${scene}/colmap/sparse/0 --gt-model-path data/datasets/ETH3D/${scene}/dslr_calibration_jpg
+  python src/run_camera_poses.py --est-model-path data/results/flowmap/ETH3D/${scene}/colmap/sparse/0 --gt-model-path data/datasets/ETH3D/${scene}/dslr_calibration_jpg
 done
 
 # AceZero
@@ -50,7 +50,7 @@ for scene in "${SCENES[@]}"; do
     continue
   fi
   echo "AceZero: Processing ${scene}"
-  python src/run_relative_errors.py --est-model-path data/results/acezero/ETH3D/${scene}/colmap/sparse/0 --gt-model-path data/datasets/ETH3D/${scene}/dslr_calibration_jpg
+  python src/run_camera_poses.py --est-model-path data/results/acezero/ETH3D/${scene}/colmap/sparse/0 --gt-model-path data/datasets/ETH3D/${scene}/dslr_calibration_jpg
 done
 
 # Glomap
@@ -61,5 +61,5 @@ for scene in "${SCENES[@]}"; do
     continue
   fi
   echo "Glomap: Processing ${scene}"
-  python src/run_relative_errors.py --est-model-path data/results/glomap/ETH3D/${scene}/colmap/sparse/0 --gt-model-path data/datasets/ETH3D/${scene}/dslr_calibration_jpg
+  python src/run_camera_poses.py --est-model-path data/results/glomap/ETH3D/${scene}/colmap/sparse/0 --gt-model-path data/datasets/ETH3D/${scene}/dslr_calibration_jpg
 done

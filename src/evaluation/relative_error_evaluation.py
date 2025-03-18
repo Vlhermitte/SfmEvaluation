@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from tqdm import tqdm
 from typing import List, Dict
 
 from utils.common import Camera
@@ -43,6 +44,8 @@ def evaluate_rotation_matrices(R_gt: np.ndarray, R_est: np.ndarray) -> float:
 
 def evaluate_translation_error(t_gt: np.ndarray, t_est: np.ndarray) -> float:
     """
+    **THIS FUNCTION IS NOT USED ANYMORE AND WILL BE REMOVED**
+
     Evaluate the relative translation error between the ground truth and estimated translation vectors.
 
     The translation error is computed as the Euclidean distance between the two translation vectors.
@@ -104,30 +107,38 @@ def evaluate_relative_errors(gt_cameras: List[Camera], est_cameras: List[Camera]
     Returns:
         dict: A dictionary with the relative_rotation_error and relative_translation_error lists.
     """
+    assert len(gt_cameras) == len(est_cameras), "Number of estimated and ground truth cameras should be the same."
+
+    # Sort the cameras in estimated cameras based on the image name to match the ground truth
+    est_cameras = sorted(est_cameras, key=lambda camera: camera.image)
+    gt_cameras = sorted(gt_cameras, key=lambda camera: camera.image)
+
     results = {'relative_rotation_error': [], 'relative_translation_error': [], 'relative_translation_angle': []}
 
-    for i in range(len(gt_cameras) - 1):
-        if i >= len(est_cameras) - 1:  # Handle missing images
+    # Evaluate on all possible pairs from all images (not just consecutive pairs)
+    pairs = [(i, j) for i in range(len(gt_cameras)) for j in range(i + 1, len(gt_cameras))]
+    for i, j in tqdm(pairs, desc='Evaluating relative errors'):
+        # Camera Object has is_valid attribute set to False if the camera was missing in the COLMAP file
+        if est_cameras[i].is_valid and est_cameras[j].is_valid:
+            # Compute relative transformations
+            R_rel_est = est_cameras[j].R @ est_cameras[i].R.T  # R.T = R^-1
+            R_rel_gt = gt_cameras[j].R @ gt_cameras[i].R.T
+
+            t_rel_est = est_cameras[j].t - (R_rel_est @ est_cameras[i].t)
+            t_rel_gt = gt_cameras[j].t - (R_rel_gt @ gt_cameras[i].t)
+
+            # Evaluate errors
+            rotation_error = evaluate_rotation_matrices(R_rel_gt, R_rel_est)
+            translation_error = evaluate_translation_error(t_rel_gt, t_rel_est)
+            translation_angle = evaluate_translation_angle(t_rel_gt, t_rel_est)
+
+            results['relative_rotation_error'].append(rotation_error)
+            results['relative_translation_error'].append(translation_error)
+            results['relative_translation_angle'].append(translation_angle)
+        else:
             # Assign high values for missing cameras
             results['relative_rotation_error'].append(180.0)
             results['relative_translation_error'].append(1000.0)
             results['relative_translation_angle'].append(180.0)
-            continue
-        j = i + 1
-        # Compute relative transformations
-        R_rel_est = est_cameras[j].R @ est_cameras[i].R.T   # R.T = R^-1
-        R_rel_gt = gt_cameras[j].R @ gt_cameras[i].R.T
-
-        t_rel_est = est_cameras[j].t - (R_rel_est @ est_cameras[i].t)
-        t_rel_gt = gt_cameras[j].t - (R_rel_gt @ gt_cameras[i].t)
-
-        # Evaluate errors
-        rotation_error = evaluate_rotation_matrices(R_rel_gt, R_rel_est)
-        translation_error = evaluate_translation_error(t_rel_gt, t_rel_est)
-        translation_angle = evaluate_translation_angle(t_rel_gt, t_rel_est)
-
-        results['relative_rotation_error'].append(rotation_error)
-        results['relative_translation_error'].append(translation_error)
-        results['relative_translation_angle'].append(translation_angle)
 
     return results

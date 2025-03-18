@@ -2,6 +2,8 @@
 # Copyright (c) 2022 The Regents of the University of California, Nerfstudio Team.
 # The original code can be found at https://github.com/nerfstudio-project/nerfstudio/blob/main/nerfstudio/process_data/colmap_utils.py
 
+# For now this code is not used in the project, but it can be used to convert COLMAP's cameras.bin and images.bin to a JSON file.
+
 import argparse
 import json
 import numpy as np
@@ -226,13 +228,13 @@ if __name__ == '__main__':
     parser.add_argument(
         "--recon-dir",
         type=str,
-        default="../../results/glomap/ETH3D/courtyard/sparse/0",
+        required=True,
         help="Path to the reconstruction directory, e.g. 'sparse/0'",
     )
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="../../results/glomap/ETH3D/courtyard/",
+        required=True,
         help="Path to the output directory",
     )
 
