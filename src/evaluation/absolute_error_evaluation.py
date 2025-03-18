@@ -124,8 +124,24 @@ if __name__ == '__main__':
     est_cameras = get_cameras_info(est_cameras_type, images)
     gt_cameras = get_cameras_info(gt_cameras_type, gt_images)
 
+    if len(est_cameras) != len(gt_cameras):
+        # For every gt_cameras not in est_cameras, add a corresponding camera with in_valid=False
+        for gt_camera in gt_cameras:
+            if gt_camera not in est_cameras:
+                # Note: it is important to have a non-zero tvec to avoid division by zero in the trajectory alignment
+                est_cameras.append(
+                    Camera(gt_camera.image, gt_camera.type, np.array([0, 0, 0, 1]), np.array([1, 1, 1]), is_valid=False)
+                )
+
+    est_cameras = sorted(est_cameras, key=lambda camera: camera.image)
+    gt_cameras = sorted(gt_cameras, key=lambda camera: camera.image)
+
     # Evaluate pose error
     results = evaluate_camera_pose(est_cameras, gt_cameras, perform_alignment=True)
 
-    print(f"Rotation error: {results['rotation_error']}\n")
-    print(f"Translation error: {results['translation_error']}")
+    gt_poses = np.array([gt_camera.pose[:3, 3] for gt_camera in gt_cameras])
+    est_poses = np.array([est_camera.pose[:3, 3] for est_camera in est_cameras])
+    plot_trajectory(gt_poses)
+    plot_trajectory(est_poses)
+
+    print(f"ATE: {ate}")
