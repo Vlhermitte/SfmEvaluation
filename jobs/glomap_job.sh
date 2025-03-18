@@ -153,7 +153,7 @@ fi
 
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LAMAR_HGE" ] || [ "$dataset_choice" = "lamar_hge" ]; then
     for SCENE in "${LAMAR_HGE_SCENES[@]}"; do
-        process_scene "LaMAR/HGE/session/map/raw_data" "$SCENE"
+        process_scene "LaMAR/HGE/sessions/map/raw_data" "$SCENE"
     done
 fi
 
