@@ -16,8 +16,6 @@ log() {
     echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
 }
 
-matcher=${1:-exhaustive_matcher}
-
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
 log "Starting GLOMAP batch processing GPU: $gpu_name"
 
@@ -35,6 +33,16 @@ ETH3D_SCENES=(
 
 MIP_NERF_360_SCENES=(
     "bicycle" "bonsai" "counter" "garden" "kitchen" "room" "stump"
+)
+
+
+LAMAR_HGE_SCENES=(
+    "ios_2022-01-12_14.59.02_000" "ios_2022-01-12_15.15.53_000" "ios_2022-01-18_17.05.03_000"
+    "ios_2022-01-18_17.10.39_000" "ios_2022-01-20_16.52.33_001" "ios_2022-01-25_14.34.24_002"
+    "ios_2022-01-25_14.57.49_000" "ios_2022-01-25_15.13.54_000" "ios_2022-01-25_15.13.54_002"
+    "ios_2022-06-13_10.45.07_000" "ios_2022-06-13_15.59.36_000" "ios_2022-06-14_17.12.28_000"
+    "ios_2022-06-30_15.55.53_000" "ios_2022-07-01_15.18.09_000" "ios_2022-07-01_15.45.08_000"
+    "ios_2022-07-01_15.58.10_000" "ios_2022-07-03_16.00.37_000"
 )
 
 mkdir -p data/results/glomap
@@ -108,14 +116,45 @@ process_scene() {
     log "Finished processing scene: ${scene} in $elapsed_time seconds"
 }
 
-# Process ETH3D scenes
-for SCENE in "${ETH3D_SCENES[@]}"; do
-    process_scene "ETH3D" "$SCENE"
+# Default parameter values
+matcher="exhaustive_matcher"
+dataset_choice="all"
+
+# Parse command-line arguments for --matcher and --dataset
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --matcher)
+            matcher="$2"
+            shift 2
+            ;;
+        --dataset)
+            dataset_choice="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown parameter passed: $1"
+            exit 1
+            ;;
+    esac
 done
 
-# Process MipNeRF360 scenes
-for SCENE in "${MIP_NERF_360_SCENES[@]}"; do
-    process_scene "MipNerf360" "$SCENE"
-done
+# Process scenes based on the dataset choice
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "ETH3D" ] || [ "$dataset_choice" = "eth3d" ]; then
+    for SCENE in "${ETH3D_SCENES[@]}"; do
+        process_scene "ETH3D" "$SCENE"
+    done
+fi
+
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "MipNeRF360" ] || [ "$dataset_choice" = "mipnerf360" ]; then
+    for SCENE in "${MIP_NERF_360_SCENES[@]}"; do
+        process_scene "MipNerf360" "$SCENE"
+    done
+fi
+
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LAMAR_HGE" ] || [ "$dataset_choice" = "lamar_hge" ]; then
+    for SCENE in "${LAMAR_HGE_SCENES[@]}"; do
+        process_scene "LaMAR/HGE/session/map/raw_data" "$SCENE"
+    done
+fi
 
 log "All scenes processed."
