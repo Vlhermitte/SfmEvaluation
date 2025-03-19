@@ -47,9 +47,7 @@ def run_abs_err_evaluation(gt_model: pycolmap.Reconstruction, est_model: pycolma
         alignment_error='proj_center'
     )
 
-    sim3d_transform = comparison_results['rec2_from_rec1']
-
-    if sim3d_transform is None:
+    if comparison_results is None:
         if verbose:
             print('Failed to align the estimated model with the ground truth model. Skipping the evaluation.')
         return {'rotation_errors': 'failed', 'translation_errors': 'failed'}
