@@ -42,8 +42,8 @@ class Evaluator:
         gt_cameras = get_cameras_info(gt_cameras_type, gt_images)
 
         # Run the evaluation
-        rel_results = run_rel_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
-        abs_results = run_abs_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
+        rel_results = run_rel_err_evaluation(est_model=est_cameras, gt_model=gt_cameras)
+        abs_results = run_abs_err_evaluation(est_model=est_cameras, gt_model=gt_cameras)
 
         return rel_results, abs_results
 

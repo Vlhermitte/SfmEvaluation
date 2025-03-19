@@ -5,6 +5,7 @@ from utils.geometry import quaternion2rotation
 
 class Camera:
     """
+    DEPRECATED: Use pycolmap.Camera instead
     Camera class that stores camera information.
     The camera is of format colmap
 
@@ -19,6 +20,7 @@ class Camera:
     - params: np.array, camera parameters (COLMAP sensor parameters, see https://colmap.github.io/cameras.html)
     """
     def __init__(self, image, type, qvec, tvec, is_valid=True):
+        warnings.warn("Camera class is deprecated. Use pycolmap.Camera instead", DeprecationWarning)
         self.image = image
         self.type = type
         self.R = quaternion2rotation(qvec)
@@ -48,6 +50,10 @@ class Camera:
 
 
 def get_cameras_info(cameras_type, images) -> list:
+    """
+    DEPRECATED: Use pycolmap.get_cameras_info instead
+    """
+    warnings.warn("get_cameras_info is deprecated. Use pycolmap.get_cameras_info instead", DeprecationWarning)
     cameras = []
     for key, img in images.items():
         # take only the last part of the path as the image name

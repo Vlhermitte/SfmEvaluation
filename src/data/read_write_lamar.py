@@ -3,9 +3,16 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 from pathlib import Path
 from typing import Iterator, List, Union, Optional
-from functools import singledispatchmethod
+from tqdm import tqdm
+import shutil
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from read_write_model import write_model, Camera as ColmapCamera, Image as ColmapImage, Point3D as ColmapPoint3D
+from data.read_write_model import write_model, Camera as ColmapCamera, Image as ColmapImage, Point3D as ColmapPoint3D
+
+
+def copy_image(image_path, output_dir):
+    shutil.copy2(image_path, output_dir / image_path.name)
+
 
 class LamarSessionProcessor:
     """
@@ -82,6 +89,20 @@ class LamarSessionProcessor:
 
         return cameras_sensors
 
+    def get_images_path(self, session_ids: Union[str, List[str]]):
+        if isinstance(session_ids, str):
+            session_ids = [session_ids]
+
+        images_paths = []
+        for session_id in session_ids:
+            session_path = self.datasets_path / 'sessions/map/raw_data' / session_id
+            assert session_path.exists(), f"Error: {session_path} does not exist"
+
+            images_dir = session_path / 'images'
+            images_paths.append((session_id, images_dir))
+
+        return images_paths
+
     def export_to_colmap(self, session_ids: Union[str, List[str]], saving_path: Optional[Path] = None):
         """
         Export camera trajectories for one or multiple sessions into COLMAP format files.
@@ -139,6 +160,30 @@ class LamarSessionProcessor:
             output_path = Path(saving_path)
         write_model(colmap_cameras, colmap_images, colmap_points, output_path, ext='.txt')
 
+    def export_all_in_directory(self, session_ids: Union[str, List[str]]):
+        if isinstance(session_ids, str):
+            session_ids = [session_ids]
+
+        for session_id in session_ids:
+            session_path = self.datasets_path / 'sessions/map/raw_data' / session_id
+            assert session_path.exists(), f"Error: {session_path} does not exist"
+
+            output_path = self.datasets_path / 'sessions/map' / 'colmap_all' / 'images'
+            output_path.mkdir(exist_ok=True, parents=True)
+
+            images_dir = self.datasets_path / 'sessions/map/raw_data' / session_id / 'images'
+            image_paths = list(images_dir.glob('*.jpg'))
+
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                futures = {executor.submit(copy_image, image, output_path): image for image in image_paths}
+                for future in tqdm(as_completed(futures), total=len(futures),
+                                   desc=f'Exporting images from {session_id}'):
+                    try:
+                        future.result()
+                    except Exception as e:
+                        print(f"Error copying {futures[future]}: {e}")
+
+
 def visualize_trajectory(trajectory):
     vis = o3d.visualization.Visualizer()
     vis.create_window()
@@ -182,4 +227,5 @@ if __name__ == '__main__':
     # retrieve all session ids that start with ios
     session_ids = [session.name for session in datasets_path.glob('sessions/map/raw_data/ios*')]
     lamar = LamarSessionProcessor(datasets_path)
-    lamar.export_to_colmap(session_ids)
+    #lamar.export_to_colmap(session_ids)
+    lamar.export_all_in_directory(session_ids)
