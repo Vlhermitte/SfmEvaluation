@@ -3,7 +3,7 @@ import cv2
 import pycolmap
 from typing import List, Dict
 
-from utils.common import Camera, detect_colmap_format
+from utils.common import detect_colmap_format
 from utils.alignment import ransac_kabsch
 
 

@@ -5,6 +5,7 @@ from utils.geometry import quaternion2rotation
 
 class Camera:
     """
+    DEPRECATED: Use pycolmap.Camera instead
     Camera class that stores camera information.
     The camera is of format colmap
 
@@ -48,6 +49,9 @@ class Camera:
 
 
 def get_cameras_info(cameras_type, images) -> list:
+    """
+    DEPRECATED: Use pycolmap.get_cameras_info instead
+    """
     cameras = []
     for key, img in images.items():
         # take only the last part of the path as the image name
