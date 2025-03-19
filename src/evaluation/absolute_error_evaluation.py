@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import pycolmap
 from typing import List, Dict
 
 from utils.common import Camera, detect_colmap_format
@@ -7,75 +8,42 @@ from utils.alignment import ransac_kabsch
 
 
 def evaluate_camera_pose(
-        est_cameras: List[Camera],
-        gt_cameras: List[Camera],
+        gt_images: List[pycolmap.Image],
+        est_images: List[pycolmap.Image],
         R_threshold: float = 5,
-        t_threshold: float = 0.1,
-        perform_alignment: bool = True) -> Dict:
+        t_threshold: float = 0.1
+) -> Dict:
     """
     Evaluate the absolute pose error between the ground truth and estimated camera poses.
     Args:
-        est_cameras (List[Camera]): List of estimated camera poses.
-        gt_cameras (List[Camera]): List of ground truth camera poses.
+        gt_images (List[pycolmap.Image]): List of ground truth images.
+        est_images (List[pycolmap.Image]): List of estimated images.
         R_threshold (float): Rotation threshold in degrees.
         t_threshold (float): Translation threshold in meters.
-        perform_alignment (bool): Whether to estimate the alignment between the estimated and ground truth poses.
-
     Returns:
         dict: A dictionary with the rotation_error and translation_error lists.
     """
-    assert len(est_cameras) == len(gt_cameras), "Number of estimated and ground truth cameras should be the same."
+    assert len(gt_images) == len(est_images), "Number of estimated and ground truth cameras should be the same."
     # Sort the cameras in estimated cameras based on the image name
-    est_cameras = sorted(est_cameras, key=lambda camera: camera.image)
-    gt_cameras = sorted(gt_cameras, key=lambda camera: camera.image)
-
-    # Camera pose is in world-to-cam but we need cam-to-world
-    est_poses = []
-    for est_camera in est_cameras:
-        pose = est_camera.pose
-        est_poses.append(np.linalg.inv(pose))
-
-    gt_poses = []
-    for gt_camera in gt_cameras:
-        pose = gt_camera.pose
-        gt_poses.append(np.linalg.inv(pose))
-
-    if perform_alignment:
-        # Alignment needs a list of pose correspondences with confidences
-        alignment_transformation, alignment_scale = ransac_kabsch(
-            est_poses=est_poses,
-            gt_poses=gt_poses,
-            inlier_threshold_r=R_threshold,
-            inlier_threshold_t=t_threshold,
-            estimate_scale=True
-        )
-
-        if alignment_transformation is None:
-            print("Alignment failed. Setting all pose errors to infinity.")
-            alignment_transformation = None
-            alignment_scale = 1.0
-    else:
-        alignment_transformation = np.eye(4)
-        alignment_scale = 1.0
+    #gt_images = sorted(gt_images, key=lambda image: image.name.split('.')[0])
+    #est_images = sorted(est_images, key=lambda image: image.name.split('.')[0])
 
     # Evaluation loop
     rotation_errors = []
     translation_errors = []
     accuracy = 0
-    for est_camera, gt_camera in zip(est_cameras, gt_cameras):
-        if alignment_transformation is None or est_camera.is_valid is False:
-            rotation_errors.append(np.inf)
-            translation_errors.append(np.inf)
-        else:
-            gt_pose = alignment_transformation @ gt_camera.pose
+    for gt_image, est_image in zip(gt_images, est_images):
+        if gt_image.registered and est_image.registered:
+
+            T_gt = gt_image.cam_from_world.matrix()
+            T_est = est_image.cam_from_world.matrix()
 
             # Compute translation error
-            t_err = np.linalg.norm(gt_pose[:3, 3] - est_camera.pose[:3, 3])
-            t_err = t_err / alignment_scale
+            t_err = np.linalg.norm(T_gt[:3, 3] - T_est[:3, 3])
             translation_errors.append(t_err)
 
             # Compute rotation error
-            R_err = gt_pose[:3, :3] @ est_camera.pose[:3, :3].T
+            R_err = T_gt[:3, :3] @ T_est[:3, :3].T
             angle = cv2.Rodrigues(R_err)[0]
             angle = np.linalg.norm(angle)
             # Convert to degrees
@@ -85,7 +53,7 @@ def evaluate_camera_pose(
             if angle <= R_threshold and t_err <= t_threshold:
                 accuracy += 1
 
-    accuracy = accuracy / len(est_cameras)
+    accuracy = accuracy / len(est_images)
 
     return {'rotation_error': rotation_errors, 'translation_error': translation_errors, 'accuracy': accuracy}
 

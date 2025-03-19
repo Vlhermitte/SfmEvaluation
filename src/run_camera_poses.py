@@ -1,58 +1,85 @@
 import argparse
+import os
 import logging
 import json
 import numpy as np
+import pycolmap
+from copy import deepcopy
 from typing import Tuple, List
 
-from utils.common import Camera, get_cameras_info, detect_colmap_format
-from data.read_write_model import read_model
+from utils.common import detect_colmap_format
 from evaluation.absolute_error_evaluation import evaluate_camera_pose
 from evaluation.relative_error_evaluation import evaluate_relative_errors
 
 
-def run_rel_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], verbose: bool = False) -> Tuple[dict, dict]:
-    if len(est_cameras) != len(gt_cameras):
+def run_rel_err_evaluation(gt_model: pycolmap.Reconstruction, est_model: pycolmap.Reconstruction, verbose: bool = False) -> Tuple[dict, dict]:
+    gt_images = []
+    for gt_image in gt_model.images.values():
+        gt_image.name = os.path.basename(gt_image.name)
+        gt_images.append(gt_image)
+
+    est_images = []
+    for est_image in est_model.images.values():
+        est_image.name = os.path.basename(est_image.name)
+        est_images.append(est_image)
+
+    if len(gt_images) != len(est_images):
         if verbose:
             print('Missing cameras in the estimated model. Adding dummy cameras with invalid poses.')
-        # For every gt_cameras not in est_cameras, add a corresponding camera with in_valid=False
-        for gt_camera in gt_cameras:
-            if gt_camera not in est_cameras:
-                # Note: it is important to have a non-zero tvec to avoid division by zero in the trajectory alignment
-                est_cameras.append(
-                    Camera(gt_camera.image, gt_camera.type, np.array([0, 0, 0, 1]), np.array([1, 1, 1]), is_valid=False)
-                )
+
+        est_image_name = [est_image.name.split('.')[0] for est_image in est_images]
+        for gt_image in gt_images:
+            if gt_image.name.split('.')[0] not in est_image_name:
+                dummy_image = pycolmap.Image()
+                dummy_image.name = gt_image.name
+                dummy_image.registered = False
+                est_images.append(dummy_image)
 
     # Evaluating
-    results = evaluate_relative_errors(est_cameras=est_cameras, gt_cameras=gt_cameras)
+    results = evaluate_relative_errors(gt_images=gt_images, est_images=est_images)
 
     return results
 
-def run_abs_err_evaluation(est_cameras: List[Camera], gt_cameras: List[Camera], verbose: bool = False) -> dict:
-    if len(est_cameras) != len(gt_cameras):
-        if verbose:
-            print('Missing cameras in the estimated model. Adding dummy cameras with invalid poses.')
-        # For every gt_cameras not in est_cameras, add a corresponding camera with in_valid=False
-        for gt_camera in gt_cameras:
-            if gt_camera not in est_cameras:
-                # Note: it is important to have a non-zero tvec to avoid division by zero in the trajectory alignment
-                est_cameras.append(
-                    Camera(gt_camera.image, gt_camera.type, np.array([0, 0, 0, 1]), np.array([1, 1, 1]), is_valid=False)
-                )
-
-    # Evaluate pose error
-    results = evaluate_camera_pose(
-        est_cameras=est_cameras,
-        gt_cameras=gt_cameras,
-        R_threshold=5,
-        t_threshold=10,
-        perform_alignment=True
+def run_abs_err_evaluation(gt_model: pycolmap.Reconstruction, est_model: pycolmap.Reconstruction, verbose: bool = False) -> dict:
+    sim3d = pycolmap.align_reconstructions_via_proj_centers(
+        src_reconstruction=est_model,
+        tgt_reconstruction=gt_model,
+        max_proj_center_error=0.01,
     )
 
-    if verbose:
-        print(f"Rotation error: {results['rotation_error']}\n")
-        print(f"Translation error: {results['translation_error']}")
+    # Apply alignment to the estimated model
+    est_model_aligned = deepcopy(est_model)
+    est_model_aligned.transform(sim3d)
 
-    return results
+    gt_images = []
+    for gt_image in gt_model.images.values():
+        gt_image.name = os.path.basename(gt_image.name)
+        gt_images.append(gt_image)
+
+    est_images = []
+    for est_image in est_model_aligned.images.values():
+        est_image.name = os.path.basename(est_image.name)
+        est_images.append(est_image)
+
+    if len(gt_images) != len(est_images):
+        if verbose:
+            print('Missing cameras in the estimated model. Adding dummy cameras with invalid poses.')
+
+        est_image_name = [est_image.name.split('.')[0] for est_image in est_images]
+        for gt_image in gt_images:
+            if gt_image.name.split('.')[0] not in est_image_name:
+                dummy_image = pycolmap.Image()
+                dummy_image.name = gt_image.name
+                dummy_image.registered = False
+                est_images.append(dummy_image)
+
+    # Evaluate the camera poses
+    abs_results = evaluate_camera_pose(
+        gt_images=gt_images, est_images=est_images
+    )
+
+    return abs_results
+
 
 def compute_auc(R_error, t_error, max_threshold=30):
     """
@@ -121,28 +148,43 @@ if __name__ == '__main__':
 
     try:
         _logger.info(f"Reading ground truth model {gt_model_path}")
-        gt_cameras_type, gt_images, gt_points3D = read_model(gt_model_path, ext=detect_colmap_format(gt_model_path))
-    except:
+        gt_sparse_model = pycolmap.Reconstruction()
+        ext = detect_colmap_format(gt_model_path)
+        if ext == '.bin':
+            gt_sparse_model.read_binary(gt_model_path)
+        elif ext == '.txt':
+            gt_sparse_model.read_text(gt_model_path)
+        else:
+            _logger.error(f"Warning: The ground truth model format is not supported. Please use .bin or .txt format.")
+            exit(1)
+    except Exception as e:
+        _logger.error(f"Error: {e}")
         _logger.error(f"Warning: Evaluation failed for {gt_model_path}. Please check the input model paths and try again.")
+        exit(1)
 
     try:
         _logger.info(f"Reading estimated model {est_model_path}")
-        est_cameras_type, images, est_points3D = read_model(est_model_path, ext=detect_colmap_format(est_model_path))
-    except:
+        est_sparse_model = pycolmap.Reconstruction()
+        ext = detect_colmap_format(est_model_path)
+        if ext == '.bin':
+            est_sparse_model.read_binary(est_model_path)
+        elif ext == '.txt':
+            est_sparse_model.read_text(est_model_path)
+        else:
+            _logger.error(f"Warning: The estimated model format is not supported. Please use .bin or .txt format.")
+            exit(1)
+    except Exception as e:
+        _logger.error(f"Error: {e}")
         _logger.error(f"Warning: Evaluation failed for {est_model_path}. Please check the input model paths and try again.")
         exit(1)
 
-    # Create list of Camera objects for estimated and ground truth models
-    est_cameras = get_cameras_info(est_cameras_type, images)
-    gt_cameras = get_cameras_info(gt_cameras_type, gt_images)
-
     # Find how many camera were not registered in the estimated model
-    number_of_missing_cameras = len(gt_cameras) - len(est_cameras)
+    number_of_missing_cameras = len(gt_sparse_model.images) - len(est_sparse_model.images)
 
     ####################################################################################################################
     # Relative errors evaluation                                                                                       #
     ####################################################################################################################
-    rel_results = run_rel_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
+    rel_results = run_rel_err_evaluation(gt_model=gt_sparse_model, est_model=est_sparse_model)
 
     with open(f'{est_model_path}/relative_results.json', 'w') as f:
         json.dump(rel_results, f, indent=4)
@@ -203,10 +245,10 @@ if __name__ == '__main__':
     # Absolute errors evaluation                                                                                       #
     ####################################################################################################################
     # TODO: Fix the absolute error evaluation (The rotation error seems correct but the translation error is not)
-    abs_results = run_abs_err_evaluation(est_cameras=est_cameras, gt_cameras=gt_cameras)
+    abs_results = run_abs_err_evaluation(gt_model=gt_sparse_model, est_model=est_sparse_model)
 
-    with open(f'{est_model_path}/absolute_results.json', 'w') as f:
-        json.dump(abs_results, f, indent=4)
+    # with open(f'{est_model_path}/absolute_results.json', 'w') as f:
+    #     json.dump(abs_results, f, indent=4)
 
 
 
