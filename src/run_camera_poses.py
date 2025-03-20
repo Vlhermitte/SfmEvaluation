@@ -6,22 +6,66 @@ import numpy as np
 import pycolmap
 from copy import deepcopy
 from typing import Tuple, List
+from pathlib import Path
 
 from utils.common import detect_colmap_format
+from data.read_write_model import (
+    read_images_binary, read_images_text, read_cameras_binary, read_cameras_text
+)
 from evaluation.absolute_error_evaluation import evaluate_camera_pose
 from evaluation.relative_error_evaluation import evaluate_relative_errors
 
+def read_model(model_path: Path):
+    if not isinstance(model_path, Path):
+        model_path = Path(model_path)
+    assert model_path.exists(), f"Error: The ground truth model path {gt_model_path} does not exist."
+
+    try:
+        model = pycolmap.Reconstruction()
+        ext = detect_colmap_format(model_path)
+
+        if (model_path / f'cameras{ext}').exists() and (model_path / f'images{ext}').exists() and (model_path / f'points3D{ext}').exists():
+            model.read_binary(model_path) if ext == '.bin' else model.read_text(model_path)
+            for image in model.images.values():
+                image.name = os.path.splitext(os.path.basename(image.name))[0]
+        else:
+            # Read manually in case points3D file is missing (THIS MAY CAUSE PROBLEMS FOR ABSOLUTE ERROR EVALUATION
+            cameras = read_cameras_binary(model_path / 'cameras.bin') if ext == '.bin' else read_cameras_text(model_path / 'cameras.txt')
+            for cam in cameras.values():
+                camera = pycolmap.Camera(
+                    camera_id=cam.id,
+                    model=cam.model,
+                    width=cam.width,
+                    height=cam.height,
+                    params=cam.params
+                )
+                model.add_camera(camera)
+
+            images = read_images_binary(model_path / 'images.bin') if ext == '.bin' else read_images_text(model_path / 'images.txt')
+            for img in images.values():
+                quat_xyzw = img.qvec[1:] + img.qvec[:1]
+                # Sometimes the COLMAP model contains the full path. This causes problem when comparing the gt model with the estimated model,
+                # especially during the alignment process. So, we only keep the basename of the image name.
+                basename_without_ext = os.path.splitext(os.path.basename(img.name))[0]
+                image = pycolmap.Image(
+                    image_id=img.id,
+                    name=basename_without_ext,
+                    camera_id=img.camera_id,
+                    cam_from_world=pycolmap.Rigid3d(quat_xyzw, img.tvec),
+                    registered = True
+                )
+                model.add_image(image)
+
+        model.check()
+    except Exception as e:
+        print(f"Error: Failed to read the model. {e}")
+        exit(1)
+
+    return model
 
 def run_rel_err_evaluation(gt_model: pycolmap.Reconstruction, est_model: pycolmap.Reconstruction, verbose: bool = False) -> Tuple[dict, dict]:
-    gt_images = []
-    for gt_image in gt_model.images.values():
-        gt_image.name = os.path.basename(gt_image.name)
-        gt_images.append(gt_image)
-
-    est_images = []
-    for est_image in est_model.images.values():
-        est_image.name = os.path.basename(est_image.name)
-        est_images.append(est_image)
+    gt_images = [image for image in gt_model.images.values()]
+    est_images = [image for image in est_model.images.values()]
 
     if len(gt_images) != len(est_images):
         if verbose:
@@ -61,10 +105,10 @@ def run_abs_err_evaluation(gt_model: pycolmap.Reconstruction, est_model: pycolma
     abs_results = {
         'rotation_errors': rotation_errors,
         'translation_errors': translation_errors,
+        'missing_cameras': len(gt_model.images) - len(est_model.images)
     }
 
     return abs_results
-
 
 def compute_auc(R_error, t_error, max_threshold=30):
     """
@@ -131,37 +175,8 @@ if __name__ == '__main__':
     gt_model_path = args.gt_model_path
     est_model_path = args.est_model_path
 
-    try:
-        _logger.info(f"Reading ground truth model {gt_model_path}")
-        gt_sparse_model = pycolmap.Reconstruction()
-        ext = detect_colmap_format(gt_model_path)
-        if ext == '.bin':
-            gt_sparse_model.read_binary(gt_model_path)
-        elif ext == '.txt':
-            gt_sparse_model.read_text(gt_model_path)
-        else:
-            _logger.error(f"Warning: The ground truth model format is not supported. Please use .bin or .txt format.")
-            exit(1)
-    except Exception as e:
-        _logger.error(f"Error: {e}")
-        _logger.error(f"Warning: Evaluation failed for {gt_model_path}. Please check the input model paths and try again.")
-        exit(1)
-
-    try:
-        _logger.info(f"Reading estimated model {est_model_path}")
-        est_sparse_model = pycolmap.Reconstruction()
-        ext = detect_colmap_format(est_model_path)
-        if ext == '.bin':
-            est_sparse_model.read_binary(est_model_path)
-        elif ext == '.txt':
-            est_sparse_model.read_text(est_model_path)
-        else:
-            _logger.error(f"Warning: The estimated model format is not supported. Please use .bin or .txt format.")
-            exit(1)
-    except Exception as e:
-        _logger.error(f"Error: {e}")
-        _logger.error(f"Warning: Evaluation failed for {est_model_path}. Please check the input model paths and try again.")
-        exit(1)
+    gt_sparse_model = read_model(gt_model_path)
+    est_sparse_model = read_model(est_model_path)
 
     # Find how many camera were not registered in the estimated model
     number_of_missing_cameras = len(gt_sparse_model.images) - len(est_sparse_model.images)
