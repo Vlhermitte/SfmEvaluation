@@ -5,11 +5,13 @@ channels:
 dependencies:
   - python=3.11
   - numpy
+  - scipy
   - open3d
   - matplotlib
   - tqdm
   - ffmpeg
+  - plotly
   - pip
   - pip:
+      - pycolmap==3.10
       - opencv-python
-      - git+https://github.com/Vlhermitte/lamar-benchmark.git#egg=lamar[scantools]
