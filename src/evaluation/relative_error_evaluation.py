@@ -85,7 +85,7 @@ def evaluate_relative_errors(gt_images: List[pycolmap.Image], est_images: List[p
     gt_images = sorted(gt_images, key=lambda image: image.name.split('.')[0])
     est_images = sorted(est_images, key=lambda image: image.name.split('.')[0])
 
-    results = {'relative_rotation_error': [], 'relative_translation_error': [], 'relative_translation_angle': []}
+    results = {'relative_rotation_error': [], 'relative_translation_angle': [], 'number_of_missing_cameras': 0}
 
     # Evaluate on all possible pairs from all images
     pairs = [(i, j) for i in range(len(gt_images)) for j in range(i + 1, len(gt_images))]
@@ -125,5 +125,6 @@ def evaluate_relative_errors(gt_images: List[pycolmap.Image], est_images: List[p
             # Assign high values for missing cameras
             results['relative_rotation_error'].append(180.0)
             results['relative_translation_angle'].append(180.0)
+    results['number_of_missing_cameras'] = len([image for image in est_images if not image.registered])
 
     return results
