@@ -85,11 +85,13 @@ def run_rel_err_evaluation(gt_model: pycolmap.Reconstruction, est_model: pycolma
     return results
 
 def run_abs_err_evaluation(gt_model: pycolmap.Reconstruction, est_model: pycolmap.Reconstruction, verbose: bool = False) -> dict:
-    comparison_results = pycolmap.compare_reconstructions(
-        reconstruction1=gt_model,
-        reconstruction2=est_model,
-        alignment_error='proj_center'
-    )
+    from wurlitzer import pipes
+    with pipes(): # Suppress the output of the evaluation
+        comparison_results = pycolmap.compare_reconstructions(
+            reconstruction1=gt_model,
+            reconstruction2=est_model,
+            alignment_error='proj_center'
+        )
 
     if comparison_results is None:
         if verbose:
