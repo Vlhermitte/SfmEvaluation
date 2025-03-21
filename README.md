@@ -4,17 +4,18 @@
 - [Overview](#overview)
 - [Installation](#installation)
 - [Evaluation Protocols](#evaluation-protocols)
-    - [Relative Pose Evaluation](#relative-pose-evaluation)
-    - [Absolute Pose Evaluation (In Progress)](#absolute-pose-evaluation-in-progress)
-    - [Novel View Synthesis](#novel-view-synthesis-in-progress)
-    - [3D Triangulation Evaluation (In Progress)](#3d-triangulation-evaluation-in-progress)
+  - [Camera Pose Evaluation](#camera-pose-evaluation)
+      - [Relative Pose Evaluation](#relative-pose-evaluation)
+      - [Absolute Pose Evaluation](#absolute-pose-evaluation-in-progress)
+  - [Novel View Synthesis](#novel-view-synthesis-in-progress)
+  - [3D Triangulation Evaluation (In Progress)](#3d-triangulation-evaluation-in-progress)
 - [Scripts](#scripts)
 
 ## Overview
 This project provides tools for reading, writing, and evaluating Structure-from-Motion (SfM) models.
 The evaluation protocol consists of the following components:
 - **Relative Pose Error**
-- **Absolute Pose Error** *(in progress)*
+- **Absolute Pose Error**
 - **Novel View Synthesis**
 - **3D Triangulation** *(in progress)*
 
@@ -51,20 +52,20 @@ To run the Novel View Synthesis evaluation, you need to install [NerfStudio](htt
 
 ## Evaluation Protocols
 
-### Relative Pose Evaluation
-The evaluation assesses **relative rotation error (RRE)** and **relative translation error (RTE)**, computed as follows:
+### Camera Pose Evaluation
+This protocol evaluates the quality of **camera poses** estimated by SfM methods with 2 metrics:
+- **Relative Pose Error**
+- **Absolute Pose Error**
 
-#### Formulation
-For each image pair \(i\) and \(j\):
-```math
-  R_{rel} = R_j \cdot R_i^T
-```
-```math
-  t_{rel} = t_j - (R_{rel} \cdot t_i)
-```
-For implementation details, see [`relative_error_evaluation`](src/evaluation/relative_error_evaluation.py).
+#### Relative Pose Evaluation
+The evaluation assesses **relative rotation error (RRE)** and **relative translation error (RTE)** 
+by comparing all pairs of camera poses in the estimated model to the ground truth model.
 
-#### Running Relative Pose Evaluation
+#### Absolute Pose Evaluation
+This protocol evaluates the quality of **absolute camera poses** by comparing estimated poses to ground truth poses.
+The estimated model and the ground truth model are aligned using colmap aligner via projection center.
+
+### Running Pose Evaluation
 To evaluate relative camera poses, use:
 ```
 python src/run_camera_poses.py --gt-model-path <PATH_TO_GT_MODEL> --est-model-path <PATH_TO_EST_MODEL>
@@ -74,12 +75,7 @@ python src/run_camera_poses.py --gt-model-path <PATH_TO_GT_MODEL> --est-model-pa
 
 📌 **Note:** Files in `<PATH_TO_GT_MODEL>` and `<PATH_TO_EST_MODEL>` must be in **COLMAP format** (`.txt/.bin`).
 
-### Absolute Pose Evaluation *(In Progress)*
-🚧 **This feature is still under development.** 🚧
-
-An **absolute pose evaluation** script is currently in progress. See [`absolute_error_evaluation.py`](src/evaluation/absolute_error_evaluation.py).
-- Uses the **Kabsch-Umeyama algorithm** to align estimated and ground truth camera poses.
-- Computes **absolute rotation and translation errors**.
+For implementation details, see [`run_camera_poses.py`](src/run_camera_poses.py).
 
 ### Novel View Synthesis
 This protocol evaluates the quality of **novel view synthesis** by comparing rendered images to ground truth images.
