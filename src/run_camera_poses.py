@@ -58,8 +58,8 @@ def read_model(model_path: Path):
 
         model.check()
     except Exception as e:
-        print(f"Error: Failed to read the model. {e}")
-        exit(1)
+        print(f"Error: Failed to read the {model_path}. {e}")
+        return None
 
     return model
 
