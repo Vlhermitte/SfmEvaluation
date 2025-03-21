@@ -24,7 +24,7 @@ ETH3D_SCENES = (
 )
 
 MIP_NERF_360_SCENES = (
-    "bycicle",
+    "bicycle",
     "bonsai",
     "counter",
     "garden",
