@@ -5,8 +5,9 @@ from pathlib import Path
 from typing import Tuple
 
 from utils.common import detect_colmap_format
-from run_camera_poses import read_model
-from run_camera_poses import run_rel_err_evaluation, run_abs_err_evaluation
+from run_camera_poses import (
+    read_model, run_rel_err_evaluation, run_abs_err_evaluation, export_rel_results, export_abs_results
+)
 from run_nerfstudio import sanity_check_colmap, run_nerfstudio
 from src.evaluation.triangulation_evaluation import evaluate_multiview
 
@@ -38,7 +39,7 @@ class Evaluator:
         # Run the evaluation
         if (gt_sparse_model and est_sparse_model) is not None:
             rel_results = run_rel_err_evaluation(gt_model=gt_sparse_model, est_model=est_sparse_model)
-            abs_results = run_abs_err_evaluation(gt_model=gt_sparse_model, est_model=est_sparse_model, verbose=True)
+            abs_results = run_abs_err_evaluation(gt_model=gt_sparse_model, est_model=est_sparse_model)
 
         return rel_results, abs_results
 
@@ -123,14 +124,19 @@ if __name__ == '__main__':
         print("Evaluating", results)
         for scene in ETH3D_SCENES:
             print(scene)
+            est_model_path = results / "ETH3D" / scene / COLMAP_FORMAT
             evaluator = Evaluator(
                 gt_model_path=ETH3D_DATA_PATH /scene / "dslr_calibration_jpg",
-                est_model_path=results / "ETH3D" / scene / COLMAP_FORMAT,
+                est_model_path=est_model_path,
                 image_path=ETH3D_DATA_PATH / scene / "images"
             )
 
             # Camera poses evaluation
             rel_results, abs_results = evaluator.run_camera_evaluator()
+            if rel_results is not None:
+                export_rel_results(rel_results, est_model_path)
+            if abs_results is not None:
+                export_abs_results(abs_results, est_model_path)
 
             # Novel view synthesis evaluation
             # ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator()
@@ -152,6 +158,10 @@ if __name__ == '__main__':
 
             # Camera poses evaluation
             rel_results, abs_results = evaluator.run_camera_evaluator()
+            if rel_results is not None:
+                export_rel_results(rel_results, est_model_path)
+            if abs_results is not None:
+                export_abs_results(abs_results, est_model_path)
 
             # Novel view synthesis evaluation
             # ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator()
