@@ -4,8 +4,8 @@ import logging
 from pathlib import Path
 from typing import Tuple
 
-from utils.common import get_cameras_info, detect_colmap_format
-from data.read_write_model import read_model
+from utils.common import detect_colmap_format
+from run_camera_poses import read_model
 from run_camera_poses import run_rel_err_evaluation, run_abs_err_evaluation
 from run_nerfstudio import sanity_check_colmap, run_nerfstudio
 from src.evaluation.triangulation_evaluation import evaluate_multiview
@@ -31,19 +31,14 @@ class Evaluator:
         Run the camera poses evaluation.
         :return: rel_results, abs_results.
         """
-        gt_cameras_type, gt_images, gt_points3D = read_model(
-            self.gt_model_path, ext=detect_colmap_format(self.gt_model_path)
-        )
-        est_cameras_type, images, est_points3D = read_model(
-            self.est_model_path, ext=detect_colmap_format(self.est_model_path)
-        )
-
-        est_cameras = get_cameras_info(est_cameras_type, images)
-        gt_cameras = get_cameras_info(gt_cameras_type, gt_images)
+        gt_sparse_model = read_model(self.gt_model_path)
+        est_sparse_model = read_model(self.est_model_path)
+        rel_results, abs_results = None, None
 
         # Run the evaluation
-        rel_results = run_rel_err_evaluation(est_model=est_cameras, gt_model=gt_cameras)
-        abs_results = run_abs_err_evaluation(est_model=est_cameras, gt_model=gt_cameras)
+        if (gt_sparse_model and est_sparse_model) is not None:
+            rel_results = run_rel_err_evaluation(gt_model=gt_sparse_model, est_model=est_sparse_model)
+            abs_results = run_abs_err_evaluation(gt_model=gt_sparse_model, est_model=est_sparse_model, verbose=True)
 
         return rel_results, abs_results
 
@@ -118,17 +113,45 @@ class Evaluator:
 
 
 if __name__ == '__main__':
-    evaluator = Evaluator(
-        gt_model_path=Path("../data/datasets/ETH3D/courtyard/dslr_calibration_jpg"),
-        est_model_path=Path("../data/results/glomap/ETH3D/courtyard/colmap/sparse/0"),
-        image_path=Path("../data/datasets/ETH3D/courtyard/images")
+    from config import (
+        ETH3D_DATA_PATH, ETH3D_SCENES,
+        MIP_NERF_360_DATA_PATH, MIP_NERF_360_SCENES,
+        GLOMAP_RESULTS_PATH, VGGSFM_RESULTS_PATH, FLOWMAP_RESULTS_PATH, ACEZERO_RESULTS_PATH, COLMAP_FORMAT
     )
 
-    # Camera poses evaluation
-    rel_results, abs_results = evaluator.run_camera_evaluator()
+    for results in [GLOMAP_RESULTS_PATH, VGGSFM_RESULTS_PATH, FLOWMAP_RESULTS_PATH, ACEZERO_RESULTS_PATH]:
+        print("Evaluating", results)
+        for scene in ETH3D_SCENES:
+            print(scene)
+            evaluator = Evaluator(
+                gt_model_path=ETH3D_DATA_PATH /scene / "dslr_calibration_jpg",
+                est_model_path=results / "ETH3D" / scene / COLMAP_FORMAT,
+                image_path=ETH3D_DATA_PATH / scene / "images"
+            )
 
-    # Novel view synthesis evaluation
-    ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator()
+            # Camera poses evaluation
+            rel_results, abs_results = evaluator.run_camera_evaluator()
 
-    # Triangulation evaluation
-    tolerances, completenesses, accuracies, f1_scores = evaluator.run_triangulation_evaluator()
+            # Novel view synthesis evaluation
+            # ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator()
+
+            # Triangulation evaluation
+            # tolerances, completenesses, accuracies, f1_scores = evaluator.run_triangulation_evaluator()
+
+        for scene in MIP_NERF_360_SCENES:
+            print(scene)
+            est_model_path = results / "MipNerf360" / scene / COLMAP_FORMAT
+            if not est_model_path.exists():
+                print(f"Error: The model path {est_model_path} does not exist.")
+                continue
+            evaluator = Evaluator(
+                gt_model_path=MIP_NERF_360_DATA_PATH / scene / "sparse/0",
+                est_model_path=est_model_path,
+                image_path=MIP_NERF_360_DATA_PATH / scene / "images"
+            )
+
+            # Camera poses evaluation
+            rel_results, abs_results = evaluator.run_camera_evaluator()
+
+            # Novel view synthesis evaluation
+            # ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator()
