@@ -145,7 +145,55 @@ def compute_auc(R_error, t_error, max_threshold=30):
     auc = np.mean(np.cumsum(normalized_histogram)) * 100
     return auc, normalized_histogram
 
+def export_rel_results(rel_results: dict, output_path: Path):
+    with open(f'{output_path}/relative_results.json', 'w') as f:
+        json.dump(rel_results, f, indent=4)
 
+    # Define thresholds
+    # Compute AUC for rotation and translation errors
+    Auc_30, normalized_histogram = compute_auc(rel_results['relative_rotation_error'],
+                                               rel_results['relative_translation_angle'])
+    Auc_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
+    Auc_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
+    Auc_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
+
+    # RRE auc
+    RRE_30, normalized_histogram = compute_auc(rel_results['relative_rotation_error'], None)
+    RRE_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
+    RRE_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
+    RRE_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
+
+    # RTE auc
+    RTE_30, normalized_histogram = compute_auc(None, rel_results['relative_translation_angle'])
+    RTE_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
+    RTE_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
+    RTE_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
+
+    number_of_missing_cameras = rel_results['number_of_missing_cameras']
+
+    # Write auc to txt file
+    with open(f'{output_path}/rel_auc.json', 'w') as f:
+        json.dump({
+            'Missing_cameras': number_of_missing_cameras,
+            'Auc_3': Auc_3,
+            'Auc_5': Auc_5,
+            'Auc_10': Auc_10,
+            'Auc_30': Auc_30,
+            'RRE_3': RRE_3,
+            'RRE_5': RRE_5,
+            'RRE_10': RRE_10,
+            'RRE_30': RRE_30,
+            'RTE_3': RTE_3,
+            'RTE_5': RTE_5,
+            'RTE_10': RTE_10,
+            'RTE_30': RTE_30
+        }, f, indent=4)
+
+def export_abs_results(abs_results: dict, output_path: Path):
+    with open(f'{output_path}/absolute_results.json', 'w') as f:
+        json.dump(abs_results, f, indent=4)
+
+    # TODO: Find a good metric to show absolute errors
 
 if __name__ == '__main__':
     _logger = logging.getLogger(__name__)
@@ -187,69 +235,16 @@ if __name__ == '__main__':
     # Relative errors evaluation                                                                                       #
     ####################################################################################################################
     rel_results = run_rel_err_evaluation(gt_model=gt_sparse_model, est_model=est_sparse_model)
+    export_rel_results(rel_results, est_model_path)
 
-    with open(f'{est_model_path}/relative_results.json', 'w') as f:
-        json.dump(rel_results, f, indent=4)
-
-    # Define thresholds
-    # Compute AUC for rotation and translation errors
-    Auc_30, normalized_histogram = compute_auc(rel_results['relative_rotation_error'], rel_results['relative_translation_angle'])
-    Auc_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
-    Auc_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
-    Auc_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
-    if verbose:
-        print(f"Auc_3  (%): {Auc_3}")
-        print(f"Auc_5  (%): {Auc_5}")
-        print(f"Auc_10 (%): {Auc_10}")
-        print(f"Auc_30 (%): {Auc_30}")
-
-    # RRE auc
-    RRE_30, normalized_histogram = compute_auc(rel_results['relative_rotation_error'], None)
-    RRE_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
-    RRE_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
-    RRE_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
-    if verbose:
-        print(f'RRE_3  (%): {RRE_3}')
-        print(f'RRE_5  (%): {RRE_5}')
-        print(f'RRE_10 (%): {RRE_10}')
-        print(f'RRE_30 (%): {RRE_30}')
-
-    # RTE auc
-    RTE_30, normalized_histogram = compute_auc(None, rel_results['relative_translation_angle'])
-    RTE_3 = np.mean(np.cumsum(normalized_histogram[:3]) * 100)
-    RTE_5 = np.mean(np.cumsum(normalized_histogram[:5]) * 100)
-    RTE_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
-    if verbose:
-        print(f'RTE_3  (%): {RTE_3}')
-        print(f'RTE_5  (%): {RTE_5}')
-        print(f'RTE_10 (%): {RTE_10}')
-        print(f'RTE_30 (%): {RTE_30}')
-
-    # Write auc to txt file
-    with open(f'{est_model_path}/rel_auc.json', 'w') as f:
-        json.dump({
-            'Missing_cameras': number_of_missing_cameras,
-            'Auc_3': Auc_3,
-            'Auc_5': Auc_5,
-            'Auc_10': Auc_10,
-            'Auc_30': Auc_30,
-            'RRE_3': RRE_3,
-            'RRE_5': RRE_5,
-            'RRE_10': RRE_10,
-            'RRE_30': RRE_30,
-            'RTE_3': RTE_3,
-            'RTE_5': RTE_5,
-            'RTE_10': RTE_10,
-            'RTE_30': RTE_30
-        }, f, indent=4)
 
     ####################################################################################################################
     # Absolute errors evaluation                                                                                       #
     ####################################################################################################################
     abs_results = run_abs_err_evaluation(gt_model=gt_sparse_model, est_model=est_sparse_model)
+    export_abs_results(abs_results, est_model_path)
 
-    with open(f'{est_model_path}/absolute_results.json', 'w') as f:
-        json.dump(abs_results, f, indent=4)
+
 
 
 
