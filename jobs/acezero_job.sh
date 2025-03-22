@@ -71,6 +71,7 @@ process_scene() {
 
     # Monitor VRAM usage during processing every seconds
     log "Starting VRAM monitoring for scene: $scene"
+    rm "$vram_log"
     nvidia-smi --query-gpu=timestamp,memory.total,memory.used,memory.free --format=csv -l 1 >> "$vram_log" &
     vram_pid=$!
 
