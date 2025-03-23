@@ -65,13 +65,10 @@ cd flowmap || { log "ERROR: Failed to change directory to 'flowmap'"; exit 1; }
 # Run the FlowMap pipeline
 start_time=$(date +%s)
 
-#if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene" output_dir="$out"; then
-#    log "ERROR: FlowMap pipeline execution failed"
-#    exit 1
-#fi
-
-conda activate
-python3 -m flowmap.overfit dataset=images dataset.images.root="$scene" output_dir="$out"
+if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene" output_dir="$out"; then
+    log "ERROR: FlowMap pipeline execution failed"
+    exit 1
+fi
 
 end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))
