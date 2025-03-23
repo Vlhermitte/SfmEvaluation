@@ -11,6 +11,8 @@ dependencies:
   - tqdm
   - ffmpeg
   - plotly
+  - pandas
+  - pillow
   - pip
   - pip:
       - pycolmap==3.10
