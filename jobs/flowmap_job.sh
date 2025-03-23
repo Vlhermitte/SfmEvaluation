@@ -57,7 +57,7 @@ process_scene() {
     local dataset=$1
     local scene=$2
     local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
-    local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
+    local out_dir="${OUT_DIR}/${dataset}/${scene}" # flowmap automatically outputs to colmap/sparse/0
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
 
     log "Processing scene: $scene from $dataset"
