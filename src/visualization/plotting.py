@@ -1,14 +1,14 @@
-"""
-Slightly modified code written by Paul-Edouard Sarlin and Philipp Lindenberger taken from Hloc library.
-We copied this code as we only need this code from hloc library and we don't want to install the whole library.
-This code is for visualization purposes.
-"""
-
 import numpy as np
 import plotly.graph_objects as go
 import pycolmap
 from scipy.interpolate import splprep, splev
 from typing import Optional
+from pathlib import Path
+
+try:
+    import open3d as o3d
+except ImportError:
+    print("Open3D is not installed. Point cloud visualization with .ply files will not work.")
 
 def init_figure() -> go.Figure:
     """Initialize a 3D figure."""
@@ -140,23 +140,41 @@ def plot_points(
     ps: int = 2,
     colorscale: Optional[str] = None,
     name: Optional[str] = None,
+    ply_file: Optional[Path] = None,
 ):
     """Plot a set of 3D points."""
-    # Filter outliers
-    bbs = reconstruction.compute_bounding_box(0.001, 0.999)
-    # Filter points, use original reproj error here
-    p3Ds = [
-        p3D
-        for _, p3D in reconstruction.points3D.items()
-        if (
-                (p3D.xyz >= bbs[0]).all()
-                and (p3D.xyz <= bbs[1]).all()
-                and p3D.error <= 6.0
-                and p3D.track.length() >= 2
-        )
-    ]
-    xyzs = np.array([p3D.xyz for p3D in p3Ds])
-    pcolor = [p3D.color for p3D in p3Ds]
+    if ply_file is not None and ply_file.exists() and len(reconstruction.points3D.items()) == 0 and 'o3d' in globals():
+        pcd = o3d.io.read_point_cloud(str(ply_file))
+        # Limit to 100k points (compute voxel size)
+        if len(pcd.points) > 100000:
+            # Get the bounding box
+            min_bound = pcd.get_min_bound()
+            max_bound = pcd.get_max_bound()
+            # Compute the dimensions and volume of the bounding box
+            dims = max_bound - min_bound
+            volume = dims[0] * dims[1] * dims[2]
+            # Desired number of points
+            target_points = 100000
+            # Calculate voxel size
+            voxel_size = (volume / target_points)
+            pcd = pcd.voxel_down_sample(voxel_size)
+        xyzs = np.asarray(pcd.points)
+        pcolor = np.asarray(pcd.colors)
+    else:
+        # Filter outliers
+        bbs = reconstruction.compute_bounding_box(0.001, 0.999)
+        # Filter points, use original reproj error here
+        p3Ds = [
+            p3D
+            for _, p3D in reconstruction.points3D.items()
+            if (
+                    (p3D.xyz >= bbs[0]).all()
+                    and (p3D.xyz <= bbs[1]).all()
+                    and p3D.error <= 6.0
+            )
+        ]
+        xyzs = np.array([p3D.xyz for p3D in p3Ds])
+        pcolor = [p3D.color for p3D in p3Ds]
 
     x, y, z = xyzs.T
     tr = go.Scatter3d(
@@ -178,21 +196,21 @@ if __name__ == '__main__':
         "--gt-model-path",
         type=str,
         required=False,
-        default="../../data/datasets/ETH3D/courtyard/dslr_calibration_jpg",
+        default="../../data/datasets/ETH3D/delivery_area/dslr_calibration_jpg",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
         "--est-model-path",
         type=str,
         required=False,
-        default="../../data/results/acezero/ETH3D/courtyard/colmap/sparse/0",
+        default="../../data/results/flowmap/ETH3D/delivery_area/colmap/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
 
     args = parser.parse_args()
 
-    gt_model_path = args.gt_model_path
-    est_model_path = args.est_model_path
+    gt_model_path = Path(args.gt_model_path)
+    est_model_path = Path(args.est_model_path)
 
     # Load the ground truth and estimated models.
     from run_camera_poses import read_model
@@ -210,12 +228,13 @@ if __name__ == '__main__':
 
     fig = init_figure()
 
-    #plot_trajectory(fig, gt_sparse_model)
+    # plot_trajectory(fig, gt_sparse_model)
     plot_cameras(fig, gt_sparse_model)
     plot_points(fig, gt_sparse_model)
 
-    #plot_trajectory(fig, est_sparse_model, line_color="rgb(100, 255, 100)")
+    # plot_trajectory(fig, est_sparse_model, line_color="rgb(100, 255, 100)")
     plot_cameras(fig, est_sparse_model, color="rgb(227, 130, 66)")
+    # plot_points(fig, est_sparse_model, ply_file=est_model_path / "points3D.ply")
 
     fig.show()
 
