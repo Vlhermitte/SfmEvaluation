@@ -80,6 +80,7 @@ process_scene() {
 
     start_time=$(date +%s)
     log "Running FlowMap pipeline on scene: $scene"
+    cd flowmap || { log "ERROR: Failed to change directory to 'flowmap'"; exit 1; }
     if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir"; then
         log "ERROR: FlowMap pipeline execution failed for scene: $scene"
     fi
@@ -98,6 +99,7 @@ process_scene() {
     gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
     log "Elapsed time: ${elapsed_time} seconds on ${gpu_name}" >> "${out_dir}/time.txt"
     log "Finished processing scene: $scene in $elapsed_time seconds"
+    cd ..
 }
 
 # Process ETH3D scenes
