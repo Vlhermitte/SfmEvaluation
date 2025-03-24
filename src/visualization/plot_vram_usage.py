@@ -41,6 +41,21 @@ def read_log(path: Path):
 
 if __name__ == '__main__':
     # Read the vram_usage.log file
-    path = Path('../../data/results/acezero/ETH3D/courtyard/')
-    df = read_log(path / 'vram_usage.log')
-    plot_vram_usage(df, save_path=path)
+    from config import (
+        ETH3D_DATA_PATH, ETH3D_SCENES,
+        MIP_NERF_360_DATA_PATH, MIP_NERF_360_SCENES,
+        GLOMAP_RESULTS_PATH, VGGSFM_RESULTS_PATH, FLOWMAP_RESULTS_PATH, ACEZERO_RESULTS_PATH, COLMAP_FORMAT
+    )
+
+    for method in [GLOMAP_RESULTS_PATH, VGGSFM_RESULTS_PATH, FLOWMAP_RESULTS_PATH, ACEZERO_RESULTS_PATH]:
+        print("Plotting VRAM usage", method)
+
+        for scene in ETH3D_SCENES:
+            path = Path(f'../{method}/Eth3d/{scene}/')
+            df = read_log(path / 'vram_usage.log')
+            plot_vram_usage(df, save_path=path)
+
+        for scene in MIP_NERF_360_SCENES:
+            path = Path(f'../{method}/MipNerf360/{scene}/')
+            df = read_log(path / 'vram_usage.log')
+            plot_vram_usage(df, save_path=path)
