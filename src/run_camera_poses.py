@@ -18,9 +18,9 @@ from evaluation.relative_error_evaluation import evaluate_relative_errors
 def read_model(model_path: Path):
     if not isinstance(model_path, Path):
         model_path = Path(model_path)
-    assert model_path.exists(), f"Error: The ground truth model path {model_path} does not exist."
 
     try:
+        assert model_path.exists(), f"Error: The ground truth model path {model_path} does not exist."
         model = pycolmap.Reconstruction()
         ext = detect_colmap_format(model_path)
 
@@ -56,7 +56,6 @@ def read_model(model_path: Path):
                 )
                 model.add_image(image)
 
-        model.check()
     except Exception as e:
         print(f"Error: Failed to read the {model_path}. {e}")
         return None
