@@ -13,6 +13,7 @@
 
 # Function to print messages with timestamps
 log() {
+    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1" >> flowmap_job.log
     echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
 }
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)

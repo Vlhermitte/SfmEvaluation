@@ -13,6 +13,7 @@
 
 # Function to print messages with timestamps
 log() {
+    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1" >> glomap_job.log
     echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
 }
 
