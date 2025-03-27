@@ -36,6 +36,10 @@ MIP_NERF_360_SCENES=(
     "bicycle" "bonsai" "counter" "garden" "kitchen" "room" "stump"
 )
 
+TANKS_AND_TEMPLES=(
+    "Barn" "Caterpillar" "Church" "Courthouse" "Ignatius" "Meetingroom" "Truck"
+)
+
 mkdir -p data/results/flowmap
 DATASETS_DIR="$(realpath data/datasets)"
 OUT_DIR="$(realpath data/results/flowmap)"
@@ -102,14 +106,43 @@ process_scene() {
     cd ..
 }
 
-# Process ETH3D scenes
-for SCENE in "${ETH3D_SCENES[@]}"; do
-    process_scene "ETH3D" "$SCENE"
+dataset_choice="all"
+matcher="exhaustive" # Not in use for FlowMap
+# Parse command-line arguments for --matcher and --dataset
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --matcher)
+            matcher="$2"
+            shift 2
+            ;;
+        --dataset)
+            dataset_choice="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown parameter passed: $1"
+            exit 1
+            ;;
+    esac
 done
 
-# Process MipNeRF360 scenes
-for SCENE in "${MIP_NERF_360_SCENES[@]}"; do
-    process_scene "MipNerf360" "$SCENE"
-done
+# Process ETH3D scenes
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "ETH3D" ] || [ "$dataset_choice" = "eth3d" ]; then
+    for SCENE in "${ETH3D_SCENES[@]}"; do
+        process_scene "ETH3D" "$SCENE"
+    done
+fi
+
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "MipNeRF360" ] || [ "$dataset_choice" = "mipnerf360" ]; then
+    for SCENE in "${MIP_NERF_360_SCENES[@]}"; do
+        process_scene "MipNerf360" "$SCENE"
+    done
+fi
+
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples" ] || [ "$dataset_choice" = "tanksandtemples" ] || [ "$dataset_choice" = "t2" ]; then
+    for SCENE in "${TANKS_AND_TEMPLES[@]}"; do
+        process_scene "TanksAndTemples" "$SCENE"
+    done
+fi
 
 log "All scenes processed."

@@ -35,15 +35,19 @@ MIP_NERF_360_SCENES=(
     "bicycle" "bonsai" "counter" "garden" "kitchen" "room" "stump"
 )
 
-
-LAMAR_HGE_SCENES=(
-    "ios_2022-01-12_14.59.02_000" "ios_2022-01-12_15.15.53_000" "ios_2022-01-18_17.05.03_000"
-    "ios_2022-01-18_17.10.39_000" "ios_2022-01-20_16.52.33_001" "ios_2022-01-25_14.34.24_002"
-    "ios_2022-01-25_14.57.49_000" "ios_2022-01-25_15.13.54_000" "ios_2022-01-25_15.13.54_002"
-    "ios_2022-06-13_10.45.07_000" "ios_2022-06-13_15.59.36_000" "ios_2022-06-14_17.12.28_000"
-    "ios_2022-06-30_15.55.53_000" "ios_2022-07-01_15.18.09_000" "ios_2022-07-01_15.45.08_000"
-    "ios_2022-07-01_15.58.10_000" "ios_2022-07-03_16.00.37_000"
+TANKS_AND_TEMPLES=(
+    "Barn" "Caterpillar" "Church" "Courthouse" "Ignatius" "Meetingroom" "Truck"
 )
+
+
+#LAMAR_HGE_SCENES=(
+#    "ios_2022-01-12_14.59.02_000" "ios_2022-01-12_15.15.53_000" "ios_2022-01-18_17.05.03_000"
+#    "ios_2022-01-18_17.10.39_000" "ios_2022-01-20_16.52.33_001" "ios_2022-01-25_14.34.24_002"
+#    "ios_2022-01-25_14.57.49_000" "ios_2022-01-25_15.13.54_000" "ios_2022-01-25_15.13.54_002"
+#    "ios_2022-06-13_10.45.07_000" "ios_2022-06-13_15.59.36_000" "ios_2022-06-14_17.12.28_000"
+#    "ios_2022-06-30_15.55.53_000" "ios_2022-07-01_15.18.09_000" "ios_2022-07-01_15.45.08_000"
+#    "ios_2022-07-01_15.58.10_000" "ios_2022-07-03_16.00.37_000"
+#)
 
 mkdir -p data/results/glomap
 DATASETS_DIR="$(realpath data/datasets)"
@@ -151,9 +155,9 @@ if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "MipNeRF360" ] || [ "$
     done
 fi
 
-if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LAMAR_HGE" ] || [ "$dataset_choice" = "lamar_hge" ]; then
-    for SCENE in "${LAMAR_HGE_SCENES[@]}"; do
-        process_scene "LaMAR/HGE/sessions/map/raw_data" "$SCENE"
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples" ] || [ "$dataset_choice" = "tanksandtemples" ] || [ "$dataset_choice" = "t2" ]; then
+    for SCENE in "${TANKS_AND_TEMPLES[@]}"; do
+        process_scene "TanksAndTemples" "$SCENE"
     done
 fi
 
