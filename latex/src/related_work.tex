@@ -1,0 +1,60 @@
+\chapter{Background and Related Work}\label{chap:related_work}
+
+In this chapter, we provide a comprehensive overview of the foundational concepts and recent advancements relevant to Structure-from-Motion (SfM).
+We begin by describing classical SfM techniques, highlighting traditional feature extraction, matching methods, and optimization strategies. 
+Subsequently, we review emerging learning-based approaches, focusing on methods that leverage neural networks to enhance reconstruction accuracy, efficiency, and robustness. 
+The chapter further delves into detailed discussions of specific state-of-the-art methods, including Glomap, VGGSfm, FlowMap, and Ace Zero, 
+clarifying their claimed advantages and limitations compared to classical SfM pipelines like Colmap.
+
+\section{Classical SfM}
+SfM approaches can be broadly classified into two categories: incremental and global.
+
+\subsection{Incremental SfM}
+Incremental Structure-from-Motion (SfM) follows a sequential approach, where the 3D reconstruction is built progressively by adding one image at a time. 
+This method begins with an initial pair of images and expands the reconstruction iteratively by registering new images and refining the existing structure. 
+The core steps of incremental SfM include feature extraction and matching, relative camera pose estimation, and bundle adjustment.
+
+\paragraph{Feature Extraction and Matching}
+The first step in incremental SfM involves detecting and describing key points in each image. 
+Traditional methods use hand-crafted feature descriptors such as SIFT or ORB to extract distinctive image features. 
+Once features are detected, feature matching is performed across image pairs to establish correspondences. 
+This is typically achieved using nearest-neighbor search with ratio tests to filter out incorrect matches.
+
+\paragraph{Relative Camera Pose Estimation}
+Given the matched feature correspondences between image pairs, the next step is to estimate the relative camera poses. 
+This is achieved using epipolar geometry constraints, often solved via the five-point or eight-point algorithms within a RANSAC framework to remove outliers. 
+The estimated relative camera pose allows for triangulation, reconstructing initial 3D points.
+
+\paragraph{Bundle Adjustment}
+As new images are added, the estimated structure and camera parameters can suffers from drift and inaccuracies.
+Bundle adjustment is a key step in incremental SfM that refines the camera poses and 3D structure by minimizing the reprojection error.
+Non-linear least squares solvers such as Levenberg-Marquardt or Ceres solver are commonly used to achieve this refinement. 
+Incremental SfM benefits from high accuracy but suffers from scalability issues as the number of images increases.
+
+\subsection{Global SfM}
+In contrast to incremental approaches, global SfM processes all images simultaneously to compute a globally consistent 3D structure.
+Instead of reapeting the costly bundle adjustment, global SfM methods estimate camera geometry for all input images at once.
+
+A \emph{view graph} is constructed with all image pairs and their estimated relative poses.
+
+The graph is then used to estimate camera intrinsics, as well as construction of a relative camera pose graph.
+The relative camera pose graph is then used to perform \emph{rotation averaging} as well as \emph{translation averaging} \cite{Chatterjee2013, theia-manual, moulon2016openmvg}
+Finally, with both global rotations and translations estimated, a global bundle adjustment is performed to refine the camera parameters and 3D point positions, ensuring a consistent and accurate reconstruction of the scene.
+
+This approach allow for more scalable reconstructions.
+
+\section{Learning-based SfM}
+
+
+\section{Glomap}
+
+Glomap has been presented at the ECCV 2024 conference by \textit{L. Pan et al.} \cite{pan2024glomap}.
+
+
+\section{VGGSfm}
+
+
+\section{FlowMap}
+
+
+\section{Ace Zero}
