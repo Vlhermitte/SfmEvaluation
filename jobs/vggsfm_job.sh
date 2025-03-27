@@ -76,18 +76,19 @@ process_scene() {
     vram_pid=$!
 
     start_time=$(date +%s)
-    log "Running VGG-SfM pipeline on scene: $scene"
-    if [ "${matcher}" == "exhaustive"]; then
-      if ! conda run -n "$conda_env" python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir"; then
-          log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
-      fi
-    elif [ "{$matcher}" == "sequential"]; then
-      if ! conda run -n "$conda_env" python vggsfm/video_demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir"; then
-          log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
-      fi
+    if [ "${matcher}" == "exhaustive" ]; then
+        log "Running VGG-SfM pipeline on scene: $scene"
+        if ! conda run -n "$conda_env" python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir"; then
+            log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
+        fi
+    elif [ "${matcher}" == "sequential" ]; then
+        log "Running VGG-SfM pipeline with sequential matcher on scene: $scene"
+        if ! conda run -n "$conda_env" python vggsfm/video_demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir"; then
+            log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
+        fi
     else
-      log "ERROR: Invalid matcher option: $matcher"
-      exit 1
+        log "ERROR: Invalid matcher option: $matcher"
+        exit 1
     fi
 
 
