@@ -13,8 +13,11 @@
 
 # Function to print messages with timestamps
 log() {
-    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1" >> acezero_job.log
-    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    local msg="$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    echo "$msg"
+    if [ -n "$LOG_FILE" ]; then
+        echo "$msg" >> "$LOG_FILE"
+    fi
 }
 
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
@@ -61,8 +64,13 @@ process_scene() {
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
     local acezero_format_dir="${OUT_DIR}/${dataset}/${scene}/acezero_format"
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
+    LOG_FILE="${OUT_DIR}/${dataset}/${scene}/acezero.log"
+    mkdir -p "$(dirname "$LOG_FILE")"
+    touch "$LOG_FILE"
 
+    echo "==============================================================================" >> "$LOG_FILE"
     log "Processing scene: $scene from $dataset"
+    echo "==============================================================================" >> "$LOG_FILE"
 
     if [ ! -d "$scene_dir" ]; then
         log "ERROR: Scene directory does not exist: $scene_dir"
@@ -83,7 +91,7 @@ process_scene() {
     start_time=$(date +%s)
     log "Running Ace-Zero pipeline on scene: $scene"
     cd acezero || { log "ERROR: Failed to change directory to acezero"; exit 1; }
-    if ! conda run -n "$conda_env" python ace_zero.py "$scene_dir/images/*.$image_format" "$acezero_format_dir" --export_point_cloud True; then
+    if ! conda run -n "$conda_env" python ace_zero.py "$scene_dir/images/*.$image_format" "$acezero_format_dir" --export_point_cloud True 2>&1 | tee -a "$LOG_FILE"; then
         log "ERROR: Ace-Zero pipeline execution failed for scene: $scene"
     fi
     end_time=$(date +%s)
@@ -98,7 +106,7 @@ process_scene() {
     log "Finished processing scene: $scene in $elapsed_time seconds"
 
     log "Converting to COLMAP format..."
-    if ! conda run -n "$conda_env" python convert_to_colmap.py --src_dir "$acezero_format_dir" --dst_dir "$out_dir"; then
+    if ! conda run -n "$conda_env" python convert_to_colmap.py --src_dir "$acezero_format_dir" --dst_dir "$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
         log "ERROR: COLMAP conversion failed"
     fi
     cd ..

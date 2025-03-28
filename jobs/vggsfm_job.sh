@@ -13,8 +13,11 @@
 
 # Function to print messages with timestamps
 log() {
-    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1" >> vggsfm_job.log
-    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    local msg="$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    echo "$msg"
+    if [ -n "$LOG_FILE" ]; then
+        echo "$msg" >> "$LOG_FILE"
+    fi
 }
 
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
@@ -60,8 +63,13 @@ process_scene() {
     local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
+    LOG_FILE="${OUT_DIR}/${dataset}/${scene}/vggsfm.log"
+    mkdir -p "$(dirname "$LOG_FILE")"
+    touch "$LOG_FILE"
 
+    echo "==============================================================================" >> "$LOG_FILE"
     log "Processing scene: $scene from $dataset"
+    echo "==============================================================================" >> "$LOG_FILE"
 
     if [ ! -d "$scene_dir" ]; then
         log "ERROR: Scene directory does not exist: $scene_dir"
@@ -79,12 +87,12 @@ process_scene() {
     start_time=$(date +%s)
     if [ "${matcher}" == "exhaustive" ]; then
         log "Running VGG-SfM pipeline on scene: $scene"
-        if ! conda run -n "$conda_env" python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir"; then
+        if ! if ! conda run -n "$conda_env" python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
             log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
         fi
     elif [ "${matcher}" == "sequential" ]; then
         log "Running VGG-SfM pipeline with sequential matcher on scene: $scene"
-        if ! conda run -n "$conda_env" python vggsfm/video_demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir"; then
+        if ! conda run -n "$conda_env" python vggsfm/video_demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
             log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
         fi
     else

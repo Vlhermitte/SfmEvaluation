@@ -13,9 +13,13 @@
 
 # Function to print messages with timestamps
 log() {
-    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1" >> flowmap_job.log
-    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    local msg="$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    echo "$msg"
+    if [ -n "$LOG_FILE" ]; then
+        echo "$msg" >> "$LOG_FILE"
+    fi
 }
+
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
 log "Starting FlowMap batch processing GPU: $gpu_name"
 
@@ -64,8 +68,13 @@ process_scene() {
     local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
     local out_dir="${OUT_DIR}/${dataset}/${scene}" # flowmap automatically outputs to colmap/sparse/0
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
+    LOG_FILE="${OUT_DIR}/${dataset}/${scene}/flowmap.log"
+    mkdir -p "$(dirname "$LOG_FILE")"
+    touch "$LOG_FILE"
 
+    echo "==============================================================================" >> "$LOG_FILE"
     log "Processing scene: $scene from $dataset"
+    echo "==============================================================================" >> "$LOG_FILE"
 
     if [ ! -d "$scene_dir" ]; then
         log "ERROR: Scene directory does not exist: $scene_dir"
@@ -86,7 +95,7 @@ process_scene() {
     start_time=$(date +%s)
     log "Running FlowMap pipeline on scene: $scene"
     cd flowmap || { log "ERROR: Failed to change directory to 'flowmap'"; exit 1; }
-    if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir"; then
+    if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
         log "ERROR: FlowMap pipeline execution failed for scene: $scene"
     fi
     end_time=$(date +%s)

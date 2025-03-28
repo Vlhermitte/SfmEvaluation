@@ -13,8 +13,11 @@
 
 # Function to print messages with timestamps
 log() {
-    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1" >> glomap_job.log
-    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    local msg="$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    echo "$msg"
+    if [ -n "$LOG_FILE" ]; then
+        echo "$msg" >> "$LOG_FILE"
+    fi
 }
 
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
@@ -37,7 +40,7 @@ MIP_NERF_360_SCENES=(
 )
 
 TANKS_AND_TEMPLES=(
-    "Barn" "Caterpillar" "Church" "Courthouse" "Ignatius" "Meetingroom" "Truck"
+    "Barn" #"Caterpillar" "Church" "Courthouse" "Ignatius" "Meetingroom" "Truck"
 )
 
 
@@ -62,8 +65,13 @@ process_scene() {
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse"
     local database="${OUT_DIR}/${dataset}/${scene}/colmap/sample_reconstruction.db"
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
+    LOG_FILE="${OUT_DIR}/${dataset}/${scene}/glomap.log"
+    mkdir -p "$(dirname "$LOG_FILE")"
+    touch "$LOG_FILE"
 
+    echo "==============================================================================" >> "$LOG_FILE"
     log "Processing scene: $scene from $dataset"
+    echo "==============================================================================" >> "$LOG_FILE"
 
     if [ ! -d "$scene_dir" ]; then
         log "ERROR: Scene directory does not exist: $scene_dir"
@@ -89,12 +97,12 @@ process_scene() {
         --database_path ${database} \
         --image_path ${scene_dir}/images \
         --ImageReader.camera_model SIMPLE_RADIAL \
-        --SiftExtraction.use_gpu 1
+        --SiftExtraction.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
 
       echo "COLMAP ${matcher}..."
       colmap ${matcher} \
         --database_path ${database} \
-        --SiftMatching.use_gpu 1
+        --SiftMatching.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
     fi
 
     # GLOMAP execution
@@ -103,7 +111,7 @@ process_scene() {
     glomap mapper \
       --database_path ${database} \
       --image_path ${scene_dir}/images \
-      --output_path ${out_dir}
+      --output_path ${out_dir} 2>&1 | tee -a "$LOG_FILE"
     end_time=$(date +%s)
 
     elapsed_time=$((end_time - start_time))
