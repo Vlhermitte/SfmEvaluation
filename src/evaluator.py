@@ -4,9 +4,9 @@ import logging
 from pathlib import Path
 from typing import Tuple
 
-from utils.common import detect_colmap_format
+from utils.common import detect_colmap_format, read_model
 from run_camera_poses import (
-    read_model, run_rel_err_evaluation, run_abs_err_evaluation, export_rel_results, export_abs_results
+    run_rel_err_evaluation, run_abs_err_evaluation, export_rel_results, export_abs_results
 )
 from run_nerfstudio import sanity_check_colmap, run_nerfstudio
 from src.evaluation.triangulation_evaluation import evaluate_multiview
