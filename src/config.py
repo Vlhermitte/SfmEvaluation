@@ -6,6 +6,7 @@ MULTIVIEW_EVALUATION_TOOL_PATH = Path("../multi-view-evaluation/build/ETH3DMulti
 # Data Path
 ETH3D_DATA_PATH = Path("../data/datasets/ETH3D")
 MIP_NERF_360_DATA_PATH = Path("../data/datasets/MipNerf360")
+TANKS_AND_TEMPLES_DATA_PATH = Path("../data/datasets/TanksAndTemples")
 
 ETH3D_SCENES = (
         "courtyard",
@@ -31,6 +32,16 @@ MIP_NERF_360_SCENES = (
     "kitchen",
     "room",
     "stump"
+)
+
+TANKS_AND_TEMPLES_SCENES = (
+    "Barn",
+    "Caterpillar",
+    "Church",
+    "Courthouse",
+    "Ignatius",
+    "Meetingroom",
+    "Truck"
 )
 
 METHODS = ['Glomap', 'VGGSfm', 'FlowMap', 'AceZero']
