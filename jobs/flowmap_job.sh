@@ -83,6 +83,9 @@ process_scene() {
 
     mkdir -p "$out_dir"
 
+    # Count the number of images in the scene
+    num_images=$(find "$scene_dir/images" -maxdepth 1 -type f | wc -l)
+    log "Detected $num_images images in scene: $scene"
     image_format=$(find "$scene_dir/images" -maxdepth 1 -type f | head -n 1 | rev | cut -d'.' -f1 | rev)
     log "Detected image format: .$image_format"
 
@@ -95,9 +98,19 @@ process_scene() {
     start_time=$(date +%s)
     log "Running FlowMap pipeline on scene: $scene"
     cd flowmap || { log "ERROR: Failed to change directory to 'flowmap'"; exit 1; }
-    if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
+
+    # If number of image is less than 150, use the default settings
+    if [ "$num_images" -lt 150 ]; then
+        if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
         log "ERROR: FlowMap pipeline execution failed for scene: $scene"
     fi
+    else
+        if ! conda run -n "$conda_env" python3 -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" +experiment=low_memory 2>&1 | tee -a "$LOG_FILE"; then
+            log "ERROR: FlowMap pipeline execution failed for scene: $scene"
+        fi
+    fi
+
+
     end_time=$(date +%s)
     elapsed_time=$((end_time - start_time))
 
