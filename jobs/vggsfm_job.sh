@@ -86,8 +86,8 @@ process_scene() {
 
     start_time=$(date +%s)
     if [ "${matcher}" == "exhaustive" ]; then
-        log "Running VGG-SfM pipeline on scene: $scene"
-        if ! if ! conda run -n "$conda_env" python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
+    log "Running VGG-SfM pipeline on scene: $scene"
+        if ! conda run -n "$conda_env" python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
             log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
         fi
     elif [ "${matcher}" == "sequential" ]; then
