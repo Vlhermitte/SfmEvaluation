@@ -69,6 +69,7 @@ process_scene() {
     local out_dir="${OUT_DIR}/${dataset}/${scene}" # flowmap automatically outputs to colmap/sparse/0
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
     LOG_FILE="${OUT_DIR}/${dataset}/${scene}/flowmap.log"
+    rm "$LOG_FILE"
     mkdir -p "$(dirname "$LOG_FILE")"
     touch "$LOG_FILE"
 
