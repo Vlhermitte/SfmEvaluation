@@ -1,6 +1,9 @@
 import numpy as np
 from typing import Tuple
 from scipy.spatial.transform import Rotation
+import pycolmap
+import open3d as o3d
+import copy
 
 def kabsch(pts1, pts2, estimate_scale=False) -> Tuple[np.ndarray, float]:
     """
@@ -126,3 +129,49 @@ def ransac_kabsch(
     return best_model, best_scale
 
 
+def reconstruction_alignment(
+        gt_reconstruction: pycolmap.Reconstruction,
+        est_reconstruction: pycolmap.Reconstruction
+) -> pycolmap.Sim3d:
+
+    transform = pycolmap.align_reconstructions_via_proj_centers(
+        src_reconstruction=est_reconstruction,
+        tgt_reconstruction=gt_reconstruction
+    )
+
+    if transform is None:
+        print("Failed to align reconstructions.")
+
+    return transform
+
+def icp_refinement(
+        src_pcd: o3d.geometry.PointCloud,
+        tgt_pcd: o3d.geometry.PointCloud,
+        init_transformation: np.ndarray = np.eye(4),
+        method: str = "voxel"
+) -> o3d.pipelines.registration.RegistrationResult:
+    src_pcd_down = copy.deepcopy(src_pcd)
+    tgt_pcd_down = copy.deepcopy(tgt_pcd)
+
+    if method == "voxel":
+        voxel_size = 0.05
+        src_pcd_down = src_pcd_down.voxel_down_sample(voxel_size)
+        tgt_pcd_down = tgt_pcd_down.voxel_down_sample(voxel_size)
+    elif method == "uniform":
+        if len(src_pcd.points) > 4e6:
+            src_pcd_down = src_pcd_down.uniform_down_sample(round(len(src_pcd.points) / 4e6))
+        if len(tgt_pcd.points) > 4e6:
+            tgt_pcd_down = tgt_pcd_down.uniform_down_sample(round(len(tgt_pcd.points) / 4e6))
+
+    reg_p2p = o3d.pipelines.registration.registration_icp(
+        src_pcd_down,
+        tgt_pcd_down,
+        0.2,
+        init_transformation,
+        o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=100)
+    )
+
+    print(f"ICP refinement ({method}): fitness={reg_p2p.fitness:.4f}, inlier_rmse={reg_p2p.inlier_rmse:.4f}")
+
+    return reg_p2p
