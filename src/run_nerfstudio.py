@@ -155,7 +155,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"{CUDA_VISIBLE_DEVICES} ns-export {'pointcloud' if method == 'nerfacto' else 'gaussian-splat'} "
         f"--load-config {results_path}/nerfstudio/{method}/run/config.yml "
         f"--output-dir {results_path} "
-        f"----save-world-frame True "
+        f"--save-world-frame True "
         f"--normal-method open3d "
     ]
     subprocess.run(export_cmd, shell=True)
