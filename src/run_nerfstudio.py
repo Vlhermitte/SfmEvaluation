@@ -123,7 +123,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         # DataParser Args
         f"colmap --images-path {dataset_path}/images --colmap-path {results_path}"
     )
-    stdout=subprocess.PIPE if viz else subprocess.DEVNULL
+    stdout=subprocess.STDOUT if viz else subprocess.DEVNULL
     subprocess.run(train_cmd, shell=True, stdout=stdout, stderr=stdout)
     end = time.time()
     _logger.info(f"Training completed in {end-start:.2f} seconds.")
