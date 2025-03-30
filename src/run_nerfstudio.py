@@ -148,6 +148,15 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         _logger.info(f"Evaluation completed in {end-start:.2f} seconds.")
         _logger.info(f"Results stored in {results_path}/nerfstudio/{method}/run/eval.json")
 
+    export_cmd = [
+        f"{CUDA_VISIBLE_DEVICES} ns-export {'pointcloud' if method == 'nerfacto' else 'gaussian-splat'} "
+        f"--load-config {results_path}/nerfstudio/{method}/run/config.yml "
+        f"--output-dir {results_path} "
+        f"----save-world-frame True "
+        f"--normal-method open3d "
+    ]
+    subprocess.run(export_cmd, shell=True)
+
     _logger.info("#"*50)
 
 def sanity_check_colmap(path: Path) -> None:
@@ -188,7 +197,7 @@ if __name__ == '__main__':
         "--dataset-path",
         type=str,
         required=False,
-        default="../data/datasets/ETH3D/courtyard",
+        default="../data/datasets/TanksAndTemples/Ignatius",
         help="path to the dataset containing images"
     )
 
@@ -196,7 +205,7 @@ if __name__ == '__main__':
         "--results-path",
         type=str,
         required=False,
-        default="../data/results/glomap/ETH3D/courtyard/colmap/sparse/0",
+        default="../data/results/glomap/TanksAndTemples/Ignatius/colmap/sparse/0",
         help="path to the results directory containing colmap files."
     )
     parser.add_argument(
