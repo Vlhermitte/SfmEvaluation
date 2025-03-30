@@ -182,6 +182,7 @@ def sanity_check_colmap(path: Path) -> None:
 
 
 if __name__ == '__main__':
+    from distutils.util import strtobool
     def _strtobool(x):
         return bool(strtobool(x))
 
