@@ -111,30 +111,3 @@ end_time=$(date +%s)
 elapsed_time=$(( end_time - start_time ))
 
 echo "Elapsed time: $elapsed_time seconds" >> ${out_dir}/sparse/0/time.txt
-
-# Disable for now
-#mkdir -p ${out_dir}/dense
-#colmap image_undistorter \
-#    --image_path ${scene} \
-#    --input_path ${out_dir}/sparse/0 \
-#    --output_path ${out_dir}/dense \
-#    --output_type COLMAP
-#
-#colmap patch_match_stereo \
-#   --workspace_path ${out_dir}/dense \
-#   --workspace_format COLMAP \
-#   --PatchMatchStereo.geom_consistency true
-#
-#colmap stereo_fusion \
-#   --workspace_path ${out_dir}/dense \
-#   --workspace_format COLMAP \
-#   --input_type geometric \
-#   --output_path ${out_dir}/dense/fused.ply
-#
-#colmap poisson_mesher \
-#    --input_path ${out_dir}/dense/fused.ply \
-#    --output_path ${out_dir}/dense/meshed-poisson.ply
-#
-#colmap delaunay_mesher \
-#    --input_path ${out_dir}/dense \
-#    --output_path ${out_dir}/dense/meshed-delaunay.ply
