@@ -56,6 +56,9 @@ if ! conda env list | grep -q "$conda_env"; then
     exit 1
 fi
 
+PYTHON_BIN="$(conda run -n "$conda_env" which python)"
+log "Using Python binary: $PYTHON_BIN"
+
 # Process each scene
 process_scene() {
     local dataset=$1
@@ -87,12 +90,12 @@ process_scene() {
     start_time=$(date +%s)
     if [ "${matcher}" == "exhaustive" ]; then
     log "Running VGG-SfM pipeline on scene: $scene"
-        if ! conda run -n "$conda_env" python vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" extra_pt_pixel_interval=10 concat_extra_points=True 2>&1 | tee -a "$LOG_FILE"; then
+        if ! "$PYTHON_BIN" vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" extra_pt_pixel_interval=10 concat_extra_points=True 2>&1 | tee -a "$LOG_FILE"; then
             log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
         fi
     elif [ "${matcher}" == "sequential" ]; then
         log "Running VGG-SfM pipeline with sequential matcher on scene: $scene"
-        if ! conda run -n "$conda_env" python vggsfm/video_demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
+        if ! "$PYTHON_BIN" vggsfm/video_demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
             log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
         fi
     else
