@@ -42,7 +42,7 @@ MIP_NERF_360_SCENES=(
 )
 
 TANKS_AND_TEMPLES=(
-    "Barn" "Caterpillar" "Church" "Courthouse" "Ignatius" "Meetingroom" "Truck"
+    "Barn" #"Caterpillar" "Church" "Courthouse" "Ignatius" "Meetingroom" "Truck"
 )
 
 mkdir -p data/results/vggsfm
@@ -90,7 +90,7 @@ process_scene() {
     start_time=$(date +%s)
     if [ "${matcher}" == "exhaustive" ]; then
     log "Running VGG-SfM pipeline on scene: $scene"
-        if ! "$PYTHON_BIN" vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" extra_pt_pixel_interval=10 concat_extra_points=True 2>&1 | tee -a "$LOG_FILE"; then
+        if ! "$PYTHON_BIN" vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" extra_pt_pixel_interval=10 concat_extra_points=True extra_by_neighbor=3 2>&1 | tee -a "$LOG_FILE"; then
             log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
         fi
     elif [ "${matcher}" == "sequential" ]; then
