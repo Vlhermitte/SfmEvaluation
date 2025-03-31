@@ -8,8 +8,6 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=12
 #SBATCH --mem=48G
-#SBATCH --mail-user=lhermval@cvut.cz
-#SBATCH --mail-type=ALL
 
 # Function to print messages with timestamps
 log() {
@@ -67,6 +65,7 @@ process_scene() {
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
     LOG_FILE="${OUT_DIR}/${dataset}/${scene}/vggsfm.log"
+    rm "$LOG_FILE"
     mkdir -p "$(dirname "$LOG_FILE")"
     touch "$LOG_FILE"
 
