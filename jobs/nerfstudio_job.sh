@@ -8,6 +8,14 @@
 #SBATCH --mem=16G                      # Memory allocation
 #SBATCH --cpus-per-task=8              # Number of CPU cores per task
 
+log() {
+    local msg="$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    echo "$msg"
+    if [ -n "$LOG_FILE" ]; then
+        echo "$msg" >> "$LOG_FILE"
+    fi
+}
+
 ETH3D_SCENES=(
     "courtyard"
     "delivery_area"
@@ -24,7 +32,7 @@ ETH3D_SCENES=(
     "terrains"
 )
 
-MIP_NERF_360_SCENE=(
+MIP_NERF_360_SCENES=(
   "bicycle"
   "bonsai"
   "counter"
@@ -34,14 +42,27 @@ MIP_NERF_360_SCENE=(
   "stump"
 )
 
+TANKS_AND_TEMPLES_SCENES=(
+    "Barn"
+    "Caterpillar"
+    "Church"
+    "Courthouse"
+    "Ignatius"
+    "Meetingroom"
+    "Truck"
+)
+
 SFM_METHODS=(
     "vggsfm"
-    "flowmap"
-    "acezero"
+#    "flowmap"
+#    "acezero"
     "glomap"
 )
 
-if [ ! -z "$SLURM_JOB_ID" ]; then
+METHOD=${1:-"nerfacto"}
+
+# Determine paths based on SLURM context
+if [ -n "$SLURM_JOB_ID" ]; then
   cd ~/SfmEvaluation
   DATASET_PATH=~/SfmEvaluation/data/datasets
   RESULTS_PATH=~/SfmEvaluation/data/results
@@ -51,60 +72,47 @@ else
   RESULTS_PATH=data/results
 fi
 
-METHOD=nerfacto
+run_pipeline() {
+  local dataset_name=$1
+  local scene=$2
+  local sfm_method=$3
 
-# ETH3D scenes
+  local SCENE_PATH="${DATASET_PATH}/${dataset_name}/${scene}"
+  local COLMAP_PATH="${RESULTS_PATH}/${sfm_method}/${dataset_name}/${scene}/colmap/sparse/0"
+
+  if [ ! -d "$COLMAP_PATH" ]; then
+    log "Warning: No dataset found for ${COLMAP_PATH}. Skipping..."
+    return
+  fi
+
+  log "Running pipeline for ${dataset_name}/${scene} using ${sfm_method} method"
+  if [ -n "$SLURM_JOB_ID" ]; then
+    apptainer exec --nvccli nerfstudio.sif python src/run_nerfstudio.py \
+      --dataset-path "$SCENE_PATH" \
+      --results-path "$COLMAP_PATH" \
+      --method "$METHOD" \
+      --viz False
+  else
+    python src/run_nerfstudio.py \
+      --dataset-path "$SCENE_PATH" \
+      --results-path "$COLMAP_PATH" \
+      --method "$METHOD" \
+      --viz False
+  fi
+}
+
+# Process datasets
 for sfm_method in "${SFM_METHODS[@]}"; do
-  for scene in "${ETH3D_SCENES[@]}"; do
-    SCENE_PATH="${DATASET_PATH}/ETH3D/${scene}"
-    COLMAP_PATH="${RESULTS_PATH}/${sfm_method}/ETH3D/${scene}/colmap/sparse/0"
+#  for scene in "${ETH3D_SCENES[@]}"; do
+#    run_pipeline "ETH3D" "$scene" "$sfm_method"
+#  done
+#
+#  for scene in "${MIP_NERF_360_SCENES[@]}"; do
+#    run_pipeline "MipNerf360" "$scene" "$sfm_method"
+#  done
 
-    if [ ! -d ${COLMAP_PATH} ]; then
-      echo "Warning: No dataset found for ${COLMAP_PATH}. Skipping..."
-      continue
-    fi
-
-    if [ ! -z "$SLURM_JOB_ID" ]; then
-      # Run the Apptainer container with Nerfstudio
-      apptainer exec --nvccli nerfstudio.sif python src/run_nerfstudio.py \
-          --dataset-path ${SCENE_PATH} \
-          --results-path ${COLMAP_PATH} \
-          --method ${METHOD} \
-          --viz False
-    else
-      # Run the Nerfstudio pipeline directly
-      python src/run_nerfstudio.py \
-          --dataset-path ${SCENE_PATH} \
-          --results-path ${COLMAP_PATH} \
-          --method ${METHOD} \
-          --viz False
-    fi
+  for scene in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
+    run_pipeline "TanksAndTemples" "$scene" "$sfm_method"
   done
-done
 
-# MipNerf360 scenes
-for sfm_method in "${SFM_METHODS[@]}"; do
-  for scene in "${MIP_NERF_360_SCENE[@]}"; do
-    SCENE_PATH="${DATASET_PATH}/MipNerf360/${scene}"
-    COLMAP_PATH="${RESULTS_PATH}/${sfm_method}/MipNerf360/${scene}/colmap/sparse/0"
-
-    if [ ! -d ${COLMAP_PATH} ]; then
-      echo "Warning: No dataset found for ${COLMAP_PATH}. Skipping..."
-      continue
-    fi
-
-    if [ ! -z "$SLURM_JOB_ID" ]; then
-        # Run the Apptainer container with Nerfstudio
-        apptainer exec --nvccli nerstudio.sif python src/run_nerfstudio.py \
-            --dataset-path ${SCENE_PATH} \
-            --results-path ${COLMAP_PATH} \
-            --method ${METHOD}
-      else
-        # Run the Nerfstudio pipeline directly
-        python src/run_nerfstudio.py \
-            --dataset-path ${SCENE_PATH} \
-            --results-path ${COLMAP_PATH} \
-            --method ${METHOD}
-      fi
-  done
 done
