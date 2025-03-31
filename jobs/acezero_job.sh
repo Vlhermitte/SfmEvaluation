@@ -56,6 +56,9 @@ if ! conda env list | grep -q "$conda_env"; then
     exit 1
 fi
 
+PYTHON_BIN="$(conda run -n "$conda_env" which python)"
+log "Using Python binary: $PYTHON_BIN"
+
 # Process each scene
 process_scene() {
     local dataset=$1
@@ -91,7 +94,7 @@ process_scene() {
     start_time=$(date +%s)
     log "Running Ace-Zero pipeline on scene: $scene"
     cd acezero || { log "ERROR: Failed to change directory to acezero"; exit 1; }
-    if ! conda run -n "$conda_env" python ace_zero.py "$scene_dir/images/*.$image_format" "$acezero_format_dir" --export_point_cloud True 2>&1 | tee -a "$LOG_FILE"; then
+    if ! "$PYTHON_BIN" ace_zero.py "$scene_dir/images/*.$image_format" "$acezero_format_dir" --export_point_cloud True 2>&1 | tee -a "$LOG_FILE"; then
         log "ERROR: Ace-Zero pipeline execution failed for scene: $scene"
     fi
     end_time=$(date +%s)
