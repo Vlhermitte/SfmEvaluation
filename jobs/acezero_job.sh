@@ -23,11 +23,6 @@ log() {
 mkdir -p data/results/acezero
 DATASETS_DIR="$(realpath data/datasets)"
 OUT_DIR="$(realpath data/results/acezero)"
-LOG_FILE="${OUT_DIR}/${dataset}/${scene}/acezero.log"
-
-rm "$LOG_FILE"
-mkdir -p "$(dirname "$LOG_FILE")"
-touch "$LOG_FILE"
 
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
 log "Starting Ace-Zero batch processing on GPU: $gpu_name"
@@ -72,6 +67,11 @@ process_scene() {
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
     local acezero_format_dir="${OUT_DIR}/${dataset}/${scene}/acezero_format"
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage_${gpu_name}.log"
+    LOG_FILE="${OUT_DIR}/${dataset}/${scene}/acezero.log"
+    rm "$LOG_FILE"
+    mkdir -p "$(dirname "$LOG_FILE")"
+    touch "$LOG_FILE"
+
 
     echo "==============================================================================" >> "$LOG_FILE"
     log "Processing scene: $scene from $dataset"
