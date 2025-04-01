@@ -61,6 +61,7 @@ log "Using Python binary: $PYTHON_BIN"
 process_scene() {
     local dataset=$1
     local scene=$2
+    local matcher=$3
     local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage_${gpu_name}.log"
@@ -87,19 +88,17 @@ process_scene() {
     vram_pid=$!
 
     start_time=$(date +%s)
-    if [ "${matcher}" == "exhaustive" ]; then
-    log "Running VGG-SfM pipeline on scene: $scene"
-        if ! "$PYTHON_BIN" vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
-            log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
-        fi
-    elif [ "${matcher}" == "sequential" ]; then
-        log "Running VGG-SfM pipeline with sequential matcher on scene: $scene"
+    if [ "${matcher}" = "sequential" ]; then
+      log "Running VGG-SfM pipeline with matcher mode on scene: $scene"
         if ! "$PYTHON_BIN" vggsfm/video_demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
             log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
         fi
     else
-        log "ERROR: Invalid matcher option: $matcher"
-        exit 1
+      log "Running VGG-SfM pipeline on scene: $scene"
+        if ! "$PYTHON_BIN" vggsfm/demo.py camera_type=SIMPLE_RADIAL SCENE_DIR="$scene_dir" OUTPUT_DIR="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
+            log "ERROR: VGG-SfM pipeline execution failed for scene: $scene"
+        fi
+
     fi
 
 
@@ -121,14 +120,9 @@ process_scene() {
 }
 
 dataset_choice="all"
-matcher="exhaustive"
-# Parse command-line arguments for --matcher and --dataset
+# Parse command-line arguments for --dataset
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --matcher)
-            matcher="$2"
-            shift 2
-            ;;
         --dataset)
             dataset_choice="$2"
             shift 2
@@ -140,7 +134,6 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-
 # Process ETH3D scenes
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "ETH3D" ] || [ "$dataset_choice" = "eth3d" ]; then
     for SCENE in "${ETH3D_SCENES[@]}"; do
@@ -150,13 +143,13 @@ fi
 
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "MipNeRF360" ] || [ "$dataset_choice" = "mipnerf360" ]; then
     for SCENE in "${MIP_NERF_360_SCENES[@]}"; do
-        process_scene "MipNerf360" "$SCENE"
+        process_scene "MipNerf360" "$SCENE" "sequential"
     done
 fi
 
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples" ] || [ "$dataset_choice" = "tanksandtemples" ] || [ "$dataset_choice" = "t2" ]; then
     for SCENE in "${TANKS_AND_TEMPLES[@]}"; do
-        process_scene "TanksAndTemples" "$SCENE"
+        process_scene "TanksAndTemples" "$SCENE" "sequential"
     done
 fi
 

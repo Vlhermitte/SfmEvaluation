@@ -118,14 +118,9 @@ process_scene() {
 }
 
 dataset_choice="all"
-matcher="exhaustive" # Not in use for Ace-Zero
-# Parse command-line arguments for --matcher and --dataset
+# Parse command-line arguments for --dataset
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --matcher)
-            matcher="$2"
-            shift 2
-            ;;
         --dataset)
             dataset_choice="$2"
             shift 2

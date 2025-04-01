@@ -62,6 +62,7 @@ TANKS_AND_TEMPLES=(
 process_scene() {
     local dataset=$1
     local scene=$2
+    local matcher=$3
     local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse"
     local database="${OUT_DIR}/${dataset}/${scene}/colmap/sample_reconstruction.db"
@@ -101,10 +102,18 @@ process_scene() {
         --ImageReader.camera_model SIMPLE_RADIAL \
         --SiftExtraction.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
 
-      echo "COLMAP ${matcher}..."
-      colmap ${matcher} \
-        --database_path ${database} \
-        --SiftMatching.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
+      if [ "${matcher}" = "sequential" ]; then
+        echo "COLMAP sequential_matcher..."
+        colmap sequential_matcher \
+          --database_path ${database} \
+          --SiftMatching.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
+      else
+        echo "COLMAP exhaustive_matcher..."
+        colmap exhaustive_matcher \
+          --database_path ${database} \
+          --SiftMatching.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
+      fi
+
     fi
 
     # GLOMAP execution
@@ -132,16 +141,11 @@ process_scene() {
 }
 
 # Default parameter values
-matcher="exhaustive_matcher"
 dataset_choice="all"
 
-# Parse command-line arguments for --matcher and --dataset
+# Parse command-line arguments for --dataset
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --matcher)
-            matcher="$2"
-            shift 2
-            ;;
         --dataset)
             dataset_choice="$2"
             shift 2
@@ -162,13 +166,13 @@ fi
 
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "MipNeRF360" ] || [ "$dataset_choice" = "mipnerf360" ]; then
     for SCENE in "${MIP_NERF_360_SCENES[@]}"; do
-        process_scene "MipNerf360" "$SCENE"
+        process_scene "MipNerf360" "$SCENE" "sequential"
     done
 fi
 
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples" ] || [ "$dataset_choice" = "tanksandtemples" ] || [ "$dataset_choice" = "t2" ]; then
     for SCENE in "${TANKS_AND_TEMPLES[@]}"; do
-        process_scene "TanksAndTemples" "$SCENE"
+        process_scene "TanksAndTemples" "$SCENE" "sequential"
     done
 fi
 
