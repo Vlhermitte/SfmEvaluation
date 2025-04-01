@@ -6,7 +6,7 @@
 #SBATCH --partition=amdgpu
 #SBATCH --time=12:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=12
+#SBATCH --cpus-per-task=32
 #SBATCH --mem=32G
 #SBATCH --mail-user=lhermval@cvut.cz
 #SBATCH --mail-type=ALL
