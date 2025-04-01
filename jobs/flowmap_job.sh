@@ -20,6 +20,15 @@ log() {
     fi
 }
 
+mkdir -p data/results/flowmap
+DATASETS_DIR="$(realpath data/datasets)"
+OUT_DIR="$(realpath data/results/flowmap)"
+LOG_FILE="${OUT_DIR}/${dataset}/${scene}/flowmap.log"
+
+rm "$LOG_FILE"
+mkdir -p "$(dirname "$LOG_FILE")"
+touch "$LOG_FILE"
+
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
 log "Starting FlowMap batch processing GPU: $gpu_name"
 
@@ -45,10 +54,6 @@ TANKS_AND_TEMPLES=(
     "Barn" "Caterpillar" "Church" "Courthouse" "Ignatius" "Meetingroom" "Truck"
 )
 
-mkdir -p data/results/flowmap
-DATASETS_DIR="$(realpath data/datasets)"
-OUT_DIR="$(realpath data/results/flowmap)"
-
 # Verify Conda environment exists
 conda_env="flowmap"
 if ! conda env list | grep -q "$conda_env"; then
@@ -71,10 +76,6 @@ process_scene() {
     local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
     local out_dir="${OUT_DIR}/${dataset}/${scene}" # flowmap automatically outputs to colmap/sparse/0
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
-    LOG_FILE="${OUT_DIR}/${dataset}/${scene}/flowmap.log"
-    rm "$LOG_FILE"
-    mkdir -p "$(dirname "$LOG_FILE")"
-    touch "$LOG_FILE"
 
     echo "==============================================================================" >> "$LOG_FILE"
     log "Processing scene: $scene from $dataset"

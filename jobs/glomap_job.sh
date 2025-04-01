@@ -20,6 +20,14 @@ log() {
     fi
 }
 
+mkdir -p data/results/glomap
+DATASETS_DIR="$(realpath data/datasets)"
+OUT_DIR="$(realpath data/results/glomap)"
+
+LOG_FILE="${OUT_DIR}/${dataset}/${scene}/glomap.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+touch "$LOG_FILE"
+
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
 log "Starting GLOMAP batch processing GPU: $gpu_name"
 
@@ -53,9 +61,6 @@ TANKS_AND_TEMPLES=(
 #    "ios_2022-07-01_15.58.10_000" "ios_2022-07-03_16.00.37_000"
 #)
 
-mkdir -p data/results/glomap
-DATASETS_DIR="$(realpath data/datasets)"
-OUT_DIR="$(realpath data/results/glomap)"
 
 # Process each scene
 process_scene() {
@@ -65,9 +70,6 @@ process_scene() {
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse"
     local database="${OUT_DIR}/${dataset}/${scene}/colmap/sample_reconstruction.db"
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
-    LOG_FILE="${OUT_DIR}/${dataset}/${scene}/glomap.log"
-    mkdir -p "$(dirname "$LOG_FILE")"
-    touch "$LOG_FILE"
 
     echo "==============================================================================" >> "$LOG_FILE"
     log "Processing scene: $scene from $dataset"
