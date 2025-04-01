@@ -68,7 +68,7 @@ process_scene() {
     local scene=$2
     local scene_dir="${DATASETS_DIR}/${dataset}/${scene}"
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse/0"
-    local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage.log"
+    local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage_${gpu_name}.log"
 
     echo "==============================================================================" >> "$LOG_FILE"
     log "Processing scene: $scene from $dataset"
