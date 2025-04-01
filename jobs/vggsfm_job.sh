@@ -3,7 +3,7 @@
 #SBATCH --job-name=vggsfm_job
 #SBATCH --output=vggsfm_job.out
 #SBATCH --error=vggsfm_job.err
-#SBATCH --partition=amdgpu
+#SBATCH --partition=gpu
 #SBATCH --time=24:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=12
