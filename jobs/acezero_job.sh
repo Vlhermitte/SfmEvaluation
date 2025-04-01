@@ -74,7 +74,7 @@ process_scene() {
 
 
     echo "==============================================================================" >> "$LOG_FILE"
-    log "Processing scene: $scene from $dataset"
+    log "Processing scene: $scene from $dataset" on ${gpu_name}
     echo "==============================================================================" >> "$LOG_FILE"
 
     if [ ! -d "$scene_dir" ]; then
