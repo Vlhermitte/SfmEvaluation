@@ -44,7 +44,7 @@ MIP_NERF_360_SCENES=(
 )
 
 TANKS_AND_TEMPLES=(
-    "Barn" #"Caterpillar" "Church" "Courthouse" "Ignatius" "Meetingroom" "Truck"
+    "Barn" "Caterpillar" "Church" "Courthouse" "Ignatius" "Meetingroom" "Truck"
 )
 
 # Verify Conda environment exists
