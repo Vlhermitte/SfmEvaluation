@@ -3,7 +3,7 @@
 #SBATCH --job-name=acezero_job
 #SBATCH --output=acezero_job.out
 #SBATCH --error=acezero_job.err
-#SBATCH --partition=gpu
+#SBATCH --partition=amdgpu
 #SBATCH --time=12:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=12

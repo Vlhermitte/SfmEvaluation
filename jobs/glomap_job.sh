@@ -3,7 +3,7 @@
 #SBATCH --job-name=glomap_job
 #SBATCH --output=glomap_job.out
 #SBATCH --error=glomap_job.err
-#SBATCH --partition=gpu
+#SBATCH --partition=amdgpu
 #SBATCH --time=12:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=12
