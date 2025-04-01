@@ -4,7 +4,7 @@
 #SBATCH --output=flowmap_job.out
 #SBATCH --error=flowmap_job.err
 #SBATCH --partition=amdgpu
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=12
 #SBATCH --mem=48G
