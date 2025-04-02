@@ -54,8 +54,8 @@ TANKS_AND_TEMPLES_SCENES=(
 
 SFM_METHODS=(
     "vggsfm"
-#    "flowmap"
-#    "acezero"
+    "flowmap"
+    "acezero"
     "glomap"
 )
 
@@ -103,13 +103,13 @@ run_pipeline() {
 
 # Process datasets
 for sfm_method in "${SFM_METHODS[@]}"; do
-#  for scene in "${ETH3D_SCENES[@]}"; do
-#    run_pipeline "ETH3D" "$scene" "$sfm_method"
-#  done
-#
-#  for scene in "${MIP_NERF_360_SCENES[@]}"; do
-#    run_pipeline "MipNerf360" "$scene" "$sfm_method"
-#  done
+  for scene in "${ETH3D_SCENES[@]}"; do
+    run_pipeline "ETH3D" "$scene" "$sfm_method"
+  done
+
+  for scene in "${MIP_NERF_360_SCENES[@]}"; do
+    run_pipeline "MipNerf360" "$scene" "$sfm_method"
+  done
 
   for scene in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
     run_pipeline "TanksAndTemples" "$scene" "$sfm_method"
