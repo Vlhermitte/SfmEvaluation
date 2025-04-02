@@ -179,6 +179,11 @@ def sanity_check_colmap(path: Path) -> None:
             new_image = image._replace(name=img_path.parts[-1])
             images[image_id] = new_image
             path_changed = True
+        # if image doesn't have extension, add .JPG
+        if len(img_path.suffix) == 0:
+            new_image = image._replace(name=f"{img_path}.JPG")
+            images[image_id] = new_image
+            path_changed = True
     if path_changed:
         _logger.info("Fixed image paths in the colmap model.")
         write_model(cameras=cameras, images=images, points3D=points3D, path=path, ext=".bin")
