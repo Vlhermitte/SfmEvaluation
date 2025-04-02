@@ -84,7 +84,7 @@ def read_model(model_path: Path):
         if (model_path / f'cameras{ext}').exists() and (model_path / f'images{ext}').exists() and (model_path / f'points3D{ext}').exists():
             model.read_binary(model_path) if ext == '.bin' else model.read_text(model_path)
             for image in model.images.values():
-                image.name = os.path.splitext(os.path.basename(image.name))[0]
+                image.name = os.path.basename(img.name)
         else:
             # Read manually in case points3D file is missing (THIS MAY CAUSE PROBLEMS FOR ABSOLUTE ERROR EVALUATION
             cameras = read_cameras_binary(model_path / 'cameras.bin') if ext == '.bin' else read_cameras_text(model_path / 'cameras.txt')
@@ -103,10 +103,10 @@ def read_model(model_path: Path):
                 quat_xyzw = img.qvec[1:] + img.qvec[:1]
                 # Sometimes the COLMAP model contains the full path. This causes problem when comparing the gt model with the estimated model,
                 # especially during the alignment process. So, we only keep the basename of the image name.
-                basename_without_ext = os.path.splitext(os.path.basename(img.name))[0]
+                basename = os.path.basename(img.name)
                 image = pycolmap.Image(
                     image_id=img.id,
-                    name=basename_without_ext,
+                    name=basename,
                     camera_id=img.camera_id,
                     cam_from_world=pycolmap.Rigid3d(quat_xyzw, img.tvec),
                     registered = True
