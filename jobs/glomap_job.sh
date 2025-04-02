@@ -166,7 +166,7 @@ fi
 
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "MipNeRF360" ] || [ "$dataset_choice" = "mipnerf360" ] || [ "$dataset_choice" = "mp360" ]; then
     for SCENE in "${MIP_NERF_360_SCENES[@]}"; do
-        process_scene "MipNerf360" "$SCENE" "sequential"
+        process_scene "MipNerf360" "$SCENE"
     done
 fi
 
