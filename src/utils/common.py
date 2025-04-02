@@ -84,7 +84,7 @@ def read_model(model_path: Path):
         if (model_path / f'cameras{ext}').exists() and (model_path / f'images{ext}').exists() and (model_path / f'points3D{ext}').exists():
             model.read_binary(model_path) if ext == '.bin' else model.read_text(model_path)
             for image in model.images.values():
-                image.name = os.path.basename(img.name)
+                image.name = os.path.basename(image.name)
         else:
             # Read manually in case points3D file is missing (THIS MAY CAUSE PROBLEMS FOR ABSOLUTE ERROR EVALUATION
             cameras = read_cameras_binary(model_path / 'cameras.bin') if ext == '.bin' else read_cameras_text(model_path / 'cameras.txt')
