@@ -158,7 +158,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--save-world-frame True "
         f"--normal-method open3d "
     ]
-    subprocess.run(export_cmd, shell=True)
+    # subprocess.run(export_cmd, shell=True)
 
     _logger.info("#"*50)
 
