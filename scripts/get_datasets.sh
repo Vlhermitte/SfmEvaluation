@@ -4,10 +4,10 @@
 # set -euo pipefail
 
 #######################################
-# Configuration for ETH3D dataset
+# Configuration for datasets
 #######################################
-BASE_DIR="data/datasets/ETH3D"
-SCENES=(
+ETH3D_BASE_DIR="data/datasets/ETH3D"
+ETH3D_SCENES=(
     "courtyard"
     "delivery_area"
     "electro"
@@ -22,6 +22,17 @@ SCENES=(
     "terrace"
     "terrains"
 )
+
+MIP_NERF_360_SCENE=(
+    "bicycle"
+    "bonsai"
+    "counter"
+    "garden"
+    "kitchen"
+    "room"
+    "stump"
+)
+
 
 #######################################
 # Utility functions
@@ -70,7 +81,7 @@ check_scene_exists() {
 download_and_extract() {
     local scene=$1
     local url="https://www.eth3d.net/data/${scene}_dslr_jpg.7z"
-    local output_dir="${BASE_DIR}/"
+    local output_dir="${ETH3D_BASE_DIR}/"
     local archive_file="${scene}_dslr_jpg.7z"
 
     echo "Processing scene: ${scene}"
@@ -158,22 +169,21 @@ organize_images() {
 # Download the complete ETH3D dataset by processing all scenes
 download_eth3d() {
     echo "Starting ETH3D dataset download..."
-    echo "Base directory: ${BASE_DIR}"
-    echo
+    echo "Base directory: ${ETH3D_BASE_DIR}"
 
-    mkdir -p "${BASE_DIR}"
+    mkdir -p "${ETH3D_BASE_DIR}"
 
-    local total_scenes=${#SCENES[@]}
+    local total_scenes=${#ETH3D_SCENES[@]}
     local skipped_scenes=0
     local successful_scenes=0
 
-    for scene in "${SCENES[@]}"; do
+    for scene in "${ETH3D_SCENES[@]}"; do
         echo "=== Processing scene: ${scene} ==="
-        if check_scene_exists "${BASE_DIR}/${scene}"; then
+        if check_scene_exists "${ETH3D_BASE_DIR}/${scene}"; then
             echo "Scene already exists. Skipping..."
             ((skipped_scenes++))
         else
-            if download_and_extract "${scene}" && organize_images "${BASE_DIR}/${scene}"; then
+            if download_and_extract "${scene}" && organize_images "${ETH3D_BASE_DIR}/${scene}"; then
                 echo "=== Completed ${scene} ==="
                 ((successful_scenes++))
             else
@@ -222,6 +232,14 @@ download_mipnerf360() {
         echo "Extraction failed for MipNerf360 dataset"
         return 1
     }
+
+    # We only want to keep the images with a downscaled resolution of 2
+    for scene in "${MIP_NERF_360_SCENE[@]}"; do
+        rm -r "${mip_dir}/${scene}/images"
+        rm -r "${mip_dir}/${scene}/images_4"
+        rm -r "${mip_dir}/${scene}/images_8"
+        mv "${mip_dir}/${scene}/images_2" "${mip_dir}/${scene}/images"
+    done
 
     # Clean up the archive file
     rm "${archive_file}"
