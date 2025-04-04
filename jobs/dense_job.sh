@@ -3,7 +3,7 @@
 #SBATCH --job-name=dense_job
 #SBATCH --output=dense_job.out
 #SBATCH --error=dense_job.err
-#SBATCH --partition=gpu
+#SBATCH --partition=1day
 #SBATCH --time=12:00:00
 #SBATCH --gres=gpu:a16:4
 #SBATCH --cpus-per-task=32
