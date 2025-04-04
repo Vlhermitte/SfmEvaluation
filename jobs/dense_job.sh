@@ -67,10 +67,6 @@ process_scene() {
     local out_dir="${RESULTS_DIR}/${method}/${dataset}/${scene}/dense"
     local vram_log="${out_dir}/vram_usage_dense.log"
     local LOG_FILE="${out_dir}/dense.log"
-    rm "$LOG_FILE"
-    mkdir -p "$(dirname "$LOG_FILE")"
-    mkdir -p "$out_dir"
-    touch "$LOG_FILE"
 
 
     echo "==============================================================================" >> "$LOG_FILE"
@@ -81,6 +77,16 @@ process_scene() {
         log "ERROR: Image directory does not exist: $image_dir"
         return
     fi
+
+    if [ ! -d "$sparse_dir" ]; then
+        log "ERROR: Sparse directory does not exist: $sparse_dir"
+        return
+    fi
+
+    rm "$LOG_FILE"
+    mkdir -p "$(dirname "$LOG_FILE")"
+    mkdir -p "$out_dir"
+    touch "$LOG_FILE"
 
     # Monitor VRAM usage during processing every seconds
     log "Starting VRAM monitoring for scene: $scene"
