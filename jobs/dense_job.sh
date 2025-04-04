@@ -156,6 +156,7 @@ while [[ "$#" -gt 0 ]]; do
             echo "  --help                  Show this help message"
             echo "Example: $0 --method glomap --dataset eth3d"
             exit 0
+            ;;
         *)
             echo "Unknown parameter passed: $1"
             exit 1
