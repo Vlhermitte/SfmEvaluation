@@ -96,6 +96,7 @@ process_scene() {
     start_time=$(date +%s)
     log "Running Ace-Zero pipeline on scene: $scene"
     cd acezero || { log "ERROR: Failed to change directory to acezero"; exit 1; }
+    conda activate "$conda_env" || { log "ERROR: Failed to activate conda environment"; exit 1; }
     if ! "$PYTHON_BIN" ace_zero.py "$scene_dir/images/*.$image_format" "$acezero_format_dir" --export_point_cloud True 2>&1 | tee -a "$LOG_FILE"; then
         log "ERROR: Ace-Zero pipeline execution failed for scene: $scene"
     fi
