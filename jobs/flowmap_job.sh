@@ -104,7 +104,7 @@ process_scene() {
     cd flowmap || { log "ERROR: Failed to change directory to 'flowmap'"; exit 1; }
 
     # If number of image is less than 150, use the default settings
-    if [ "$num_images" -lt 150 ]; then
+    if [ "$num_images" -lt 180 ]; then
         if ! "$PYTHON_BIN" -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
         log "ERROR: FlowMap pipeline execution failed for scene: $scene"
     fi
