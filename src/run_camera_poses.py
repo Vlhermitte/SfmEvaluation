@@ -34,30 +34,42 @@ def run_rel_err_evaluation(gt_model: pycolmap.Reconstruction, est_model: pycolma
     return results
 
 def run_abs_err_evaluation(gt_model: pycolmap.Reconstruction, est_model: pycolmap.Reconstruction, verbose: bool = False) -> dict:
-    from wurlitzer import pipes
-    with pipes(): # Suppress the output of the evaluation
-        comparison_results = pycolmap.compare_reconstructions(
-            reconstruction1=gt_model,
-            reconstruction2=est_model,
-            alignment_error='proj_center'
-        )
+    transform = pycolmap.align_reconstructions_via_proj_centers(
+        src_reconstruction=est_model,
+        tgt_reconstruction=gt_model,
+        max_proj_center_error=0.1,
+    )
 
-    if comparison_results is None:
+    if transform is None:
         if verbose:
             print('Failed to align the estimated model with the ground truth model. Skipping the evaluation.')
         return {'rotation_errors': 'failed', 'translation_errors': 'failed'}
+    # Apply the alignment to the estimated model
+    est_model.transform(transform.matrix())
 
-    rotation_errors = []
-    translation_errors = []
-    for error in comparison_results['errors']:
-        rotation_errors.append(error.rotation_error_deg)
-        translation_errors.append(error.proj_center_error)
+    gt_images = [image for image in gt_model.images.values()]
+    est_images = [image for image in est_model.images.values()]
 
-    abs_results = {
-        'rotation_errors': rotation_errors,
-        'translation_errors': translation_errors,
-        'missing_cameras': len(gt_model.images) - len(est_model.images)
-    }
+    if len(gt_images) != len(est_images):
+        if verbose:
+            print('Missing cameras in the estimated model. Adding dummy cameras with invalid poses.')
+
+        est_image_name = [est_image.name.split('.')[0] for est_image in est_images]
+        for gt_image in gt_images:
+            if gt_image.name.split('.')[0] not in est_image_name:
+                dummy_image = pycolmap.Image()
+                dummy_image.name = gt_image.name
+                dummy_image.registered = False
+                est_images.append(dummy_image)
+
+    abs_results = evaluate_camera_pose(
+        gt_images=gt_images,
+        est_images=est_images,
+        R_threshold=5,
+        t_threshold=0.1
+    )
+
+    abs_results['number_of_missing_cameras'] = len(gt_model.images) - len(est_model.images)
 
     return abs_results
 

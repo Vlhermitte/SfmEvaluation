@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import pycolmap
+import os
 from typing import List, Dict
 
 from utils.common import detect_colmap_format
@@ -14,8 +15,6 @@ def evaluate_camera_pose(
         t_threshold: float = 0.1
 ) -> Dict:
     """
-    **NOT IN USE FOR NOW (MIGHT GET DEPRECATED)**
-
     Evaluate the absolute pose error between the ground truth and estimated camera poses.
     Args:
         gt_images (List[pycolmap.Image]): List of ground truth images.
@@ -27,8 +26,8 @@ def evaluate_camera_pose(
     """
     assert len(gt_images) == len(est_images), "Number of estimated and ground truth cameras should be the same."
     # Sort the cameras in estimated cameras based on the image name
-    #gt_images = sorted(gt_images, key=lambda image: image.name.split('.')[0])
-    #est_images = sorted(est_images, key=lambda image: image.name.split('.')[0])
+    gt_images = sorted(gt_images, key=lambda image: os.path.basename(image.name.split('.')[0]))
+    est_images = sorted(est_images, key=lambda image: os.path.basename(image.name.split('.')[0]))
 
     # Evaluation loop
     rotation_errors = []
@@ -40,21 +39,25 @@ def evaluate_camera_pose(
             T_gt = gt_image.cam_from_world.matrix()
             T_est = est_image.cam_from_world.matrix()
 
-            # Compute translation error
-            t_err = np.linalg.norm(T_gt[:3, 3] - T_est[:3, 3])
-            translation_errors.append(t_err)
+            T_gt = np.vstack((T_gt, [0, 0, 0, 1]))
+            T_est = np.vstack((T_est, [0, 0, 0, 1]))
 
-            # Compute rotation error
-            R_err = T_gt[:3, :3] @ T_est[:3, :3].T
-            angle = cv2.Rodrigues(R_err)[0]
-            angle = np.linalg.norm(angle)
-            # Convert to degrees
-            angle = np.degrees(angle)
-            rotation_errors.append(angle)
+            T_error = np.linalg.inv(T_est) @ T_gt
+            R_error = T_error[:3, :3]
+            t_error = T_error[:3, 3]
 
+            angle = np.arccos((np.trace(R_error) - 1) / 2)
+            t_err = np.linalg.norm(t_error)
             if angle <= R_threshold and t_err <= t_threshold:
                 accuracy += 1
 
+            rotation_errors.append(np.degrees(angle))
+            translation_errors.append(t_err)
+        else:
+            # Assign high values for missing cameras
+            rotation_errors.append(180.0)
+            translation_errors.append(100.0)
+
     accuracy = accuracy / len(est_images)
 
-    return {'rotation_error': rotation_errors, 'translation_error': translation_errors, 'accuracy': accuracy}
+    return {'rotation_errors': rotation_errors, 'translation_errors': translation_errors, 'accuracy': accuracy}
