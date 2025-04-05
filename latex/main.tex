@@ -119,12 +119,23 @@ In Prague, \ctufield{day}.~\monthinlanguage{title}~\ctufield{year}
 \usepackage[pagewise]{lineno}
 \usepackage{lipsum,blindtext}
 \usepackage{mathrsfs} % provides \mathscr used in the ridiculous examples
+\usepackage{amsmath}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{subcaption} % Required for subfigure captions
 \usepackage{float} % Required for H float positioning
 \usepackage{array} % Required for bold table lines
+\usepackage[x11names]{xcolor}
+\usepackage[backend=biber,style=numeric]{biblatex}
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks=true,
+	linkcolor=black,
+	citecolor=blue,
+	urlcolor=blue,
+}
 
+\addbibresource{src/references.bib}
 
 \begin{document}
 
@@ -147,8 +158,9 @@ In Prague, \ctufield{day}.~\monthinlanguage{title}~\ctufield{year}
 
 % \appendix
 
-\bibliographystyle{plain}
-\bibliography{src/references.bib}
+% \bibliographystyle{plain}
+% \bibliography{src/references}
+\printbibliography
 
 % \ctutemplate{specification.as.chapter}
 
