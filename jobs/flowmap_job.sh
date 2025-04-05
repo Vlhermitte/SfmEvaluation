@@ -103,7 +103,7 @@ process_scene() {
     log "Running FlowMap pipeline on scene: $scene"
     cd flowmap || { log "ERROR: Failed to change directory to 'flowmap'"; exit 1; }
 
-    # If number of image is less than 150, use the default settings
+    # If number of image is less than 180, use the default settings
     if [ "$num_images" -lt 180 ]; then
         if ! "$PYTHON_BIN" -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
         log "ERROR: FlowMap pipeline execution failed for scene: $scene"
@@ -131,6 +131,8 @@ process_scene() {
     gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
     log "Elapsed time: ${elapsed_time} seconds on ${gpu_name}" >> "${out_dir}/time.txt"
     log "Finished processing scene: $scene in $elapsed_time seconds"
+    rm -r "$out_dir/colmap/images"
+    rm "$out_dir/colmap.zip"
     cd ..
 }
 
