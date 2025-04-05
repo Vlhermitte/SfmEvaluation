@@ -59,8 +59,6 @@ SFM_METHODS=(
     "glomap"
 )
 
-METHOD=${1:-"nerfacto"}
-
 # Determine paths based on SLURM context
 if [ -n "$SLURM_JOB_ID" ]; then
   cd ~/SfmEvaluation
@@ -102,9 +100,14 @@ run_pipeline() {
 }
 
 sfm="all"
+METHOD="nerfacto"
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
+        --method)
+            METHOD="$2"
+            shift 2
+            ;;
         --sfm)
             sfm="$2"
             shift 2
