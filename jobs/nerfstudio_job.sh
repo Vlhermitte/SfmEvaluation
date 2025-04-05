@@ -2,7 +2,7 @@
 #SBATCH --job-name=nerfstudio_job      # Job name
 #SBATCH --output=nerfstudio_out.log    # Standard output log
 #SBATCH --error=nerfstudio_err.log     # Standard error log
-#SBATCH --time=16:00:00                # Time limit in the format HH:MM:SS
+#SBATCH --time=24:00:00                # Time limit in the format HH:MM:SS
 #SBATCH --partition=1day               # Use the '1day' partition
 #SBATCH --gres=gpu:a16:1               # Request 1 GPU (a16)
 #SBATCH --mem=16G                      # Memory allocation
@@ -101,18 +101,62 @@ run_pipeline() {
   fi
 }
 
-# Process datasets
-for sfm_method in "${SFM_METHODS[@]}"; do
-  for scene in "${ETH3D_SCENES[@]}"; do
-    run_pipeline "ETH3D" "$scene" "$sfm_method"
-  done
+sfm="all"
 
-  for scene in "${MIP_NERF_360_SCENES[@]}"; do
-    run_pipeline "MipNerf360" "$scene" "$sfm_method"
-  done
-
-  for scene in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
-    run_pipeline "TanksAndTemples" "$scene" "$sfm_method"
-  done
-
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --sfm)
+            sfm="$2"
+            shift 2
+            ;;
+        --dataset)
+            dataset_choice="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown parameter passed: $1"
+            exit 1
+            ;;
+    esac
 done
+
+# Process datasets
+if [ "$sfm" = "all" ]; then
+  for sfm_method in "${SFM_METHODS[@]}"; do
+    if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "ETH3D" ] || [ "$dataset_choice" = "eth3d" ]; then
+      for scene in "${ETH3D_SCENES[@]}"; do
+        run_pipeline "ETH3D" "$scene" "$sfm_method"
+      done
+    fi
+
+    if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "MipNeRF360" ] || [ "$dataset_choice" = "mipnerf360" ] || [ "$dataset_choice" = "mp360" ]; then
+      for scene in "${MIP_NERF_360_SCENES[@]}"; do
+        run_pipeline "MipNerf360" "$scene" "$sfm_method"
+      done
+    fi
+
+    if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples" ] || [ "$dataset_choice" = "tanksandtemples" ] || [ "$dataset_choice" = "t2" ]; then
+      for scene in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
+        run_pipeline "TanksAndTemples" "$scene" "$sfm_method"
+      done
+    fi
+  done
+else
+  if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "ETH3D" ] || [ "$dataset_choice" = "eth3d" ]; then
+    for scene in "${ETH3D_SCENES[@]}"; do
+      run_pipeline "ETH3D" "$scene" "$sfm_method"
+    done
+  fi
+
+  if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "MipNeRF360" ] || [ "$dataset_choice" = "mipnerf360" ] || [ "$dataset_choice" = "mp360" ]; then
+    for scene in "${MIP_NERF_360_SCENES[@]}"; do
+      run_pipeline "MipNerf360" "$scene" "$sfm_method"
+    done
+  fi
+
+  if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples" ] || [ "$dataset_choice" = "tanksandtemples" ] || [ "$dataset_choice" = "t2" ]; then
+    for scene in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
+      run_pipeline "TanksAndTemples" "$scene" "$sfm_method"
+    done
+  fi
+fi
