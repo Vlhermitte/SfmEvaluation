@@ -3,7 +3,7 @@
 In this chapter, we provide a comprehensive overview of the foundational concepts and recent advancements relevant to Structure-from-Motion (SfM).
 We begin by describing classical SfM techniques, highlighting traditional feature extraction, matching methods, and optimization strategies. 
 Subsequently, we review emerging learning-based approaches, focusing on methods that leverage neural networks to enhance reconstruction accuracy, efficiency, and robustness. 
-The chapter further delves into detailed discussions of specific state-of-the-art methods, including Glomap, VGGSfm, FlowMap, and Ace Zero, 
+The chapter further delves into detailed discussions of specific state-of-the-art methods, including GLOMAP, VGGSfm, FlowMap, and Ace Zero, 
 clarifying their claimed advantages and limitations compared to classical SfM pipelines like Colmap.
 
 \section{Classical SfM}
@@ -17,8 +17,7 @@ The core steps of incremental SfM include feature extraction and matching, relat
 \paragraph{Feature Extraction and Matching}
 The first step in incremental SfM involves detecting and describing key points in each image. 
 Traditional methods use hand-crafted feature descriptors such as SIFT or ORB to extract distinctive image features. 
-Once features are detected, feature matching is performed across image pairs to establish correspondences. 
-This is typically achieved using nearest-neighbor search with ratio tests to filter out incorrect matches.
+Once features are detected, feature matching is performed across image pairs to establish correspondences.
 
 \paragraph{Relative Camera Pose Estimation}
 Given the matched feature correspondences between image pairs, the next step is to estimate the relative camera poses. 
@@ -40,21 +39,128 @@ A \emph{view graph} is constructed with all image pairs and their estimated rela
 The graph is then used to estimate camera intrinsics, as well as construction of a relative camera pose graph.
 The relative camera pose graph is then used to perform \emph{rotation averaging} as well as \emph{translation averaging} \cite{Chatterjee2013, theia-manual, moulon2016openmvg}
 Finally, with both global rotations and translations estimated, a global bundle adjustment is performed to refine the camera parameters and 3D point positions, ensuring a consistent and accurate reconstruction of the scene.
-
 This approach allow for more scalable reconstructions.
 
-\section{Learning-based SfM}
+However, three limitations remains: \\
+\textbf{Translation Scale Recovery}: The scale of the translations cannot be determined from two-view geometry alone, requiring additional constraints or prior information for absolute scale recovery.
+The process of translation averaging is particularly sensitive to noise and outliers making this task challenging. \\
+\textbf{Prior knowledge of camera intrinsics}: Global SfM methods typically require prior knowledge of camera intrinsics, which is not always available. \\
+\textbf{Colinear motion}: When the motion of the camera is colinear, is lead to degenerate reconstruction problem. Which is challenging as such motion is frequently encountered in real-world scenarios (e.g., self-driving car or drone flying in a straight line).
+
+\section{GLOMAP}\label{sec:glomap}
+
+GLOMAP \cite{pan2024glomap} is a recent global Structure-from-Motion method that aims to overcome the challenges of global SFM. It can deal with unknown camera intrinsics as well as colinear motion.
+
+\paragraph{Feature Extraction and Matching}
+The pipeline rely of COLAMP features extraction and matching, which use RootSIFT \cite{arrandjelovic2012three} for features extraction and has several option for matching: 
+\begin{itemize}
+    \item \textbf{Exhaustive}: All images are matched against each other, which is computationally expensive but provides the most accurate matches.
+    \item \textbf{Sequential}: Matches are computed in a sequential manner, which is more efficient than exhaustive matching but requires sequential images.
+    \item \textbf{Vocabulary Tree}: A Bag-of-Words images retrival approach \cite{schoenberger2016vote} that allows to find overlaping images in a large dataset and match them.
+\end{itemize}
+
+\paragraph{Camera Pose Estimation and Triangulation}
+Since GLOMAP is a global SfM method, it seeks to estimate all the camera rotation and translation parameters simultaneously.
+The global camera pose estimation is performed usually performed by a combination of rotation averaging and translation averaging. 
+However, due to noise and outliers as well as scale ambiguity, translation averaging is particularly challenging.
+
+GLOMAP introduces a novel approach and perform rotation averaging and a steps called \emph{Global positioning} instead of translation averaging. \\
+Global positioning is the key step for robustness and perform directly a joint camera and point position estimation. 
+Employing the BATA loss \cite{zhuang2019baselinedesensitizingtranslationaveraging} with a bounded reprojection error in the range $[0, 1]$. 
+This allows the optimization process to converge quickly and prevent outliers from impacting the results.
+
+By avoiding the translation averaging step, GLOMAP is able to handle colinear motion and better handle outliers.
+
+Finally, global bundle adjustment is performed to refine the camera parameters and 3D point positions, ensuring a consistent and accurate reconstruction of the scene.
+
+The authors claim superior performance and accuracy compared to traditional global SfM methods, and on par with , while being significantly faster.
+
+A limitation of GLOMAP remains, if the scene has a rotational symmetry, the rotation averaging step colapses.
+
+\section{VGGSfM}\label{sec:vggsfm}
+
+Visual Geometry Grounded Deep Structure From Motion (VGGSfM) \cite{wang2023vggsfm} introduces a novel, fully differentiable pipeline for Structure-from-Motion (SfM) that harnesses the potential of deep learning. The authors propose a unified framework that integrates the entire SfM pipeline into a function $f_{\theta}$, parameterized by $\theta$, which maps a set of images $\mathcal{I}$ to camera parameters $\mathcal{P}$ and a 3D point cloud $\mathcal{X}$. Here, $\theta$ is a learnable parameter, optimized by minimizing a loss function $\mathcal{L}$.
+
+In its original formulation, $f_\theta$ can be decomposed into four stages: (1) Point Tracking, (2) Camera Estimator, (3) Triangulator, and (4) Bundle Adjustment.
+
+\paragraph{Point Tracking.}
+Unlike traditional SfM methods that compute pairwise correspondences and chain them into multi-image tracks, VGGSfM employs a deep feed-forward tracker to predict pixel-accurate multi-image correspondences directly from the input images. 
+It typically selects a set of query points in one image (e.g.\ using SuperPoint \cite{detone18superpoint}, SIFT \cite{Lowe2004DistinctiveIF}, ALIKED \cite{Zhao2023ALIKED}, or a combination) and extracts their feature descriptors. These descriptors are matched across all other images using a multi-scale cost volume, encoding their similarity. 
+A Transformer attends to all input frames jointly, predicting the 2D location of each query point in every view along with its visibility and confidence. 
+In contrast to pairwise matching that relies on incremental chaining, VGGSfM's direct multi-image tracking reduces both complexity and drift errors.
+
+\paragraph{Camera Estimator and Triangulator.}
+The initial camera estimator and triangulator stages use deep Transformers to generate an initial estimate of the camera parameters $\mathcal{P}$ and the 3D points $\mathcal{X}$, as opposed to relying on rotation/translation averaging or incremental registration. 
+In the original paper's pipeline, the network could leverage track features as well as image features to produce camera poses. All cameras and points are thus registered collectively, ensuring differentiability and bypassing many incremental SfM complexities.
+
+\paragraph{Bundle Adjustment.}
+Finally, the pipeline employs a differentiable second-order Levenberg-Marquardt optimizer from the Theseus library \cite{pineda2022theseus} to refine both the camera parameters and 3D points by minimizing reprojection error. 
+Because bundle adjustment (BA) is fully differentiable, the entire SfM pipeline can be trained end-to-end—unlike in traditional approaches that use non-differentiable solvers.
+
+\paragraph{Comparison with Global SfM}
+VGGSfM is related to global SfM approaches but differs in three crucial aspects:
+\begin{itemize}
+    \item It learns to track points directly from the images, rather than performing pairwise matching.
+    \item It uses a deep network to regress camera poses in a single pass, rather than rotation/translation averaging.
+    \item It employs differentiable bundle adjustment to refine parameters in an end-to-end manner.
+\end{itemize}
+
+\subsection*{VGGSfM v1.1 Updates}
+Starting from v1.1, the VGGSfM implementation separates the camera predictor from the point-tracking stage. 
+Concretely, the camera predictor now relies \emph{only} on image features rather than requiring track features. 
+This design choice arose in response to users feedback:
+\begin{itemize}
+    \item \textbf{Faster Pose Estimates.} Some scenarios benefit from real-time or near-real-time camera pose estimation without waiting for the (comparatively slower) track prediction.
+    \item \textbf{Flexibility.} Users can opt to generate approximate camera poses quickly and refine them later (if desired) with track-based bundle adjustment.
+\end{itemize}
+This change does slightly reduce the initial pose accuracy—because track features are no longer used for the first pose guess—but in practice, errors remain small enough (e.g.\ $\approx 3^\circ$ mean rotational error and $6\%$ translational error) \cite{VGGSFM_GitHubIssue}. 
+These errors can be effectively corrected via the subsequent BA stage if a high-accuracy reconstruction is needed.
 
 
-\section{Glomap}
-
-Glomap has been presented at the ECCV 2024 conference by \textit{L. Pan et al.} \cite{pan2024glomap}.
-
-
-\section{VGGSfm}
+While VGGSfM demonstrates robust performance on several benchmarks such as Co3D \cite{reizenstein21co3d}, IMC \cite{Jin_2020}, and ETH3D \cite{schoeps2017cvpr}, the authors acknowledge it does not (yet) handle large-scale datasets (thousands of frames) as readily as classical SfM pipelines. Ongoing work (VGGSfM v2) aims to address these scalability challenges while maintaining the end-to-end differentiability and strong performance.
+\section{FlowMap}\label{sec:flowmap}
 
 
-\section{FlowMap}
+FlowMap \cite{smith24flowmap} presented by \textit{C. Smith and D. Charatan et al} is a recently introduced Structure-from-Motion method leveraging an end-to-end differentiable approach for estimating camera poses, intrinsics, and dense per-frame depth maps from video sequences. 
+Unlike classical SfM methods such as COLMAP, FlowMap does not rely on explicit 3D point triangulation from sparse correspondences. 
+Instead, it formulates SfM as a gradient-descent optimization problem, supervised purely by off-the-shelf optical flow and sparse point tracking correspondences.
+
+\paragraph{Differentiable Optimization}
+FlowMap minimizes a least-squares objective by comparing the optical flow generated from estimated depth, camera intrinsics, and poses against pre-computed optical flow and point tracks. 
+Crucially, depth is parameterized using a neural network that maps input RGB frames to dense per-pixel depth maps, enabling consistent depth predictions across similar image patches. 
+This approach helps FlowMap leverage geometric information robustly, even when patches are poorly constrained due to minimal motion or noise in correspondences.
+
+Camera poses in FlowMap are computed analytically as the solution to an orthogonal Procrustes problem, aligning pairs of consecutive depth maps transformed by optical flow correspondences. 
+This pose solver is differentiable, allowing gradient information to flow back into the depth network and correspondence weighting module.
+
+\paragraph{Intrinsic Parameter Estimation}
+FlowMap introduces a differentiable focal length estimator, softly selecting camera intrinsics from a set of candidate focal lengths based on optical flow consistency. 
+After an initial soft selection stage, it switches to direct regression for focal length, benefiting from improved initialization and robust optimization.
+
+\paragraph{Point Tracks for Robustness}
+In addition to dense optical flow, sparse point tracks spanning longer sequences are employed. 
+These tracks minimize drift over extended trajectories by providing long-term geometric consistency.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/flowmap_pipeline.png}
+    \caption{FlowMap pipeline overview \cite{smith24flowmap}}.
+    \label{fig:flowmap}
+\end{figure}
+
+\paragraph{Correspondence Loss}
+The Correspondence Loss in FlowMap is a Camera-Induced Flow Loss, which use known correspondences to compute the reprojection error. 
+To compute the loss, a points $\mathbf{u_i}$ is unprojected into the 3D space using the estimated depth map $\mathbf{D_i}$ and camera intrinsics $\mathbf{K_i}$, yielding a 3D point $\mathbf{X_i}$.
+This point $\mathbf{X_i}$ is transfomed via the estimated relative camera pose $\mathbf{P_{ij}}$ to the second camera frame $\mathbf{I_j}$, where it is projected back into the second image plane.
+The reprojection error is then computed as the difference between the projected point $\mathbf{u_j}$ and the known correspondence of $\mathbf{u_i}$ in the second image.
 
 
-\section{Ace Zero}
+\paragraph{Comparison to Traditional SfM}
+Unlike conventional methods, FlowMap produces dense depth estimates rather than sparse 3D points, a critical advantage for tasks like novel view synthesis. 
+Empirical evaluations demonstrate that FlowMap achieves reconstruction quality comparable to COLMAP on standard benchmarks, such as Tanks \& Temples, Mip-NeRF 360, CO3D, and LLFF, especially when combined with downstream rendering approaches like Gaussian Splatting.
+
+However, FlowMap does exhibit limitations. It relies heavily on accurate off-the-shelf correspondences, struggles with rotation-dominant trajectories, and can suffer from local minima such as hollow-face geometry inversions. 
+Further, while it excels in scenarios involving continuous video data, it currently lacks mechanisms for processing unstructured image collections typical in classical SfM.
+
+
+\section{Ace Zero}\label{sec:acezero}

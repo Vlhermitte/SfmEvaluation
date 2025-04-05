@@ -33,8 +33,20 @@ The Relative Rotation Error (RRE) quantifies the angular difference between esti
     \text{RRE}_{ij} = \arccos\left(\frac{\text{trace}(R_{ij}^{\text{gt}} (R_{ij}^{\text{est}})^T) - 1}{2}\right)
 \end{equation}
 
-\paragraph{Absolute Trajectory Error (ATE)}
-TODO; Explain ATE and how it is computed, model alignment, etc.
+\paragraph{Absolute Pose Error}
+The Absolute Pose Error measures the absolute difference between the estimated and ground-truth camera poses.
+
+In order to compute the absolute pose error, we first need to align the models. Indeed, the estimated reconstruction might be in a different coordinate system than the ground-truth reconstruction.
+We align the estimated reconstruction with the ground-truth reconstruction using COLMAP \textit{model aligner}.
+
+To compute the absolute pose error between two cameras:
+\begin{equation}
+    T_{error} = T_{est}^{-1} T_{gt}
+\end{equation}
+where $T = [R|t]$ is the transformation matrix.
+
+The rotation error $R_{error}$ is then the top-left $3\times 3$ submatrix of the transformation matrix, and the translation error $t_{error}$ is the last column of the transformation matrix.
+
 
 \paragraph{Area Under the Curve (AUC)}
 
@@ -57,6 +69,31 @@ The quality of these synthetic views is quantitatively assessed using standard m
 
 Higher PSNR and SSIM scores, along with lower LPIPS scores, indicate superior reconstruction fidelity and scene representation accuracy.
 
+\subsection{3D Triangulation Evaluation}
+
+To evaluate the quality of the reconstructed 3D points, we follow \cite{Knapitsch2017} and compute the distance between the estimated dense points cloud and the ground-truth points cloud provided by the datasets.
+This is done by aligning the estimated points cloud with the ground-truth points cloud. We again use COLMAP \textit{model aligner} to compute an inital aligment and then perform Iterative closest point (ICP) \cite{Besl1992} to refine the alignment.
+
+To compute the distance between the points clouds, we estimate the per-point distances in both directions: from the reconstructed point cloud to the ground-truth point cloud, and vice versa. 
+This bidirectional comparison captures both completeness and accuracy. For each point in one cloud, we compute the Euclidean distance to its nearest neighbor in the other cloud by building a K-d search tree.
+
+We report the precision and recall of the reconstructed points cloud with respect to the ground-truth points cloud under a threshold distance of $0.1$m.
+
+\begin{itemize}
+    \item \textbf{Precision}: This measures the accuracy of the reconstructed points. Specifically, it is the fraction of reconstructed points that lie within $0.1$m of any point in the ground-truth point cloud. 
+    A high precision indicates that most of the reconstructed points are close to the true surface.
+    \begin{equation}
+        \text{Precision} = \frac{\sum_{i=1}^{N} \mathbb{I}(d_i < 0.1)}{N}
+    \end{equation}
+    where $d_i$ is the distance from the $i$-th point in the reconstructed point cloud to its nearest neighbor in the ground-truth point cloud, and $N$ is the total number of reconstructed points.
+
+    \item \textbf{Recall}: This measures the completeness of the reconstruction. It is the fraction of ground-truth points that are within $0.1$m of any point in the reconstructed point cloud.
+    A high recall indicates that most of the actual surface has been captured by the reconstruction.
+    \begin{equation}
+        \text{Recall} = \frac{\sum_{j=1}^{M} \mathbb{I}(d_j < 0.1)}{M}
+    \end{equation}
+    where $d_j$ is the distance from the $j$-th point in the ground-truth point cloud to its nearest neighbor in the reconstructed point cloud, and $M$ is the total number of ground-truth points.
+\end{itemize}
 
 
 
