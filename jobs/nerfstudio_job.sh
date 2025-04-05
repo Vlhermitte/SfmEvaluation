@@ -144,19 +144,19 @@ if [ "$sfm" = "all" ]; then
 else
   if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "ETH3D" ] || [ "$dataset_choice" = "eth3d" ]; then
     for scene in "${ETH3D_SCENES[@]}"; do
-      run_pipeline "ETH3D" "$scene" "$sfm_method"
+      run_pipeline "ETH3D" "$scene" "$sfm"
     done
   fi
 
   if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "MipNeRF360" ] || [ "$dataset_choice" = "mipnerf360" ] || [ "$dataset_choice" = "mp360" ]; then
     for scene in "${MIP_NERF_360_SCENES[@]}"; do
-      run_pipeline "MipNerf360" "$scene" "$sfm_method"
+      run_pipeline "MipNerf360" "$scene" "$sfm"
     done
   fi
 
   if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples" ] || [ "$dataset_choice" = "tanksandtemples" ] || [ "$dataset_choice" = "t2" ]; then
     for scene in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
-      run_pipeline "TanksAndTemples" "$scene" "$sfm_method"
+      run_pipeline "TanksAndTemples" "$scene" "$sfm"
     done
   fi
 fi
