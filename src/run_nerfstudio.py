@@ -85,7 +85,8 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
     # max resolution of 1600px, which is the default of nerfstudio
     downscale_factor = compute_downscale_factor(dataset_path, max_resolution=1600)
     _logger.info(f"Downscaling factor found : {downscale_factor}")
-    downscale_images(dataset_path, downscale_factor, viz=viz)
+    if downscale_factor > 1:
+        downscale_images(dataset_path, downscale_factor, viz=viz)
 
     # Find how many CUDA GPUs are available
     _logger.info("Checking for available CUDA GPUs...")
