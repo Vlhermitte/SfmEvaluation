@@ -8,6 +8,7 @@ from pathlib import Path
 from PIL import Image
 from tqdm import tqdm
 import time
+import math
 
 from data.read_write_model import read_model, write_model
 from utils.common import detect_colmap_format
@@ -32,11 +33,14 @@ def compute_downscale_factor(dataset_path: Path, max_resolution: int=1600) -> in
 def downscale_single_image(image_path: Path, output_path: Path, factor: int) -> None:
     """Downscale a single image using ffmpeg."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    img = Image.open(image_path)
+    w, h = img.size
+    w_scaled, h_scaled = math.floor(w / downscale_factor), math.floor(h / downscale_factor)
     ffmpeg_cmd = [
         "ffmpeg", "-y", "-noautorotate",
         "-i", str(image_path),
         "-q:v", "2",
-        "-vf", f"scale=iw/{factor}:-1:flags=neighbor",
+        "-vf", f"scale={w_scaled}:{h_scaled}",
         "-frames:v", "1", "-update", "1",
         "-f", "image2", str(output_path),
         "-loglevel", "quiet"
@@ -121,7 +125,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--output-dir {results_path} "
         f"--timestamp run "
         # DataParser Args
-        f"colmap --images-path {dataset_path}/images --colmap-path {results_path}"
+        f"colmap --images-path {dataset_path}/images --colmap-path {results_path} "
     )
     if not viz:
         stdout = subprocess.DEVNULL
