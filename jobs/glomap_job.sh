@@ -172,7 +172,13 @@ fi
 
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples" ] || [ "$dataset_choice" = "tanksandtemples" ] || [ "$dataset_choice" = "t2" ]; then
     for SCENE in "${TANKS_AND_TEMPLES[@]}"; do
-        process_scene "TanksAndTemples" "$SCENE" "sequential"
+        process_scene "TanksAndTemples" "$SCENE"
+    done
+fi
+
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples_reduced" ] || [ "$dataset_choice" = "tanksandtemples_reduced" ] || [ "$dataset_choice" = "t2_r" ]; then
+    for SCENE in "${TANKS_AND_TEMPLES[@]}"; do
+        process_scene "TanksAndTemples_reduced" "$SCENE"
     done
 fi
 

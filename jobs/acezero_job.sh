@@ -152,4 +152,10 @@ if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples" ] ||
     done
 fi
 
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples_reduced" ] || [ "$dataset_choice" = "tanksandtemples_reduced" ] || [ "$dataset_choice" = "t2_r" ]; then
+    for SCENE in "${TANKS_AND_TEMPLES[@]}"; do
+        process_scene "TanksAndTemples_reduced" "$SCENE"
+    done
+fi
+
 log "All scenes processed."
