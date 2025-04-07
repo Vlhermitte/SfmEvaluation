@@ -35,7 +35,7 @@ def downscale_single_image(image_path: Path, output_path: Path, factor: int) -> 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     img = Image.open(image_path)
     w, h = img.size
-    w_scaled, h_scaled = math.floor(w / downscale_factor), math.floor(h / downscale_factor)
+    w_scaled, h_scaled = math.floor(w / factor), math.floor(h / factor)
     ffmpeg_cmd = [
         "ffmpeg", "-y", "-noautorotate",
         "-i", str(image_path),
