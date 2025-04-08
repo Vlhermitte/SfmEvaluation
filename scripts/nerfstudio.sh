@@ -9,11 +9,7 @@
 #SBATCH --cpus-per-task=8              # Number of CPU cores per task
 
 log() {
-    local msg="$(date +'%Y-%m-%d %H:%M:%S') - $1"
-    echo "$msg"
-    if [ -n "$LOG_FILE" ]; then
-        echo "$msg" >> "$LOG_FILE"
-    fi
+    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
 }
 
 run_pipeline() {
