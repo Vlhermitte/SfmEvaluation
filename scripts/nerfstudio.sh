@@ -17,10 +17,10 @@ run_pipeline() {
   local sparse_path=$2
   local method=$3
 
-  if [ ! -d "$COLMAP_PATH" ]; then
-    log "Warning: No images found in ${dataset_path}. Exiting..."
-    return
-  fi
+#  if [ ! -d "$COLMAP_PATH" ]; then
+#    log "Warning: No images found in ${dataset_path}. Exiting..."
+#    return
+#  fi
 
   log "Running pipeline for ${sparse_path} using ${method} method"
   if [ -n "$SLURM_JOB_ID" ]; then
