@@ -1,68 +1,74 @@
 #!/bin/bash
+#SBATCH --job-name=nerfstudio_job      # Job name
+#SBATCH --output=nerfstudio_out.log    # Standard output log
+#SBATCH --error=nerfstudio_err.log     # Standard error log
+#SBATCH --time=24:00:00                # Time limit in the format HH:MM:SS
+#SBATCH --partition=1day               # Use the '1day' partition
+#SBATCH --gres=gpu:a16:1               # Request 1 GPU (a16)
+#SBATCH --mem=16G                      # Memory allocation
+#SBATCH --cpus-per-task=8              # Number of CPU cores per task
 
-# Run the evaluation script evaluation/main.py
-ETH3D_SCENES=(
-    "courtyard"
-    "delivery_area"
-    "electro"
-    "facade"
-    "kicker"
-    "meadow"
-    "office"
-    "pipes"
-    "playground"
-    "relief"
-    "relief_2"
-    "terrace"
-    "terrains"
-)
-
-MIP_NERF_360_SCENE=(
-  "bicycle"
-  "bonsai"
-  "counter"
-  "garden"
-  "kitchen"
-  "room"
-  "stump"
-)
-
-SFM_METHODS=(
-    "vggsfm"
-    "flowmap"
-    "acezero"
-    "glomap"
-)
-
-# Get arg or default is nerfacto
-METHOD=${1:-"nerfacto"}
-
-# Make sure we are in the root directory of the project
-cd "$(dirname "$0")/.." || exit
-
-# ETH3D
-for sfm_method in "${SFM_METHODS[@]}"; do
-  for scene in "${ETH3D_SCENES[@]}"; do
-    # Check if the estimated model exists
-    if [ ! -d "data/results/${sfm_method}/ETH3D/${scene}/colmap/sparse/0" ]; then
-      echo "Warning: ${sfm_method} model not found for ${scene}. Skipping..."
-      continue
+log() {
+    local msg="$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    echo "$msg"
+    if [ -n "$LOG_FILE" ]; then
+        echo "$msg" >> "$LOG_FILE"
     fi
-    echo "${sfm_method}: Processing ${scene}"
-    python src/run_nerfstudio.py --dataset-path data/datasets/ETH3D/${scene} --results-path data/results/${sfm_method}/ETH3D/${scene}/colmap/sparse/0 --method ${METHOD}
-  done
+}
+
+run_pipeline() {
+  local dataset_path=$1
+  local sparse_path=$2
+  local method=$3
+
+  if [ ! -d "$COLMAP_PATH" ]; then
+    log "Warning: No images found in ${dataset_path}. Exiting..."
+    return
+  fi
+
+  log "Running pipeline for ${sparse_path} using ${method} method"
+  if [ -n "$SLURM_JOB_ID" ]; then
+    apptainer exec --nvccli nerfstudio.sif python src/run_nerfstudio.py \
+      --dataset-path "$dataset_path" \
+      --results-path "$sparse_path" \
+      --method "$method" \
+      --viz False
+  else
+    python src/run_nerfstudio.py \
+      --dataset-path "$dataset_path" \
+      --results-path "$sparse_path" \
+      --method "$method" \
+      --viz False
+  fi
+}
+
+METHOD="nerfacto"
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --dataset_path)
+            DATASET_PATH="$2"
+            shift 2
+            ;;
+        --sparse_path)
+            SPARSE_PATH="$2"
+            shift 2
+            ;;
+        --method)
+            METHOD="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown parameter passed: $1"
+            exit 1
+            ;;
+    esac
 done
 
-# MipNerf360
-for sfm_method in "${SFM_METHODS[@]}"; do
-  for scene in "${MIP_NERF_360_SCENE[@]}"; do
-    # Check if the estimated model exists
-    if [ ! -d "data/results/${sfm_method}/MipNerf360/${scene}/colmap/sparse/0" ]; then
-      echo "Warning: ${sfm_method} model not found for ${scene}. Skipping..."
-      continue
-    fi
-    echo "${sfm_method}: Processing ${scene}"
-    python src/run_nerfstudio.py --dataset-path data/datasets/MipNerf360/${scene} --results-path data/results/${sfm_method}/MipNerf360/${scene}/colmap/sparse/0 --method ${METHOD}
-  done
-done
+if [ -z "$dataset_path" ] || [ -z "$output_path" ]; then
+    echo "Usage: $0 --dataset_path <path_to_dataset> --sparse_path <path_to_sparse> [--method <method>]"
+    exit 1
+fi
+
+run_pipeline "$DATASET_PATH" "$SPARSE_PATH" "$METHOD"
 
