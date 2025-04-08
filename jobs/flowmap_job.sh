@@ -63,6 +63,7 @@ log "Using Python binary: $PYTHON_BIN"
 FLOWMAP_DIR="$(realpath flowmap)"
 log "Found FlowMap directory: $FLOWMAP_DIR"
 export PYTHONPATH="$FLOWMAP_DIR:$PYTHONPATH"
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 # Process each scene
 process_scene() {
