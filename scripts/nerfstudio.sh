@@ -65,7 +65,7 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-if [ -z "$dataset_path" ] || [ -z "$output_path" ]; then
+if [ -z "$dataset_path" ] || [ -z "$sparse_path" ]; then
     echo "Usage: $0 --dataset_path <path_to_dataset> --sparse_path <path_to_sparse> [--method <method>]"
     exit 1
 fi
