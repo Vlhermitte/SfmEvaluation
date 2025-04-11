@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=nerfstudio_job      # Job name
-#SBATCH --output=nerfstudio_out.log    # Standard output log
-#SBATCH --error=nerfstudio_err.log     # Standard error log
-#SBATCH --time=24:00:00                # Time limit in the format HH:MM:SS
-#SBATCH --partition=1day               # Use the '1day' partition
-#SBATCH --gres=gpu:a16:1               # Request 1 GPU (a16)
-#SBATCH --mem=16G                      # Memory allocation
-#SBATCH --cpus-per-task=8              # Number of CPU cores per task
+#SBATCH --job-name=nerfstudio_job
+#SBATCH --output=nerfstudio_out.log
+#SBATCH --error=nerfstudio_err.log
+#SBATCH --time=3-00:00:00
+#SBATCH --partition=long
+#SBATCH --gres=gpu:a16:1
+#SBATCH --mem=24G
+#SBATCH --cpus-per-task=16
 
 log() {
     local msg="$(date +'%Y-%m-%d %H:%M:%S') - $1"
@@ -59,16 +59,7 @@ SFM_METHODS=(
     "glomap"
 )
 
-# Determine paths based on SLURM context
-if [ -n "$SLURM_JOB_ID" ]; then
-  cd ~/SfmEvaluation
-  DATASET_PATH=~/SfmEvaluation/data/datasets
-  RESULTS_PATH=~/SfmEvaluation/data/results
-else
-  cd "$(dirname "$0")/.."
-  DATASET_PATH=data/datasets
-  RESULTS_PATH=data/results
-fi
+gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
 
 run_pipeline() {
   local dataset_name=$1
@@ -78,12 +69,17 @@ run_pipeline() {
   local SCENE_PATH="${DATASET_PATH}/${dataset_name}/${scene}"
   local COLMAP_PATH="${RESULTS_PATH}/${sfm_method}/${dataset_name}/${scene}/colmap/sparse/0"
 
+  LOG_FILE="${RESULTS_PATH}/${sfm_method}/${dataset_name}/${scene}/nerfstudio.log"
+  rm "$LOG_FILE"
+  mkdir -p "$(dirname "$LOG_FILE")"
+  touch "$LOG_FILE"
+
   if [ ! -d "$COLMAP_PATH" ]; then
     log "Warning: No dataset found for ${COLMAP_PATH}. Skipping..."
     return
   fi
 
-  log "Running pipeline for ${dataset_name}/${scene} using ${sfm_method} method"
+  log "Running pipeline for ${dataset_name}/${scene} using ${sfm_method} method on ${gpu_name}"
   if [ -n "$SLURM_JOB_ID" ]; then
     apptainer exec --nvccli nerfstudio.sif python src/run_nerfstudio.py \
       --dataset-path "$SCENE_PATH" \
@@ -100,6 +96,7 @@ run_pipeline() {
 }
 
 sfm="all"
+dataset_choice="all"
 METHOD="nerfacto"
 
 while [[ "$#" -gt 0 ]]; do
