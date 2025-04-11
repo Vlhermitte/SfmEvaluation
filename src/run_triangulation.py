@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 import logging
@@ -43,107 +44,69 @@ if __name__ == '__main__':
     _logger.setLevel(logging.INFO)
     _logger.addHandler(logging.StreamHandler(sys.stdout))
 
-    from config import (
-        ETH3D_DATA_PATH, ETH3D_SCENES,
-        MIP_NERF_360_DATA_PATH, MIP_NERF_360_SCENES,
-        TANKS_AND_TEMPLES_DATA_PATH, TANKS_AND_TEMPLES_SCENES,
-        GLOMAP_RESULTS_PATH, VGGSFM_RESULTS_PATH, FLOWMAP_RESULTS_PATH, ACEZERO_RESULTS_PATH, COLMAP_FORMAT
+    parser = argparse.ArgumentParser(description='Triangulation evaluation')
+    parser.add_argument('--ref-colmap-path', type=str, required=True,
+                        help='Path to the reference reconstruction from COLMAP')
+    parser.add_argument('--est-colmap-path', type=str, required=True,
+                        help='Path to the estimated reconstruction in COLMAP format')
+    parser.add_argument('--gt-pcd-path', type=str, required=True,
+                        help='Path to the ground truth point cloud')
+    parser.add_argument('--est-pcd-path', type=str, required=False,
+                        help='Path to the estimated point cloud')
+    parser.add_argument('--cropfile', type=str,
+                        help='Path to the crop file (Only for Tanks and Temples dataset)')
+    parser.add_argument('--output', type=str, default="results",
+                        help='Path to the output directory')
+    parser.add_argument('--mlp', type=str,
+                        help='Path to the MLP file (Only for ETH3D dataset)')
+    parser.add_argument('--init-aligment', type=str,
+                        help='Path to the json file with the initial alignment (Only for Tanks and Temples dataset)')
+    parser.add_argument('--threshold', type=float, default=0.1,
+                        help='Threshold for the F1 score')
+    parser.add_argument('--stretch', type=float, default=5,
+                        help='Stretch for the F1 score')
+    args = parser.parse_args()
+
+    assert args.mlp and args.init_aligment, "Either --mlp or --init-aligment should be provided, not both."
+
+    if not Path(args.output).exists():
+        os.makedirs(args.output)
+
+    colmap_sparse_ref = Path(args.ref_colmap_path)
+    est_sparse_model = Path(args.est_colmap_path)
+    gt_pcd = o3d.io.read_point_cloud(args.gt_pcd_path)
+    est_pcd = o3d.io.read_point_cloud(args.est_colmap_path) if args.est_pcd_path else None
+    cropfile = args.cropfile if args.cropfile else None
+    init_alignment = np.loadtxt(args.init_aligment) if args.init_aligment else None
+
+
+    distance1, distance2 = run_triangulation_evaluation(
+        colmap_sparse_ref=colmap_sparse_ref,
+        est_sparse_reconstruction=est_sparse_model,
+        gt_pcd=gt_pcd,
+        est_pcd=est_pcd,
+        cropfile=cropfile,
+        init_alignment=init_alignment,
     )
+    write_color_distances(est_model_path / f"{scene}_precision.ply", est_pcd, distance1, triangulation_threshold)
+    write_color_distances(est_model_path / f"{scene}_recall.ply", gt_scan_pcd, distance2, triangulation_threshold)
 
-    # Run ETH3D evaluation
-    for results in [GLOMAP_RESULTS_PATH, VGGSFM_RESULTS_PATH, FLOWMAP_RESULTS_PATH, ACEZERO_RESULTS_PATH]:
-        print("Evaluating method: ", results)
-        for scene in ETH3D_SCENES:
-            scene_dir = ETH3D_DATA_PATH / scene
-            est_path = results / "ETH3D" / scene
-            if not est_path.exists() or not scene_dir.exists():
-                continue
-
-            print(scene)
-            gt_pcd = o3d.io.read_point_cloud(str(scene_dir / "dslr_scan_eval/scan1.ply"))
-            colmap_sparse_ref = read_model(scene_dir / "dslr_calibration_jpg")
-
-            # We prefer the sparse reconstruction from the dense folder because it is aligned with the dense pcd.
-            # During the colmap stereo_fusion step, the dense pcd might move from the original sparse coordinate system.
-            # This is why stereo_fusion creates a new sparse reconstruction in the dense folder which is aligned with the dense pcd.
-            est_sparse_path = est_path / "colmap/dense/sparse"
-            est_dense_pcd = None
-            if est_sparse_path.exists() and (est_path / "colmap/dense/fused.ply").exists():
-                est_sparse_reconstruction = read_model(est_sparse_path)
-                est_dense_pcd = o3d.io.read_point_cloud(str(est_path / "colmap/dense/fused.ply"))
-            elif (est_path / "colmap/sparse/0").exists():
-                print("Using sparse reconstruction from colmap/sparse/0")
-                est_sparse_reconstruction = read_model(est_path / "colmap/sparse/0")
-                if (est_path / "colmap/sparse/0/points3D.ply").exists():
-                    est_dense_pcd = o3d.io.read_point_cloud(str(est_path / "colmap/sparse/0/points3D.ply"))
-            else:
-                print("No sparse reconstruction found.")
-                continue
-
-            # Read the XML file
-            mlp_file = ETH3D_DATA_PATH / scene / "dslr_scan_eval/scan_alignment.mlp"
-            with open(mlp_file, "r") as file:
-                mlp_lines = file.readlines()
-
-            mlp_lines = [line.strip() for line in mlp_lines]
-            matrices = parse_mlp_matrices(mlp_lines)
-            init_alignment = matrices["scan1.ply"]
-
-            # ETH3D applies the alignment to the ground truth scan
-            gt_pcd.transform(init_alignment)
-
-            run_triangulation_evaluation(
-                scene_dir=scene_dir,
-                est_path=est_path,
-                gt_pcd=gt_pcd,
-                colmap_sparse_ref=colmap_sparse_ref,
-                est_sparse_reconstruction=est_sparse_reconstruction,
-                est_dense_pcd=est_dense_pcd,
-                cropfile=None,
-                init_alignment=None,
-                threshold=0.1,
-            )
-
-        # Run Tanks and Temples evaluation
-        for scene in TANKS_AND_TEMPLES_SCENES:
-            scene_dir = TANKS_AND_TEMPLES_DATA_PATH / scene
-            est_path = results / "TanksAndTemples" / scene
-            if not est_path.exists() or not scene_dir.exists():
-                continue
-
-            print(scene)
-            gt_pcd = o3d.io.read_point_cloud(str(scene_dir / f"{scene_dir.name}.ply"))
-            colmap_sparse_ref = read_model(scene_dir / "sparse/0")
-
-            est_sparse_path = est_path / "colmap/dense/sparse"
-            est_dense_pcd = None
-            if est_sparse_path.exists() and (est_path / "colmap/dense/fused.ply").exists():
-                est_sparse_reconstruction = read_model(est_sparse_path)
-                est_dense_pcd = o3d.io.read_point_cloud(str(est_path / "colmap/dense/fused.ply"))
-            elif (est_path / "colmap/sparse/0").exists():
-                print("Using sparse reconstruction from colmap/sparse/0")
-                est_sparse_reconstruction = read_model(est_path / "colmap/sparse/0")
-                # Flowmap doesn't create a point3D.bin file but a points3D.ply file
-                if (est_path / "colmap/sparse/0/points3D.ply").exists():
-                    est_dense_pcd = o3d.io.read_point_cloud(str(est_path / "colmap/sparse/0/points3D.ply"))
-            else:
-                print("No sparse reconstruction found.")
-                continue
-
-            cropfile = scene_dir / f"{scene_dir.name}.json"
-            # Tanks and Temples applies the alignment to the estimated reconstruction
-            init_alignment = np.loadtxt(scene_dir / f"{scene_dir.name}_trans.txt")
-
-            run_triangulation_evaluation(
-                scene_dir=scene_dir,
-                est_path=est_path,
-                colmap_sparse_ref=colmap_sparse_ref,
-                est_sparse_reconstruction=est_sparse_reconstruction,
-                est_dense_pcd=est_dense_pcd,
-                gt_pcd=gt_pcd,
-                cropfile=cropfile,
-                init_alignment=init_alignment,
-                threshold=0.1,
-            )
-
-
+    metrics = get_f1_score_histo2(distance1, distance2, triangulation_threshold, stretch=5)
+    precision = metrics["precision"]
+    recall = metrics["recall"]
+    fscore = metrics["fscore"]
+    edges_source = metrics["edges_source"]
+    cum_source = metrics["cum_source"]
+    edges_target = metrics["edges_target"]
+    cum_target = metrics["cum_target"]
+    plot_fscore(
+        scene=str(scene),
+        fscore=fscore,
+        dist_threshold=triangulation_threshold,
+        edges_source=edges_source,
+        cum_source=cum_source,
+        edges_target=edges_target,
+        cum_target=cum_target,
+        plot_stretch=5,
+        mvs_outpath=str(est_model_path),
+    )
