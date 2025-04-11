@@ -45,33 +45,31 @@ def get_f1_score_histo2(distance1, distance2, threshold, stretch=5):
     hist, edges_target = np.histogram(distance2, bins)
     cum_target = np.cumsum(hist).astype(float) / num + 1e-10
 
-    return precision, recall, fscore, edges_source, cum_source, edges_target, cum_target
+    metrics = {
+        "precision": precision,
+        "recall": recall,
+        "fscore": fscore,
+        "edges_source": edges_source,
+        "cum_source": cum_source,
+        "edges_target": edges_target,
+        "cum_target": cum_target,
+    }
+    return metrics
 
 def run_triangulation_evaluation(
-        scene_dir: Path,
-        est_path: Path,
         colmap_sparse_ref: pycolmap.Reconstruction,
         est_sparse_reconstruction: pycolmap.Reconstruction,
         gt_pcd: o3d.geometry.PointCloud,
-        est_dense_pcd: o3d.geometry.PointCloud = None,
+        est_pcd: o3d.geometry.PointCloud,
         cropfile: Path = None,
         init_alignment: np.ndarray = None,
-        threshold: float = 0.1,
         verbose: bool = False,
         viz: bool = False
 ):
-    if not isinstance(scene_dir, Path):
-        scene_dir = Path(scene_dir)
-    if not isinstance(est_path, Path):
-        est_path = Path(est_path)
-
-    assert scene_dir.is_dir(), f"scene_dir does not exist: {scene_dir}"
-    assert est_path.exists(), f"est_path does not exist: {est_path}"
     assert gt_pcd is not None, "gt_pcd is not provided."
     assert colmap_sparse_ref is not None, "colmap_sparse_ref is not provided."
     assert est_sparse_reconstruction is not None, "est_sparse_reconstruction is not provided."
-    if est_dense_pcd is not None and len(est_dense_pcd.points) == 0:
-        print("Warning: est_dense_pcd has no points. Check the input point cloud.") if verbose else None
+    assert est_pcd is not None, "est_dense_pcd is not provided."
 
     if init_alignment is not None:
         print("Using provided initial alignment.") if verbose else None
@@ -84,7 +82,7 @@ def run_triangulation_evaluation(
     transform = pycolmap.align_reconstructions_via_proj_centers(
         src_reconstruction=est_sparse_reconstruction,
         tgt_reconstruction=colmap_sparse_ref,
-        max_proj_center_error=threshold
+        max_proj_center_error=0.1,
     )
 
     if transform is None:
@@ -94,28 +92,17 @@ def run_triangulation_evaluation(
     transform = transform.matrix()  # 3x4 matrix
     transform_h = np.vstack([transform, [0, 0, 0, 1]])  # 4x4 matrix
 
-    # Converte est_reconstruction.Point3D to open3d.PointCloud or use provided dense point cloud
-    est_pcd = o3d.geometry.PointCloud()
-    if est_dense_pcd is not None and len(est_dense_pcd.points) > 0:
-        print("Using provided dense point cloud.")
-        est_pcd = copy.deepcopy(est_dense_pcd)
-        # Uniform downsample if more than 10M points
-        # if len(est_pcd.points) > 10e6:
-        #     print("Downsampling dense point cloud.") if verbose else None
-        #     est_pcd = est_pcd.uniform_down_sample(10)
-    else:
-        print("No dense points cloud provided. Falling back on sparse reconstruction. This might give poor results.") if verbose else None
-        if est_sparse_reconstruction.num_points3D() > 0:
-            bbs = est_sparse_reconstruction.compute_bounding_box(0.001, 0.999)
-            for _, point3d in est_sparse_reconstruction.points3D.items():
-                if (point3d.xyz >= bbs[0]).all() and (point3d.xyz <= bbs[1]).all() and point3d.error <= 6.0:
-                    est_pcd.points.append(point3d.xyz)
-                    est_pcd.colors.append(point3d.color / 255.0)
-        else:
-            print("No points in est_sparse_reconstruction.") if verbose else None
-            return None
+    # Uniform downsample if more than 10M points
+    if len(est_pcd.points) > 10e6:
+        print("More than 10e6 points, downsampling dense point cloud.") if verbose else None
+        est_pcd = est_pcd.uniform_down_sample(10)
 
     est_pcd.transform(transform_h)
+
+    if viz:
+        gt_pcd_viz = copy.deepcopy(gt_pcd)
+        gt_pcd_viz = gt_pcd_viz.uniform_down_sample(100)
+        o3d.visualization.draw_geometries([est_pcd, gt_pcd_viz])
 
     # Refine alignment using ICP
     if cropfile is not None:
@@ -145,28 +132,7 @@ def run_triangulation_evaluation(
     # Compute point cloud to point cloud distance
     distance1, distance2 = compute_pcd_to_pcd_distance(est_pcd, gt_pcd)
 
-    # Plot color distances
-    max_distance = threshold
-    write_color_distances(est_path / f"{scene_dir.name}_precision.ply", est_pcd, distance1, max_distance, viz=viz)
-    write_color_distances(est_path / f"{scene_dir.name}_recall.ply", gt_pcd, distance2, max_distance, viz=viz)
-
-    stretch = 5
-    metrics = get_f1_score_histo2(distance1, distance2, threshold, stretch=stretch)
-    precision, recall, fscore, edges_source, cum_source, edges_target, cum_target = metrics
-
-    plot_fscore(
-        scene=str(scene_dir.name),
-        fscore=fscore,
-        dist_threshold=threshold,
-        edges_source=edges_source,
-        cum_source=cum_source,
-        edges_target=edges_target,
-        cum_target=cum_target,
-        plot_stretch=stretch,
-        mvs_outpath=str(est_path),
-    )
-
-    return fscore
+    return distance1, distance2
 
 
 if __name__ == '__main__':
@@ -182,16 +148,38 @@ if __name__ == '__main__':
     # Tanks and Temples applies the alignment to the estimated reconstruction
     init_alignment = np.loadtxt(scene_dir / f"{scene_dir.name}_trans.txt")
 
-    run_triangulation_evaluation(
-        scene_dir=scene_dir,
-        est_path=est_path,
+    threshold = 0.1
+    viz = False
+    distance1, distance2 = run_triangulation_evaluation(
         colmap_sparse_ref=colmap_sparse_ref,
         est_sparse_reconstruction=est_sparse_reconstruction,
         gt_pcd=gt_pcd,
-        est_dense_pcd=est_dense_pcd,
+        est_pcd=est_dense_pcd,
         cropfile=cropfile,
         init_alignment=init_alignment,
-        threshold=0.1,
         verbose=True,
-        viz=True,
+        viz=viz,
+    )
+
+    write_color_distances(est_path / f"{scene_dir.name}_precision.ply", est_dense_pcd, distance1, threshold, viz=viz)
+    write_color_distances(est_path / f"{scene_dir.name}_recall.ply", gt_pcd, distance2, threshold, viz=viz)
+    metrics = get_f1_score_histo2(distance1, distance2, threshold, stretch=5)
+
+    precision = metrics["precision"]
+    recall = metrics["recall"]
+    fscore = metrics["fscore"]
+    edges_source = metrics["edges_source"]
+    cum_source = metrics["cum_source"]
+    edges_target = metrics["edges_target"]
+    cum_target = metrics["cum_target"]
+    plot_fscore(
+        scene=str(scene_dir.name),
+        fscore=fscore,
+        dist_threshold=threshold,
+        edges_source=edges_source,
+        cum_source=cum_source,
+        edges_target=edges_target,
+        cum_target=cum_target,
+        plot_stretch=5,
+        mvs_outpath=str(est_path),
     )
