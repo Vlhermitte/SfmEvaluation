@@ -8,7 +8,7 @@
       - [Relative Pose Evaluation](#relative-pose-evaluation)
       - [Absolute Pose Evaluation](#absolute-pose-evaluation-in-progress)
   - [Novel View Synthesis](#novel-view-synthesis-in-progress)
-  - [3D Triangulation Evaluation (In Progress)](#3d-triangulation-evaluation-in-progress)
+  - [3D Triangulation Evaluation](#3d-triangulation-evaluation)
 - [Scripts](#scripts)
 
 ## Overview
@@ -95,7 +95,7 @@ python src/run_nerfstudio.py --dataset-path <PATH_TO_SCENE_IMAGES> --results-pat
 
 📌 **Note:** Files in `<PATH_TO_RESULTS>` must be in **COLMAP format** (`.txt/.bin`).
 
-### 3D Triangulation Evaluation*
+### 3D Triangulation Evaluation
 
 This protocol evaluates the quality of 3D triangulation by comparing the reconstructed 3D model to the ground truth scan.
 
