@@ -95,25 +95,32 @@ python src/run_nerfstudio.py --dataset-path <PATH_TO_SCENE_IMAGES> --results-pat
 
 📌 **Note:** Files in `<PATH_TO_RESULTS>` must be in **COLMAP format** (`.txt/.bin`).
 
-### 3D Triangulation Evaluation *(In Progress)*
-🚧 **This feature is still under development.** 🚧
+### 3D Triangulation Evaluation*
 
-This protocol evaluates the quality of 3D triangulation using the [ETH3D Multi-view evaluation tool](https://github.com/ETH3D/multi-view-evaluation).
+This protocol evaluates the quality of 3D triangulation by comparing the reconstructed 3D model to the ground truth scan.
 
-The evaluation assesses the completeness and accuracy of the reconstructed 3D model compared to the ground truth.
+The evaluation can be performed on ETH3D or Tanks and Temples datasets as they provide ground truth scans for each scene.
 
 #### Running 3D Triangulation Evaluation
 To evaluate 3D triangulation, use:
 ```
-python src/run_triangulation.py --ply_path <PATH_TO_RECONSTRUCTION_PLY> --mlp_path <PATH_TO_GROUND_TRUTH_MLP>
+python src/run_triangulation.py --ref-colmap-path <PATH_TO_REFERENCE_COLMAP_RECONSTRUCTION> --est-colmap-path <PATH_TO_ESTIMATED_RECONSTRUCTION> --gt-pcd-path <PATH_TO_GROUND_TRUTH_PCD> --gt-mlp-path <PATH_TO_GROUND_TRUTH_SCAN>
 ```
 
-- `<PATH_TO_RECONSTRUCTION_PLY>`: Path to the reconstructed 3D model file (e.g., `data/results/glomap/ETH3D/courtyard/model.ply`).
-- `<PATH_TO_GROUND_TRUTH_MLP>`: Path to the ground truth MLP file (e.g., `data/datasets/ETH3D/courtyard/dslr_scan_eval/scan_alignment.mlp`).
+- `<PATH_TO_REFERENCE_COLMAP_RECONSTRUCTION>`: Path to reference COLMAP reconstruction (e.g., `data/ETH3D/courtyard/sparse/0`).
+- `<PATH_TO_ESTIMATED_RECONSTRUCTION>`: Path to the estimated reconstruction from your method (e.g., `data/results/glomap/ETH3D/courtyard/colmap/sparse/0`).
+- `<PATH_TO_GROUND_TRUTH_PCD>`: Path to the ground truth PCD file (e.g., `data/ETH3D/courtyard/scan.ply`).
 
-The evaluation results, including completeness, accuracy, and F1-scores, will be saved in `multiview_results.txt` in the same directory as the reconstruction PLY file.
+Many more parameters are available see [`run_triangulation.py`](src/run_triangulation.py) for details.
 
-📌 **Note:** This evaluation protocol is used for the **ETH3D dataset** as it requires the ground truth MLP file.
+The evaluation results, including completeness, accuracy, and F1-scores.
+
+📌 **Note:** 
+- The **ETH3D** dataset requires the mlp file to perform pcd alignment.
+- The **Tanks and Temples** dataset requires the init_alignment.txt and cropfile to perform pcd alignment and crop the estimated reconstruction.
+
+🚧 **There is still a bug for FlowMap. FlowMap point cloud coordinate system is not coherent with the camera poses, 
+making the pcd alignment fail and thus, does not provide valid results for the 3D Triangulation.** 🚧
 
 ## Scripts
 
@@ -151,16 +158,29 @@ It can be used as follows:
 ```python
 from src.evaluator import Evaluator
 
-evaluator = Evaluator(gt_model_path="<PATH_TO_GT_MODEL>", est_model_path="<PATH_TO_EST_MODEL>", image_path="<PATH_TO_IMAGES>")
+evaluator = Evaluator()
 
 # Camera poses evaluation
-rel_results, abs_results = evaluator.run_camera_evaluator()
+rel_results, abs_results = evaluator.run_camera_evaluator(
+    gt_sparse_model="<PATH_TO_GT_MODEL>",
+    est_sparse_model="<PATH_TO_EST_MODEL>",
+)
 
 # Novel view synthesis evaluation
-ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator()
+ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator(
+    method="nerfacto", # or "splatfacto"
+    dataset_path="<PATH_TO_SCENE_IMAGES>",
+    results_path="<PATH_TO_RESULTS>"
+)
 
 # Triangulation evaluation (For ETH3D dataset)
-tolerances, completenesses, accuracies, f1_scores = evaluator.run_triangulation_evaluator()
+tolerances, completenesses, accuracies, f1_scores = evaluator.run_triangulation_evaluator(
+    colmap_sparse_ref=...,
+    est_sparse_reconstruction=...,
+    gt_pcd=...,
+    est_pcd=...,
+    cropfile=...,
+)
 ```
 More details can be found in the [`evaluator.py`](src/evaluator.py) file.
 
