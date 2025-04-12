@@ -61,6 +61,9 @@ SFM_METHODS=(
 
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
 
+DATASET_PATH="$(realpath data/datasets)"
+RESULTS_PATH="$(realpath data/results)"
+
 run_pipeline() {
   local dataset_name=$1
   local scene=$2
@@ -69,7 +72,7 @@ run_pipeline() {
   local SCENE_PATH="${DATASET_PATH}/${dataset_name}/${scene}"
   local COLMAP_PATH="${RESULTS_PATH}/${sfm_method}/${dataset_name}/${scene}/colmap/sparse/0"
 
-  LOG_FILE="${RESULTS_PATH}/${sfm_method}/${dataset_name}/${scene}/nerfstudio.log"
+  local LOG_FILE="${RESULTS_PATH}/${sfm_method}/${dataset_name}/${scene}/nerfstudio.log"
   rm "$LOG_FILE"
   mkdir -p "$(dirname "$LOG_FILE")"
   touch "$LOG_FILE"
@@ -81,7 +84,8 @@ run_pipeline() {
 
   log "Running pipeline for ${dataset_name}/${scene} using ${sfm_method} method on ${gpu_name}"
   if [ -n "$SLURM_JOB_ID" ]; then
-    apptainer exec --nvccli nerfstudio.sif python src/run_nerfstudio.py \
+    log "Slurm-managed system. Running with Apptainer..."
+    apptainer exec --nv nerfstudio.sif python src/run_nerfstudio.py \
       --dataset-path "$SCENE_PATH" \
       --results-path "$COLMAP_PATH" \
       --method "$METHOD" \
