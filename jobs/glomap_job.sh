@@ -30,6 +30,7 @@ log "Starting GLOMAP batch processing GPU: $gpu_name"
 # Ensure SLURM environment loads required modules
 if [ -n "${SLURM_JOB_ID:-}" ]; then
     log "Running on a Slurm-managed system. Loading required modules..."
+    module load COLMAP
     module load GLOMAP
 fi
 
