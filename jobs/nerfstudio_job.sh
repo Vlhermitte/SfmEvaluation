@@ -72,7 +72,7 @@ run_pipeline() {
   local SCENE_PATH="${DATASET_PATH}/${dataset_name}/${scene}"
   local COLMAP_PATH="${RESULTS_PATH}/${sfm_method}/${dataset_name}/${scene}/colmap/sparse/0"
 
-  local LOG_FILE="${RESULTS_PATH}/${sfm_method}/${dataset_name}/${scene}/nerfstudio.log"
+  LOG_FILE="${RESULTS_PATH}/${sfm_method}/${dataset_name}/${scene}/nerfstudio.log"
   rm "$LOG_FILE"
   mkdir -p "$(dirname "$LOG_FILE")"
   touch "$LOG_FILE"
@@ -89,13 +89,13 @@ run_pipeline() {
       --dataset-path "$SCENE_PATH" \
       --results-path "$COLMAP_PATH" \
       --method "$METHOD" \
-      --viz False
+      --viz False >> "$LOG_FILE" 2>&1
   else
     python src/run_nerfstudio.py \
       --dataset-path "$SCENE_PATH" \
       --results-path "$COLMAP_PATH" \
       --method "$METHOD" \
-      --viz False
+      --viz False >> "$LOG_FILE" 2>&1
   fi
 }
 
