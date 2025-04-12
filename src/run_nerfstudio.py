@@ -167,7 +167,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
 
     _logger.info("#"*50)
 
-def sanity_check_colmap(path: Path) -> None:
+def sanity_check_colmap(path: Path, images_path: Path) -> None:
     # read the colmap model
     cameras, images, points3D = read_model(path, detect_colmap_format(path))
 
@@ -182,8 +182,18 @@ def sanity_check_colmap(path: Path) -> None:
         img_path = Path(image.name)
         if len(img_path.parts) > 1:
             new_image = image._replace(name=img_path.parts[-1])
-            images[image_id] = new_image
             path_changed = True
+        # Find corresponding image in images_path
+        base_name = img_path.stem
+        matching_files = list(images_path.glob(f"{base_name}.*"))
+        if matching_files:
+            new_image = image._replace(name=matching_files[0].name)
+            path_changed = True
+        if path_changed:
+            images[image_id] = new_image
+            _logger.info(f"Image {image_id} path changed from {image.name} to {new_image.name}")
+
+
     if path_changed:
         _logger.info("Fixed image paths in the colmap model.")
         write_model(cameras=cameras, images=images, points3D=points3D, path=path, ext=".bin")
@@ -199,7 +209,7 @@ if __name__ == '__main__':
         "--dataset-path",
         type=str,
         required=False,
-        default="../data/datasets/TanksAndTemples/Ignatius",
+        default="../data/datasets/ETH3D/courtyard",
         help="path to the dataset containing images"
     )
 
@@ -207,7 +217,7 @@ if __name__ == '__main__':
         "--results-path",
         type=str,
         required=False,
-        default="../data/results/glomap/TanksAndTemples/Ignatius/colmap/sparse/0",
+        default="../data/results/acezero/ETH3D/courtyard/colmap/sparse/0",
         help="path to the results directory containing colmap files."
     )
     parser.add_argument(
@@ -243,6 +253,6 @@ if __name__ == '__main__':
         exit(1)
 
     # Sanity check on colmap model
-    sanity_check_colmap(results_path)
+    sanity_check_colmap(results_path, Path(dataset_path) / "images")
 
     run_nerfstudio(dataset_path, results_path, method, viz)
