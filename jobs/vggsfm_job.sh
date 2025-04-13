@@ -57,6 +57,7 @@ fi
 PYTHON_BIN="$(conda run -n "$conda_env" which python)"
 log "Using Python binary: $PYTHON_BIN"
 
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # Process each scene
 process_scene() {
     local dataset=$1
