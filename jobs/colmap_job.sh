@@ -67,7 +67,7 @@ process_scene() {
     local out_dir="${OUT_DIR}/${dataset}/${scene}/colmap/sparse"
     local database="${OUT_DIR}/${dataset}/${scene}/colmap/database.db"
     local vram_log="${OUT_DIR}/${dataset}/${scene}/vram_usage_${gpu_name}.log"
-    LOG_FILE="${OUT_DIR}/${dataset}/${scene}/clomap.log"
+    LOG_FILE="${OUT_DIR}/${dataset}/${scene}/colmap.log"
     rm "$LOG_FILE"
     mkdir -p "$(dirname "$LOG_FILE")"
     touch "$LOG_FILE"
