@@ -154,7 +154,38 @@ def export_abs_results(abs_results: dict, output_path: Path):
     with open(f'{output_path}/absolute_results.json', 'w') as f:
         json.dump(abs_results, f, indent=4)
 
-    # TODO: Find a good metric to show absolute errors
+    if abs_results['rotation_errors'] == 'failed' or abs_results['translation_errors'] == 'failed':
+        rotation_errors = np.NAN
+        translation_errors = np.NAN
+        number_of_missing_cameras = np.NAN
+    else:
+        # For each rotation error, compute mean and std
+        rotation_errors = abs_results['rotation_errors']
+        translation_errors = abs_results['translation_errors']
+        number_of_missing_cameras = abs_results['number_of_missing_cameras']
+    mean_rotation_error = np.mean(rotation_errors)
+    std_rotation_error = np.std(rotation_errors)
+    rotation_99_percentile = np.percentile(rotation_errors, 99)
+    rotation_95_percentile = np.percentile(rotation_errors, 95)
+    mean_translation_error = np.mean(translation_errors)
+    std_translation_error = np.std(translation_errors)
+    translation_99_percentile = np.percentile(translation_errors, 99)
+    translation_95_percentile = np.percentile(translation_errors, 95)
+
+
+    # Write mean and std to txt file
+    with open(f'{output_path}/abs_errors_summary.json', 'w') as f:
+        json.dump({
+            'Missing_cameras': number_of_missing_cameras,
+            'Mean_rotation_error': mean_rotation_error,
+            'Std_rotation_error': std_rotation_error,
+            'Rotation_99_percentile': rotation_99_percentile,
+            'Rotation_95_percentile': rotation_95_percentile,
+            'Mean_translation_error': mean_translation_error,
+            'Std_translation_error': std_translation_error,
+            'Translation_99_percentile': translation_99_percentile,
+            'Translation_95_percentile': translation_95_percentile
+        }, f, indent=4)
 
 if __name__ == '__main__':
     _logger = logging.getLogger(__name__)
