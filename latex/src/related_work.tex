@@ -164,3 +164,23 @@ Further, while it excels in scenarios involving continuous video data, it curren
 
 
 \section{Ace Zero}\label{sec:acezero}
+
+AceZero \cite{brachmann2024acezero} introduces an innovative approach to Structure-from-Motion (SfM) by framing it as an incremental application and refinement of a learned visual relocalizer. 
+This method diverges from conventional feature-matching SfM frameworks by employing scene coordinate regression, enabling the construction of implicit neural scene representations directly from unposed image collections without relying on local feature matching.
+
+\paragraph{Scene Coordinate Regression}
+At the core of AceZero is a scene coordinate regression method, a learning-based technique that regresses the coordinates of 3D scene points directly from 2D image locations. 
+This bypasses the need for traditional feature extraction and matching, significantly streamlining the process and potentially reducing error propagation associated with matching failures. Unlike other neural reconstruction approaches, AceZero does not require camera pose priors or sequentially ordered inputs, enhancing flexibility and applicability.
+
+\paragraph{Incremental Learning of Visual Relocalizer}
+AceZero iteratively refines a visual relocalizer model, initially starting from a single seed image with a known identity pose. 
+This model incrementally registers additional views, continuously improving its scene understanding and pose estimation capabilities. 
+Through iterative learning and refinement, AceZero can robustly scale to datasets comprising thousands of images.
+
+\paragraph{Advantages and Limitations}
+AceZero demonstrates competitive pose accuracy compared to classical feature-based SfM methods, as shown through evaluations on standard benchmarks, including novel view synthesis experiments. 
+One significant advantage is its ability to implicitly represent scenes using neural networks, potentially capturing complex scene structures better than discrete point clouds.
+
+However, as a learning-based approach, AceZero is reliant on sufficient training data to generalize well across various scenes and environments. The method's performance might degrade in scenarios with insufficient data coverage or highly repetitive visual textures. Furthermore, the computational complexity associated with neural training and inference could present scalability challenges, particularly in real-time or near-real-time applications.
+
+In summary, AceZero presents an exciting direction for neural-based SfM, promising improved robustness and implicit scene understanding capabilities, though practical considerations around training complexity and scalability must be carefully managed.

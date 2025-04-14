@@ -125,9 +125,13 @@ In Prague, \ctufield{day}.~\monthinlanguage{title}~\ctufield{year}
 \usepackage{subcaption} % Required for subfigure captions
 \usepackage{float} % Required for H float positioning
 \usepackage{array} % Required for bold table lines
-\usepackage[x11names]{xcolor}
-\usepackage[backend=biber,style=numeric]{biblatex}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{colortbl}
+% \usepackage[backend=biber,style=numeric]{biblatex}
 \usepackage{hyperref}
+\usepackage{booktabs}     
+\usepackage{multirow}
+
 \hypersetup{
 	colorlinks=true,
 	linkcolor=black,
@@ -135,7 +139,7 @@ In Prague, \ctufield{day}.~\monthinlanguage{title}~\ctufield{year}
 	urlcolor=blue,
 }
 
-\addbibresource{src/references.bib}
+% \addbibresource{src/references.bib}
 
 \begin{document}
 
@@ -158,9 +162,9 @@ In Prague, \ctufield{day}.~\monthinlanguage{title}~\ctufield{year}
 
 % \appendix
 
-% \bibliographystyle{plain}
-% \bibliography{src/references}
-\printbibliography
+\bibliographystyle{plain}
+\bibliography{src/references}
+% \printbibliography
 
 % \ctutemplate{specification.as.chapter}
 
