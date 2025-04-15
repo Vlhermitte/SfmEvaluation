@@ -198,8 +198,8 @@ def sanity_check_colmap(path: Path, images_path: Path) -> None:
             image.name = matching_files[0].name
             path_changed = True
 
-    if path_changed:
-        _logger.info("Fixed image paths in the colmap model.")
+    if path_changed or len(model.points3D) == 0: # if points3D is empty, it could mean that no points3D.bin file was found. We need to create it.
+        _logger.info("Fixed colmap model.")
         model.write(path)
 
 
