@@ -199,8 +199,8 @@ def sanity_check_colmap(path: Path, images_path: Path) -> None:
             path_changed = True
 
     # if points3D is empty, it could mean that no points3D.bin file was found. We need to create it.
-    if len(model.points3D) == 0 and (images_path / "points3D.bin").exists():
-        model.import_PLY(images_path / "points3D.ply")
+    if len(model.points3D) == 0 and (path / "points3D.bin").exists():
+        model.import_PLY(path / "points3D.ply")
         path_changed = True
 
     if path_changed:
