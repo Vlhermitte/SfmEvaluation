@@ -174,9 +174,11 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
     _logger.info("#"*50)
 
 def sanity_check_colmap(path: Path, images_path: Path) -> None:
+    if not isinstance(path, Path):
+        path = Path(path)
     # read the colmap model
     # cameras, images, points3D = read_model(path, detect_colmap_format(path))
-    model = read_model(path)
+    model = read_model(str(path))
 
     # check that the model is not empty
     if len(model.cameras) == 0 or len(model.images) == 0:
