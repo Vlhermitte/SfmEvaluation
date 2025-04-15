@@ -181,6 +181,7 @@ def sanity_check_colmap(path: Path, images_path: Path) -> None:
     # check that in images, each image has a valid path
     path_changed = False
     for image_id, image in images.items():
+        path_changed = False
         img_path = Path(image.name)
         if len(img_path.parts) > 1:
             new_image = image._replace(name=img_path.parts[-1])
@@ -193,7 +194,6 @@ def sanity_check_colmap(path: Path, images_path: Path) -> None:
             path_changed = True
         if path_changed:
             images[image_id] = new_image
-            _logger.info(f"Image {image_id} path changed from {image.name} to {new_image.name}")
 
 
     if path_changed:
