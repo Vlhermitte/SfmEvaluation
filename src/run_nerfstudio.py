@@ -9,9 +9,13 @@ from PIL import Image
 from tqdm import tqdm
 import time
 import math
+import pycolmap
 
-from data.read_write_model import read_model, write_model
-from utils.common import detect_colmap_format
+# check pycolmap version
+if pycolmap.__version__ < "3.10.0":
+    print(f"WARNING: pycolmap.__version__: {pycolmap.__version__}")
+
+from utils.common import read_model
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -171,34 +175,32 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
 
 def sanity_check_colmap(path: Path, images_path: Path) -> None:
     # read the colmap model
-    cameras, images, points3D = read_model(path, detect_colmap_format(path))
+    # cameras, images, points3D = read_model(path, detect_colmap_format(path))
+    model = read_model(path)
 
     # check that the model is not empty
-    if len(cameras) == 0 or len(images) == 0:
+    if len(model.cameras) == 0 or len(model.images) == 0:
         _logger.error(f"Error: The colmap model at {path} is empty. Please check the results path and try again.")
         exit(1)
 
     # check that in images, each image has a valid path
     path_changed = False
-    for image_id, image in images.items():
+    for image_id, image in model.images.items():
         path_changed = False
         img_path = Path(image.name)
         if len(img_path.parts) > 1:
-            new_image = image._replace(name=img_path.parts[-1])
+            image.name = img_path.parts[-1]
             path_changed = True
         # Find corresponding image in images_path
         base_name = img_path.stem
         matching_files = list(images_path.glob(f"{base_name}.*"))
         if matching_files:
-            new_image = image._replace(name=matching_files[0].name)
+            image.name = matching_files[0].name
             path_changed = True
-        if path_changed:
-            images[image_id] = new_image
-
 
     if path_changed:
         _logger.info("Fixed image paths in the colmap model.")
-        write_model(cameras=cameras, images=images, points3D=points3D, path=path, ext=".bin")
+        model.write(path)
 
 
 if __name__ == '__main__':
@@ -211,7 +213,7 @@ if __name__ == '__main__':
         "--dataset-path",
         type=str,
         required=False,
-        default="../data/datasets/ETH3D/courtyard",
+        default="../data/datasets/TanksAndTemples_reduced/Caterpillar",
         help="path to the dataset containing images"
     )
 
@@ -219,7 +221,7 @@ if __name__ == '__main__':
         "--results-path",
         type=str,
         required=False,
-        default="../data/results/acezero/ETH3D/courtyard/colmap/sparse/0",
+        default="../data/results/flowmap/TanksAndTemples_reduced/Caterpillar/colmap/sparse/0",
         help="path to the results directory containing colmap files."
     )
     parser.add_argument(
