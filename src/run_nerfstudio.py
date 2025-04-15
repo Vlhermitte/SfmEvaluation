@@ -212,16 +212,14 @@ if __name__ == '__main__':
     parser.add_argument(
         "--dataset-path",
         type=str,
-        required=False,
-        default="../data/datasets/TanksAndTemples_reduced/Caterpillar",
+        required=True,
         help="path to the dataset containing images"
     )
 
     parser.add_argument(
         "--results-path",
         type=str,
-        required=False,
-        default="../data/results/flowmap/TanksAndTemples_reduced/Caterpillar/colmap/sparse/0",
+        required=True,
         help="path to the results directory containing colmap files."
     )
     parser.add_argument(
