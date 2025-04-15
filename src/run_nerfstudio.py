@@ -119,23 +119,21 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
     _logger.info(f"Training the model using : {method}")
     start = time.time()
     # The nerfstudio Args order is important: 1. Nerfstudio Args 2. DataParser Args
-    train_cmd = [
-        CUDA_VISIBLE_DEVICES, "ns-train", method,
-        "--machine.num-devices", str(num_gpus),
-        "--pipeline.datamanager.images-on-gpu", "True" if num_images <= 1000 else "False",
-        "--pipeline.model.camera-optimizer.mode", "off",  # We do not want to optimize the camera parameters
-        "--viewer.make-share-url", "True" if viz else "",
-        "--viewer.quit-on-train-completion", "True",
-        "--experiment-name", "nerfstudio",
-        # To store the results in a directory nerfstudio instead of the default name 'unnamed'
-        "--output-dir", str(results_path),
-        "--timestamp", "run",
+    train_cmd = (
+        # Nerfstudio Args
+        f"{CUDA_VISIBLE_DEVICES} ns-train {method} "
+        f"--machine.num-devices {num_gpus} --pipeline.datamanager.images-on-gpu {'True' if num_images <= 1000 else 'False'} "
+        f"--pipeline.model.camera-optimizer.mode off " # We do not want to optimize the camera parameters
+        f"{'--viewer.make-share-url True' if viz else ''} "
+        f"--viewer.quit-on-train-completion True "
+        f"--experiment-name nerfstudio " # To store the results in a directory nerfstudio instead of the default name 'unnamed'
+        f"--output-dir {results_path} "
+        f"--timestamp run "
         # DataParser Args
-        "colmap", "--images-path", f"{dataset_path}/images",
-        "--colmap-path", str(results_path),
-        "--downscale-factor", str(downscale_factor),
-        "--load-3D-points", "True" if method == "splatfacto" else "False",
-    ]
+        f"colmap --images-path {dataset_path}/images --colmap-path {results_path} "
+        f"--downscale-factor {downscale_factor} "
+        f"--load-3D-points {'True' if method == 'splatfacto' else 'False'} "
+    )
     if not viz:
         stdout = subprocess.DEVNULL
         subprocess.run(train_cmd, shell=True, stdout=stdout, stderr=stdout)
@@ -149,10 +147,10 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
     _logger.info("Evaluating the NeRF model...")
     start = time.time()
     eval_cmd = [
-        CUDA_VISIBLE_DEVICES, "ns-eval",
-        "--load-config", f"{results_path}/nerfstudio/{method}/run/config.yml",
-        "--output-path", f"{results_path}/nerfstudio/{method}/run/eval.json",
-        "--render-output-path", f"{results_path}/nerfstudio/{method}/run/renders"
+        f"{CUDA_VISIBLE_DEVICES} ns-eval "
+        f"--load-config {results_path}/nerfstudio/{method}/run/config.yml "
+        f"--output-path {results_path}/nerfstudio/{method}/run/eval.json "
+        f"--render-output-path {results_path}/nerfstudio/{method}/run/renders"
     ]
     subprocess.run(eval_cmd, shell=True)
 
@@ -165,11 +163,11 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         _logger.info(f"Results stored in {results_path}/nerfstudio/{method}/run/eval.json")
 
     export_cmd = [
-        CUDA_VISIBLE_DEVICES," ns-export", "pointcloud" if method == "nerfacto" else "gaussian-splat",
-        "--load-config", f"{results_path}/nerfstudio/{method}/run/config.yml",
-        "--output-dir", results_path,
-        "--save-world-frame", True,
-        "--normal-method", "open3d"
+        f"{CUDA_VISIBLE_DEVICES} ns-export {'pointcloud' if method == 'nerfacto' else 'gaussian-splat'} "
+        f"--load-config {results_path}/nerfstudio/{method}/run/config.yml "
+        f"--output-dir {results_path} "
+        f"--save-world-frame True "
+        f"--normal-method open3d "
     ]
     # subprocess.run(export_cmd, shell=True)
 
