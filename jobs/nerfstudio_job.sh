@@ -145,10 +145,10 @@ if [ "$sfm" = "all" ]; then
       done
     fi
     if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples_reduced" ] || [ "$dataset_choice" = "tanksandtemples_reduced" ] || [ "$dataset_choice" = "t2_r" ]; then
-    for SCENE in "${TANKS_AND_TEMPLES[@]}"; do
-        process_scene "TanksAndTemples_reduced" "$SCENE"
-    done
-  fi
+      for SCENE in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
+          run_pipeline "TanksAndTemples_reduced" "$scene" "$sfm"
+      done
+    fi
   done
 else
   if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "ETH3D" ] || [ "$dataset_choice" = "eth3d" ]; then
