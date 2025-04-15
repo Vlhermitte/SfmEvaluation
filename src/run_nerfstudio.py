@@ -127,6 +127,7 @@ def run_nerfstudio(dataset_path: Path, results_path: Path, method: str ='nerfact
         f"--timestamp run "
         # DataParser Args
         f"colmap --images-path {dataset_path}/images --colmap-path {results_path} "
+        f"--downscale-factor {downscale_factor} "
         f"--load-3D-points {'True' if method == 'splatfacto' else 'False'} "
     )
     if not viz:
