@@ -169,7 +169,7 @@ else
     done
   fi
   if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples_reduced" ] || [ "$dataset_choice" = "tanksandtemples_reduced" ] || [ "$dataset_choice" = "t2_r" ]; then
-    for SCENE in "${TANKS_AND_TEMPLES[@]}"; do
+    for SCENE in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
         process_scene "TanksAndTemples_reduced" "$SCENE"
     done
   fi
