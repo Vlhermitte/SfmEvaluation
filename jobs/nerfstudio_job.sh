@@ -145,7 +145,7 @@ if [ "$sfm" = "all" ]; then
       done
     fi
     if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples_reduced" ] || [ "$dataset_choice" = "tanksandtemples_reduced" ] || [ "$dataset_choice" = "t2_r" ]; then
-      for SCENE in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
+      for scene in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
           run_pipeline "TanksAndTemples_reduced" "$scene" "$sfm"
       done
     fi
@@ -169,7 +169,7 @@ else
     done
   fi
   if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples_reduced" ] || [ "$dataset_choice" = "tanksandtemples_reduced" ] || [ "$dataset_choice" = "t2_r" ]; then
-    for SCENE in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
+    for scene in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
         run_pipeline "TanksAndTemples_reduced" "$scene" "$sfm"
     done
   fi
