@@ -59,4 +59,4 @@ run_pipeline() {
 
 }
 
-
+run_pipeline
