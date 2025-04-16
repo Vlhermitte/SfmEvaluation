@@ -24,11 +24,11 @@ fi
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --colmap_path)
+        --colmap-path)
             COLMAP_PATH="$2"
             shift 2
             ;;
-        --images_path)
+        --images-path)
             IMAGES_PATH="$2"
             shift 2
             ;;
@@ -40,12 +40,12 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [ -z "$COLMAP_PATH" ]; then
-    log "ERROR: --colmap_path is required"
+    log "ERROR: --colmap-path is required"
     exit 1
 fi
 
 if [ -z "$IMAGES_PATH" ]; then
-    log "ERROR: --images_path is required"
+    log "ERROR: --images-path is required"
     exit 1
 fi
 
