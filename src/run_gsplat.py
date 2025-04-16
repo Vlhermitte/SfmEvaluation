@@ -126,7 +126,7 @@ def run_gsplat(dataset_path: Path, images_path: Path, viz: bool=True) -> None:
     # remove the downscaled images
     if downscale_factor > 1:
         shutil.rmtree(downscaled_dir)
-        shutil.rmtree(f"{downscaled_dir}_{downscale_factor}_png")
+        shutil.rmtree(f"{downscaled_dir}_png")
         _logger.info(f"Removed downscaled images_{downscale_factor} from {dataset_path}")
 
 
