@@ -4,16 +4,16 @@
 
 Structure-from-Motion (SfM) refers to a family of computer vision methods aimed at simultaneously reconstructing the three-dimensional structure of a scene and estimating the positions and orientations from which a set of images was captured. 
 Traditionally, these methods involve multiple stages: detecting and matching local features across images, estimating relative camera poses, and jointly optimizing camera parameters and sparse 3D point clouds through bundle adjustment. 
-Among classical incremental SfM approaches, Colmap \cite{schoenberger2016sfm} has emerged as a robust and widely used baseline due to its open-source availability and state-of-the-art accuracy.
+Among classical incremental SfM approaches, COLMAP \cite{schoenberger2016sfm} has emerged as a robust and widely used baseline due to its open-source availability and state-of-the-art accuracy.
 
 Despite the accuracy and robustness of incremental SfM pipelines, they are not scalable to large datasets.
 To address this limitation, recent developments have introduced machine learning-based enhancements aimed at improving both efficiency and robustness. 
 Multiple novel approaches, integrating learned feature matching, end-to-end neural network frameworks, and hybrid methods, have demonstrated promising results. 
-These newer methods each independently claim superior performance over traditional approaches like Colmap. However, due to their concurrent publication and diverse evaluation protocols, comprehensive comparisons among these modern techniques have yet to be conducted.
+These newer methods each independently claim superior performance over traditional approaches like COLMAP. However, due to their concurrent publication and diverse evaluation protocols, comprehensive comparisons among these modern techniques have yet to be conducted.
 
 \section{Goals}
 
-This thesis aims to close this critical gap by providing a systematic and fair evaluation of state-of-the-art SfM methods, particularly focusing on VGGSfM \cite{wang2023vggsfm}, FlowMap \cite{smith24flowmap}, AceZero \cite{brachmann2024acezero} and GLOMAP \cite{pan2024glomap} against the baseline COLMAP.
+This thesis aims to close this critical gap by providing a systematic and fair evaluation of state-of-the-art SfM methods, particularly focusing on VGGSfM \cite{wang2023vggsfm}, FlowMap \cite{smith24flowmap}, AceZero \cite{brachmann2024acezero} and GLOMAP \cite{pan2024glomap} against the baseline COLMAP \cite{schoenberger2016sfm}.
 We establish a unified evaluation protocol incorporating multiple performance metrics, including pose accuracy, Novel View Synthesis (NVS) quality, robustness to challenging conditions, runtime and memory efficiency.
 
 To ensure broad applicability and fairness, our evaluation leverages diverse benchmark datasets capturing varying complexities such as spatial scale, camera trajectories, and illumination conditions. 

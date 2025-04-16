@@ -16,12 +16,26 @@ The core steps of incremental SfM include feature extraction and matching, relat
 
 \paragraph{Feature Extraction and Matching}
 The first step in incremental SfM involves detecting and describing key points in each image. 
-Traditional methods use hand-crafted feature descriptors such as SIFT or ORB to extract distinctive image features. 
-Once features are detected, feature matching is performed across image pairs to establish correspondences.
+Traditional methods rely on hand-crafted feature descriptors like SIFT \cite{Lowe2004DistinctiveIF} or ORB \cite{rublee2011orb}, 
+which are designed to extract distinctive image features that are robust to changes in scale, rotation, and lighting conditions.
+
+Once features are detected, they are compared across overlaping images to establish correspondences.
+This is typically done using nearest-neighbor matching, where the descriptor of a feature in one image is compared to all features in another image to find the best match.
+This process can be computationally expensive, especially for large datasets, and is often optimized using techniques like FLANN \cite{muja2009fast} or approximate nearest neighbor search.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/related_work/matches.jpg}
+    \caption{Example of feature matching between two images. The lines connect matched features across the two images.}
+    \label{fig:incremental_sfm}
+\end{figure}
+
 
 \paragraph{Relative Camera Pose Estimation}
-Given the matched feature correspondences between image pairs, the next step is to estimate the relative camera poses. 
-This is achieved using epipolar geometry constraints, often solved via the five-point or eight-point algorithms within a RANSAC framework to remove outliers. 
+Given the matched feature correspondences between image pairs, the next step is to estimate the motion of the camera between the two views.
+This is typically done by computing the essential or fundamental matrix, which encapsulates the relative rotation and translation between the two camera poses.
+
+This is achieved using epipolar geometry constraints, often solved via the five-point or eight-point algorithms within a RANSAC \cite{fischler1981random} framework to remove matches that are outliers.
 The estimated relative camera pose allows for triangulation, reconstructing initial 3D points.
 
 \paragraph{Bundle Adjustment}
@@ -73,9 +87,9 @@ By avoiding the translation averaging step, GLOMAP is able to handle colinear mo
 
 Finally, global bundle adjustment is performed to refine the camera parameters and 3D point positions, ensuring a consistent and accurate reconstruction of the scene.
 
-The authors claim superior performance and accuracy compared to traditional global SfM methods, and on par with , while being significantly faster.
+The authors claim superior performance and accuracy compared to traditional global SfM methods, and on par with COLMAP, while being significantly faster.
 
-A limitation of GLOMAP remains, if the scene has a rotational symmetry, the rotation averaging step colapses.
+A limitation of GLOMAP remains. If the scene has a rotational symmetry, the rotation averaging step collapses, making it a degenerate case for GLOMAP.
 
 \section{VGGSfM}\label{sec:vggsfm}
 
@@ -95,7 +109,7 @@ In the original paper's pipeline, the network could leverage track features as w
 
 \paragraph{Bundle Adjustment.}
 Finally, the pipeline employs a differentiable second-order Levenberg-Marquardt optimizer from the Theseus library \cite{pineda2022theseus} to refine both the camera parameters and 3D points by minimizing reprojection error. 
-Because bundle adjustment (BA) is fully differentiable, the entire SfM pipeline can be trained end-to-end—unlike in traditional approaches that use non-differentiable solvers.
+Because bundle adjustment (BA) is fully differentiable, the entire SfM pipeline can be trained end-to-end, unlike in traditional approaches that use non-differentiable solvers.
 
 \paragraph{Comparison with Global SfM}
 VGGSfM is related to global SfM approaches but differs in three crucial aspects:
@@ -118,10 +132,11 @@ These errors can be effectively corrected via the subsequent BA stage if a high-
 
 
 While VGGSfM demonstrates robust performance on several benchmarks such as Co3D \cite{reizenstein21co3d}, IMC \cite{Jin_2020}, and ETH3D \cite{schoeps2017cvpr}, the authors acknowledge it does not (yet) handle large-scale datasets (thousands of frames) as readily as classical SfM pipelines. Ongoing work (VGGSfM v2) aims to address these scalability challenges while maintaining the end-to-end differentiability and strong performance.
+
 \section{FlowMap}\label{sec:flowmap}
 
 
-FlowMap \cite{smith24flowmap} presented by \textit{C. Smith and D. Charatan et al} is a recently introduced Structure-from-Motion method leveraging an end-to-end differentiable approach for estimating camera poses, intrinsics, and dense per-frame depth maps from video sequences. 
+FlowMap \cite{smith24flowmap} presented by C. Smith and D. Charatan et al is a recently introduced Structure-from-Motion method leveraging an end-to-end differentiable approach for estimating camera poses, intrinsics, and dense per-frame depth maps from video sequences. 
 Unlike classical SfM methods such as COLMAP, FlowMap does not rely on explicit 3D point triangulation from sparse correspondences. 
 Instead, it formulates SfM as a gradient-descent optimization problem, supervised purely by off-the-shelf optical flow and sparse point tracking correspondences.
 
@@ -143,7 +158,7 @@ These tracks minimize drift over extended trajectories by providing long-term ge
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\textwidth]{figures/flowmap_pipeline.png}
+    \includegraphics[width=0.8\textwidth]{figures/related_work/flowmap_pipeline.png}
     \caption{FlowMap pipeline overview \cite{smith24flowmap}}.
     \label{fig:flowmap}
 \end{figure}
@@ -161,7 +176,6 @@ Empirical evaluations demonstrate that FlowMap achieves reconstruction quality c
 
 However, FlowMap does exhibit limitations. It relies heavily on accurate off-the-shelf correspondences, struggles with rotation-dominant trajectories, and can suffer from local minima such as hollow-face geometry inversions. 
 Further, while it excels in scenarios involving continuous video data, it currently lacks mechanisms for processing unstructured image collections typical in classical SfM.
-
 
 \section{Ace Zero}\label{sec:acezero}
 
@@ -181,6 +195,57 @@ Through iterative learning and refinement, AceZero can robustly scale to dataset
 AceZero demonstrates competitive pose accuracy compared to classical feature-based SfM methods, as shown through evaluations on standard benchmarks, including novel view synthesis experiments. 
 One significant advantage is its ability to implicitly represent scenes using neural networks, potentially capturing complex scene structures better than discrete point clouds.
 
-However, as a learning-based approach, AceZero is reliant on sufficient training data to generalize well across various scenes and environments. The method's performance might degrade in scenarios with insufficient data coverage or highly repetitive visual textures. Furthermore, the computational complexity associated with neural training and inference could present scalability challenges, particularly in real-time or near-real-time applications.
+However, as a learning-based approach, AceZero is reliant on sufficient training data to generalize well across various scenes and environments. 
+The method's performance might degrade in scenarios with insufficient data coverage or highly repetitive visual textures. Furthermore, the computational complexity associated with neural training and inference could present scalability challenges, particularly in real-time or near-real-time applications.
 
 In summary, AceZero presents an exciting direction for neural-based SfM, promising improved robustness and implicit scene understanding capabilities, though practical considerations around training complexity and scalability must be carefully managed.
+
+\section{Neural Radiance Fields (NeRF) for Novel View Synthesis}
+
+Neural Radiance Fields (NeRF) \cite{mildenhall2020nerf} is a groundbreaking method for representing and rendering complex 3D scenes in a continuous and highly detailed manner. 
+Originally proposed by Mildenhall et al., NeRF leverages neural networks to generate novel views from a sparse set of input images.
+
+\subsection{Implicit Scene Representation}
+Unlike traditional volumetric representations that discretize a scene into voxels, NeRF models a scene as a continuous function. 
+This function is implemented as a fully connected neural network that maps a 5D input, comprising a 3D spatial coordinate $(x,y,z)$ and a 2D viewing direction $(\theta,\phi)$, to an output consisting of an RGB color vector and a scalar density value. 
+To capture fine-grained details and high-frequency variations, the input coordinates are passed through a positional encoding function that transforms them into a higher-dimensional space.
+
+\subsection{Volumetric Rendering and Ray Marching}
+\paragraph{Ray Casting and Sampling:} For generating a novel view, a ray is cast from the camera's origin for each pixel. 
+Multiple sample points are taken along the ray, and the network is queried at each point to obtain corresponding density and color values.  
+\paragraph{Volume Rendering Integration:} The final pixel color is computed by integrating these samples using volumetric rendering principles. 
+Each sample's contribution is weighted based on its density and position along the ray, in a manner similar to alpha compositing, where closer, more opaque samples influence the final rendered color more strongly.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/related_work/nerf_pipeline.png}
+    \caption{NeRF Ray Sampling and Model Querying \cite{mildenhall2020nerf}.}
+    \label{fig:nerf_pipeline}
+\end{figure}
+
+\subsection{Learning and Optimization Process}
+\paragraph{Training Objective:} During training, the network's parameters are optimized by minimizing a photometric reconstruction loss (often the mean squared error) between the rendered images and the ground truth images.  
+\paragraph{Differentiable Rendering:} The volumetric rendering process is fully differentiable, which allows gradients to flow through the entire pipeline. This enables the joint optimization of both scene geometry (via density) and appearance (via RGB color) within a unified framework.
+
+\subsection{Novel View Synthesis}
+Once the network is trained, NeRF can render the scene from arbitrary viewpoints, even ones not present in the training data. By varying the camera parameters (position and orientation) and applying the same ray marching and integration process, the network synthesizes photorealistic images. 
+Moreover, the inclusion of the viewing direction helps capture view-dependent effects such as specular highlights and reflections.
+
+\subsection{Advantages and Limitations}
+\paragraph{Advantages:}
+\begin{itemize}
+    \item \textbf{High-Fidelity Rendering:} Produces photorealistic images with rich details.
+    \item \textbf{Implicit Representation:} Avoids explicit geometry representations like voxels or meshes, enabling the capture of complex scene structures.
+    \item \textbf{Differentiability:} Allows for joint optimization of geometry and appearance via end-to-end differentiable rendering.
+\end{itemize}
+\paragraph{Limitations:}
+\begin{itemize}
+    \item \textbf{Computational Complexity:} The training and rendering processes are computationally intensive.
+    \item \textbf{Scene Specificity:} Standard NeRF models are trained per-scene and do not readily generalize to new scenes without retraining.
+\end{itemize}
+
+\subsection{Relation to Structure-from-Motion (SfM) Techniques}
+SfM methods such as GLOMAP, VGGSfM, FlowMap, and Ace Zero primarily focus on reconstructing sparse or dense 3D point clouds and accurately estimating camera poses from image correspondences. 
+In contrast, NeRF shifts the emphasis towards high-quality photorealistic rendering by learning a continuous implicit representation of both geometry and appearance. 
+This approach provides additional benefits like capturing view-dependent effects, albeit at the cost of higher computational demands.
+Since NeRF's need images as well as camera poses, it can be used in conjunction with SfM methods to provide a complete pipeline for 3D reconstruction and rendering.
