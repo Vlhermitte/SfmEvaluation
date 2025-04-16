@@ -4,6 +4,7 @@ import os
 import sys
 import argparse
 import logging
+import math
 from pathlib import Path
 from PIL import Image
 from tqdm import tqdm
