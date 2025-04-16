@@ -222,7 +222,12 @@ def visualize_trajectory(trajectory):
 
 
 if __name__ == '__main__':
-    datasets_path = Path('../../data/datasets/LaMAR/HGE')
+    script_dir = Path(__file__).resolve().parent
+    datasets_path = script_dir / '../../data/datasets/LaMAR/HGE'
+    datasets_path = datasets_path.resolve()
+    if not datasets_path.exists():
+        print("Error: datasets_path does not exist")
+        exit(1)
 
     # retrieve all session ids that start with ios
     session_ids = [session.name for session in datasets_path.glob('sessions/map/raw_data/ios*')]
