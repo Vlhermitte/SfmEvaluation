@@ -106,12 +106,12 @@ process_scene() {
 
     # If number of image is less than 180, use the default settings
     if [ "$num_images" -lt 180 ]; then
-        if ! "$PYTHON_BIN" -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
+        if ! "$PYTHON_BIN" -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" local_save_root="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
         log "ERROR: FlowMap pipeline execution failed for scene: $scene"
     fi
     else
       log "Running FlowMap pipeline with low memory settings on scene: $scene"
-        if ! "$PYTHON_BIN" -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" +experiment=low_memory 2>&1 | tee -a "$LOG_FILE"; then
+        if ! "$PYTHON_BIN" -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" local_save_root="$out_dir" +experiment=low_memory 2>&1 | tee -a "$LOG_FILE"; then
             log "ERROR: FlowMap pipeline execution failed for scene: $scene"
         fi
     fi
