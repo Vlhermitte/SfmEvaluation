@@ -68,6 +68,28 @@ def evaluate_translation_angle(t_gt: np.ndarray, t_est: np.ndarray) -> float:
 
     return angle_deg
 
+def evaluate_translation_error(t_gt: np.ndarray, t_est: np.ndarray) -> float:
+    """
+    FUNCTION NOT IN USE FOR NOW BUT MAYBE WILL BE LATER
+    Evaluate the translation error between the ground truth and estimated translation vectors.
+
+    The translation error is computed as the Euclidean distance between the two translation vectors.
+
+    Args:
+        t_gt (np.ndarray): Ground truth translation vector (3x1), world origin in camera coordinate frame.
+        t_est (np.ndarray): Estimated translation vector (3x1), world origin in camera coordinate frame.
+
+    Returns:
+        float: The Euclidean distance between the ground truth and estimated translation vectors.
+    """
+    assert t_gt.shape == (3, 1) or t_gt.shape == (3,), f'Ground truth t shape is {t_gt.shape}, expected (3, 1) or (3,)'
+    assert t_est.shape == (3, 1) or t_est.shape == (3,), f'Estimated t shape is {t_est.shape}, expected (3, 1) or (3,)'
+
+    # Compute the Euclidean distance
+    error = np.linalg.norm(t_gt - t_est)
+
+    return error
+
 def evaluate_relative_errors(gt_images: List[pycolmap.Image], est_images: List[pycolmap.Image]) -> Dict[str, List]:
     """
     Evaluate the relative rotation and translation errors on image pairs.
