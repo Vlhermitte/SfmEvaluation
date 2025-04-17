@@ -35,24 +35,27 @@ def evaluate_camera_pose(
     accuracy = 0
     for gt_image, est_image in zip(gt_images, est_images):
         if gt_image.registered and est_image.registered:
-
             T_gt = gt_image.cam_from_world.matrix()
             T_est = est_image.cam_from_world.matrix()
 
             T_gt = np.vstack((T_gt, [0, 0, 0, 1]))
             T_est = np.vstack((T_est, [0, 0, 0, 1]))
 
-            T_error = np.linalg.inv(T_est) @ T_gt
-            R_error = T_error[:3, :3]
-            t_error = T_error[:3, 3]
+            R_gt = T_gt[:3, :3]
+            R_est = T_est[:3, :3]
+            R_error = R_est @ R_gt.T
+            t_gt = T_gt[:3, 3]
+            t_est = T_est[:3, 3]
+            c_gt = -R_gt.T * t_gt
+            c_est = -R_est.T * t_est
 
             angle = np.arccos((np.trace(R_error) - 1) / 2)
-            t_err = np.linalg.norm(t_error)
-            if angle <= R_threshold and t_err <= t_threshold:
+            c_error = np.linalg.norm(c_est - c_gt)
+            if angle <= R_threshold and c_error <= t_threshold:
                 accuracy += 1
 
             rotation_errors.append(np.degrees(angle))
-            translation_errors.append(t_err)
+            translation_errors.append(c_error)
         else:
             # Assign high values for missing cameras
             rotation_errors.append(180.0)
