@@ -50,6 +50,7 @@ def evaluate_camera_pose(
             c_est = -R_est.T * t_est
 
             angle = np.arccos((np.trace(R_error) - 1) / 2)
+            angle = np.degrees(angle)
             c_error = np.linalg.norm(c_est - c_gt)
             if angle <= R_threshold and c_error <= t_threshold:
                 accuracy += 1
