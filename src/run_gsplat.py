@@ -132,8 +132,9 @@ def run_gsplat(dataset_path: Path, images_path: Path, viz: bool=True) -> None:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run GSPLAT on a dataset.")
-    parser.add_argument("--dataset_path", type=str, help="Path to the colmap sparse reconstruction.", required=True)
-    parser.add_argument("--images_path", type=str, help="Path to the images directory.", required=True)
+    parser.add_argument("--dataset-path", type=str, help="Path to the colmap sparse reconstruction.", required=True)
+    parser.add_argument("--images-path", type=str, help="Path to the images directory.", required=True)
+    parser.add_argument("--pose-opt", action="store_true", help="Enable pose optimization.")
     parser.add_argument("--viz", action="store_true", help="Enable visualization.")
     args = parser.parse_args()
 

@@ -32,6 +32,10 @@ while [[ "$#" -gt 0 ]]; do
             IMAGES_PATH="$2"
             shift 2
             ;;
+        --pose-opt)
+            POSE_OPT="$2"
+            shift 2
+            ;;
         *)
             echo "Unknown parameter passed: $1"
             exit 1
@@ -53,9 +57,24 @@ run_pipeline() {
   conda activate gsplat || { log "ERROR: Failed to activate conda environment"; exit 1; }
 
   log "Running gsplat pipeline for ${COLMAP_PATH} and ${IMAGES_PATH}"
-  python src/run_gsplat.py \
-    --dataset_path "$COLMAP_PATH" \
-    --images_path "$IMAGES_PATH"
+  # Base arguments for the python script
+  cmd_args=(
+      "src/run_gsplat.py"
+      "--dataset-path" "$COLMAP_PATH"
+      "--images-path" "$IMAGES_PATH"
+  )
+
+  # Conditionally add the pose optimization flag
+  if [ -n "$POSE_OPT" ]; then
+      log "Pose optimization is enabled"
+      cmd_args+=("--pose-opt")
+  else
+      log "Pose optimization is disabled"
+  fi
+
+  # Execute the command
+  log "Executing: python ${cmd_args[*]}"
+  python "${cmd_args[@]}"
 
 }
 
