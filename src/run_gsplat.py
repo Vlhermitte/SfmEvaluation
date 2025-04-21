@@ -10,8 +10,6 @@ from PIL import Image
 from tqdm import tqdm
 from typing import Optional
 
-from utils.common import read_model
-
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
