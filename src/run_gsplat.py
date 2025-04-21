@@ -81,12 +81,14 @@ def downscale_images(dataset_path: Path, factor: int, viz: bool=True) -> Path:
 
     return downscaled_dir
 
-def run_gsplat(dataset_path: Path, images_path: Path, viz: bool=True) -> None:
+def run_gsplat(dataset_path: Path, images_path: Path, result_path: Path, viz: bool=True) -> None:
     """
     Run the GSPLAT executable with the specified arguments.
     """
     if not isinstance(dataset_path, Path):
         dataset_path = Path(dataset_path)
+    if not isinstance(images_path, Path):
+        images_path = Path(images_path)
 
     if not (dataset_path / "images").exists():
         shutil.copytree(images_path, dataset_path / "images", dirs_exist_ok=True)
@@ -114,7 +116,7 @@ def run_gsplat(dataset_path: Path, images_path: Path, viz: bool=True) -> None:
     command = [
         sys.executable, str(GSPLAT_EXE), "default",
         "--data_dir", str(dataset_path),
-        "--result_dir", str(dataset_path / "gsplat"),
+        "--result_dir", str(dataset_path / result_path),
         "--data_factor", str(downscale_factor),
     ]
 
@@ -134,6 +136,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run GSPLAT on a dataset.")
     parser.add_argument("--dataset-path", type=str, help="Path to the colmap sparse reconstruction.", required=True)
     parser.add_argument("--images-path", type=str, help="Path to the images directory.", required=True)
+    parser.add_argument("--results-path", type=str, help="Path to the results directory.", default="gsplat")
     parser.add_argument("--pose-opt", action="store_true", help="Enable pose optimization.")
     parser.add_argument("--viz", action="store_true", help="Enable visualization.")
     args = parser.parse_args()
@@ -144,4 +147,4 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # Run the GSPLAT function with the provided arguments
-    run_gsplat(args.dataset_path, args.images_path, args.viz)
+    run_gsplat(args.dataset_path, args.images_path, args.results_path, args.viz)

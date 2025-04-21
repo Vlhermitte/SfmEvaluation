@@ -32,6 +32,10 @@ while [[ "$#" -gt 0 ]]; do
             IMAGES_PATH="$2"
             shift 2
             ;;
+        --results-path)
+            RESULTS_PATH="$2"
+            shift 2
+            ;;
         --pose-opt)
             POSE_OPT="$2"
             shift 2
@@ -70,6 +74,14 @@ run_pipeline() {
       cmd_args+=("--pose-opt")
   else
       log "Pose optimization is disabled"
+  fi
+
+  # Add the results path if provided
+  if [ -n "$RESULTS_PATH" ]; then
+      log "Results will be saved to ${RESULTS_PATH}"
+      cmd_args+=("--results-path" "$RESULTS_PATH")
+  else
+      log "No results path provided, using default"
   fi
 
   # Execute the command
