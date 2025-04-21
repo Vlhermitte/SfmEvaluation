@@ -103,7 +103,7 @@ run_pipeline() {
     )
 
     log "Executing: python ${cmd_args[*]}"
-    python "${cmd_args[@]}"
+    python "${cmd_args[@]}" >> "$LOG_FILE" 2>&1
 
 }
 
