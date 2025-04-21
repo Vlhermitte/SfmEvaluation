@@ -4,7 +4,7 @@
 #SBATCH --error=gsplat_job.log
 #SBATCH --time=24:00:00
 #SBATCH --partition=1day
-#SBATCH --gres=gpu:a16:4
+#SBATCH --gres=gpu:a16:1
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=12
 
