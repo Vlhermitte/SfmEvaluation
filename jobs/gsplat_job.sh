@@ -70,6 +70,7 @@ SFM_METHODS=(
 )
 
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
+conda activate gsplat || { log "ERROR: Failed to activate conda environment"; exit 1; }
 
 DATASET_PATH="$(realpath data/datasets)"
 RESULTS_PATH="$(realpath data/results)"
