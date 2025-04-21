@@ -117,6 +117,7 @@ def run_gsplat(dataset_path: Path, images_path: Path, result_path: Path, viz: bo
         sys.executable, str(GSPLAT_EXE), "default",
         "--data_dir", str(dataset_path),
         "--result_dir", str(dataset_path / result_path),
+        "--pose_opt", True if args.pose_opt else False,
         "--data_factor", str(downscale_factor),
     ]
 
