@@ -81,7 +81,44 @@ def downscale_images(dataset_path: Path, factor: int, viz: bool=True) -> Path:
 
     return downscaled_dir
 
-def run_gsplat(dataset_path: Path, images_path: Path, result_path: Path, viz: bool=True) -> None:
+def sanity_check_colmap(path: Path, images_path: Path) -> None:
+    if not isinstance(path, Path):
+        path = Path(path)
+    # read the colmap model
+    # cameras, images, points3D = read_model(path, detect_colmap_format(path))
+    model = read_model(str(path))
+
+    # check that the model is not empty
+    if len(model.cameras) == 0 or len(model.images) == 0:
+        _logger.error(f"Error: The colmap model at {path} is empty. Please check the results path and try again.")
+        exit(1)
+
+    # check that in images, each image has a valid path
+    path_changed = False
+    for image_id, image in model.images.items():
+        path_changed = False
+        img_path = Path(image.name)
+        if len(img_path.parts) > 1:
+            image.name = img_path.parts[-1]
+            path_changed = True
+        # Find corresponding image in images_path
+        base_name = img_path.stem
+        matching_files = list(images_path.glob(f"{base_name}.*"))
+        if matching_files:
+            image.name = matching_files[0].name
+            path_changed = True
+
+    # if points3D is empty, it could mean that no points3D.bin file was found. We need to create it.
+    if len(model.points3D) == 0 and (path / "points3D.bin").exists():
+        model.import_PLY(path / "points3D.ply")
+        path_changed = True
+
+    if path_changed:
+        _logger.info("Fixed colmap model.")
+        model.write(path)
+
+
+def run_gsplat(dataset_path: Path, images_path: Path, result_path: Path, pose_opt: bool = False, viz: bool=True) -> None:
     """
     Run the GSPLAT executable with the specified arguments.
     """
@@ -117,9 +154,11 @@ def run_gsplat(dataset_path: Path, images_path: Path, result_path: Path, viz: bo
         sys.executable, str(GSPLAT_EXE), "default",
         "--data_dir", str(dataset_path),
         "--result_dir", str(dataset_path / result_path),
-        "--pose_opt", True if args.pose_opt else False,
         "--data_factor", str(downscale_factor),
+        "--disable_viewer"
     ]
+    if pose_opt:
+        command.append("--pose_opt")
 
     # Execute the command
     subprocess.run(command, check=True)
@@ -147,5 +186,21 @@ if __name__ == '__main__':
         _logger.error(f"GSPLAT executable not found at {GSPLAT_EXE}. Please check clone repo or check path.")
         sys.exit(1)
 
+    # Check that colmap model exists (i.e .bin/.txt files)
+    if not (os.path.exists(os.path.join(args.dataset_path, "images.bin")) or os.path.exists(
+            os.path.join(args.dataset_path, "images.txt"))):
+        _logger.error(
+            f"Error: The colmap model at {args.dataset_path} does not exist. Please check the results path and try again.")
+        exit(1)
+
+    # Sanity check on colmap model
+    sanity_check_colmap(args.dataset_path, Path(args.images_path))
+
     # Run the GSPLAT function with the provided arguments
-    run_gsplat(args.dataset_path, args.images_path, args.results_path, args.viz)
+    run_gsplat(
+        dataset_path=args.dataset_path,
+        images_path=args.images_path,
+        result_path=args.results_path,
+        pose_opt=bool(args.pose_opt),
+        viz=args.viz,
+    )
