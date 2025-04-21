@@ -109,14 +109,9 @@ run_pipeline() {
 
 sfm="all"
 dataset_choice="all"
-METHOD="nerfacto"
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --method)
-            METHOD="$2"
-            shift 2
-            ;;
         --sfm)
             sfm="$2"
             shift 2
@@ -154,7 +149,7 @@ if [ "$sfm" = "all" ]; then
     fi
     if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples_reduced" ] || [ "$dataset_choice" = "tanksandtemples_reduced" ] || [ "$dataset_choice" = "t2_r" ]; then
       for scene in "${TANKS_AND_TEMPLES_SCENES[@]}"; do
-          run_pipeline "TanksAndTemples_reduced" "$scene" "$sfm"
+          run_pipeline "TanksAndTemples_reduced" "$scene" "$sfm_method"
       done
     fi
   done
