@@ -10,6 +10,8 @@ from PIL import Image
 from tqdm import tqdm
 from typing import Optional
 
+from pycolmap import SceneManager
+
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -134,6 +136,35 @@ def check_cuda_gpus() -> Optional[int]:
         _logger.error(f"An unexpected error occurred while checking GPUs: {e}")
         return None
 
+def check_colmap_model(colmap_path: str, images_path: str) -> bool:
+    """
+    Check if the COLMAP model is valid by loading it with pycolmap.
+    """
+    if not isinstance(colmap_path, str):
+        colmap_path = str(colmap_path)
+    scene_manager = SceneManager(colmap_path)
+    scene_manager.load_images()
+
+    # Check images names
+    is_overwrite = False
+    for image in scene_manager.images.values():
+        # keep only the image name
+        image_name = os.path.basename(image.name)
+        # make sure the image name is in the images path
+        if not os.path.exists(os.path.join(images_path, image_name)):
+            _logger.error(f"Image {image_name} not found in {images_path}")
+            return False
+        if image.name != image_name:
+            # Overwrite the image name in the scene manager
+            scene_manager.images[image.id].name = image_name
+            is_overwrite = True
+    if is_overwrite:
+        # Save the updated scene manager
+        scene_manager.save_images(colmap_path)
+
+    return True
+
+
 def run_gsplat(dataset_path: Path, images_path: Path, result_path: Path, pose_opt: bool = False, viz: bool=True) -> None:
     """
     Run the GSPLAT executable with the specified arguments.
@@ -205,6 +236,11 @@ if __name__ == '__main__':
     if not any(path.exists() for path in paths):
         _logger.error(
             f"Error: The colmap model at {args.dataset_path}/sparse/0/ does not exist. Please check the results path and try again.")
+        exit(1)
+
+    is_ok = check_colmap_model(Path(args.dataset_path) / "sparse/0", args.images_path)
+    if not is_ok:
+        _logger.error(f"Error: The colmap model at {args.dataset_path}/sparse/0/ is not valid. Please check the results path and try again.")
         exit(1)
 
     # Run the GSPLAT function with the provided arguments
