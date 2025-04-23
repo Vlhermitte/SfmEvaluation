@@ -9,8 +9,7 @@ from pathlib import Path
 from PIL import Image
 from tqdm import tqdm
 from typing import Optional
-
-from pycolmap import SceneManager
+from utils.common import read_model
 
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -20,7 +19,7 @@ working_dir = Path(__file__).resolve().parent
 if working_dir.name == "src":
     os.chdir(working_dir.parent)
 
-GSPLAT_EXE = Path(__file__).resolve().parent.parent / "gsplat" / "examples" / "simple_trainer.py"
+GSPLAT_EXE = Path(__file__).resolve().parent / "evaluation" / "gsplat_trainer.py"
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -142,12 +141,11 @@ def check_colmap_model(colmap_path: str, images_path: str) -> bool:
     """
     if not isinstance(colmap_path, str):
         colmap_path = str(colmap_path)
-    scene_manager = SceneManager(colmap_path)
-    scene_manager.load_images()
+    model = read_model(colmap_path)
 
     # Check images names
     is_overwrite = False
-    for image in scene_manager.images.values():
+    for image in model.images.values():
         # keep only the image name
         image_name = os.path.basename(image.name)
         # make sure the image name is in the images path
@@ -156,11 +154,11 @@ def check_colmap_model(colmap_path: str, images_path: str) -> bool:
             return False
         if image.name != image_name:
             # Overwrite the image name in the scene manager
-            scene_manager.images[image.id].name = image_name
+            model.images[image.id].name = image_name
             is_overwrite = True
     if is_overwrite:
         # Save the updated scene manager
-        scene_manager.save_images(colmap_path)
+        model.save_images(colmap_path)
 
     return True
 
