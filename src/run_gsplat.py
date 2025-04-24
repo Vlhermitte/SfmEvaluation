@@ -19,7 +19,7 @@ working_dir = Path(__file__).resolve().parent
 if working_dir.name == "src":
     os.chdir(working_dir.parent)
 
-GSPLAT_EXE = Path(__file__).resolve().parent / "evaluation" / "gsplat_trainer.py"
+GSPLAT_EXE = Path(__file__).resolve().parent.parent / "gsplat" / "examples" / "simple_trainer.py"
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
@@ -219,9 +219,13 @@ if __name__ == '__main__':
     parser.add_argument("--viz", action="store_true", help="Enable visualization.")
     args = parser.parse_args()
 
-    # Make sure that GSPLAT_EXE is present
-    if not GSPLAT_EXE.exists():
-        _logger.error(f"GSPLAT executable not found at {GSPLAT_EXE}. Please check clone repo or check path.")
+    # Make sure that required modules are available
+    try:
+        import torch
+        from evaluation.gsplat_trainer import Config, main as gsplat_main
+        from gsplat.strategy import DefaultStrategy
+    except ImportError as e:
+        _logger.error(f"Required module not found: {e}. Please check your installation.")
         sys.exit(1)
 
     # Check that colmap model exists (i.e .bin/.txt files)
