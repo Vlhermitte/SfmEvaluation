@@ -287,7 +287,7 @@ download_lamar() {
 #######################################
 main() {
     # Ensure we're in the root directory of the project
-    cd "$(dirname "$0")/.." || exit
+    cd "$(dirname "$0")" || exit
 
     echo "Which dataset(s) do you want to download?"
     echo "1) ETH3D dataset"
