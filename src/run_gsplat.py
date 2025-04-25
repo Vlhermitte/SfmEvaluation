@@ -211,6 +211,16 @@ def run_gsplat(dataset_path: Path, images_path: Path, result_path: Path, pose_op
     subprocess.run(command, check=True)
     _logger.info(f"GSPLAT training completed. Results saved in {dataset_path / result_path}")
 
+    if (dataset_path / "images").exists():
+        shutil.rmtree(dataset_path / "images")
+        _logger.info(f"Cleaning {dataset_path / 'images'}")
+    if Path(downscaled_dir).exists():
+        shutil.rmtree(downscaled_dir)
+        _logger.info(f"Cleaning {downscaled_dir}")
+    if Path(downscaled_dir + f'_{factor}_png').exists():
+        shutil.rmtree(downscaled_dir + f'_{factor}_png')
+        _logger.info(f"Cleaning {downscaled_dir + f'_{factor}_png'}")
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run GSPLAT on a dataset.")
