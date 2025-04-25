@@ -199,10 +199,12 @@ def run_gsplat(dataset_path: Path, images_path: Path, result_path: Path, pose_op
     ]
     if pose_opt:
         command.append("--pose_opt")
-    if num_gpus > 1:
-        command.append(f"--steps_scaler")
-        command.append(f"{1/num_gpus}")
-        command.append("--packed")
+
+    # Multi-GPU support disabled for now because of leaked semaphore
+    # if num_gpus > 1:
+    #     command.append(f"--steps_scaler")
+    #     command.append(f"{1/num_gpus}")
+    #     command.append("--packed")
 
     if not viz:
         command.append("--disable-viewer")
