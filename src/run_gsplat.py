@@ -143,6 +143,10 @@ def check_colmap_model(colmap_path: str, images_path: str) -> bool:
         colmap_path = str(colmap_path)
     model = read_model(colmap_path)
 
+    if model is None:
+        _logger.error("Colmap model is None")
+        return False
+
     # Check images names
     is_overwrite = False
     for image in model.images.values():
@@ -189,25 +193,23 @@ def run_gsplat(dataset_path: Path, images_path: Path, result_path: Path, pose_op
     command = [
         sys.executable, str(GSPLAT_EXE), "default",
         "--data_dir", str(dataset_path),
+        "--images_dir", str(images_path),
         "--result_dir", str(dataset_path / result_path),
         "--data_factor", str(downscale_factor),
     ]
     if pose_opt:
         command.append("--pose_opt")
+    if num_gpus > 1:
+        command.append(f"--steps_scaler")
+        command.append(f"{1/num_gpus}")
+        command.append("--packed")
 
     if not viz:
         command.append("--disable-viewer")
 
     # Execute the command
     subprocess.run(command, check=True)
-    _logger.info(f"GSPLAT training completed. Results saved in {dataset_path / 'gsplat'}")
-
-    shutil.rmtree(dataset_path / "images")
-    # remove the downscaled images
-    if downscale_factor > 1:
-        shutil.rmtree(downscaled_dir)
-        shutil.rmtree(f"{downscaled_dir}_png")
-        _logger.info(f"Removed downscaled images_{downscale_factor} from {dataset_path}")
+    _logger.info(f"GSPLAT training completed. Results saved in {dataset_path / result_path}")
 
 
 if __name__ == '__main__':
@@ -218,15 +220,6 @@ if __name__ == '__main__':
     parser.add_argument("--pose-opt", action="store_true", help="Enable pose optimization.")
     parser.add_argument("--viz", action="store_true", help="Enable visualization.")
     args = parser.parse_args()
-
-    # Make sure that required modules are available
-    try:
-        import torch
-        from evaluation.gsplat_trainer import Config, main as gsplat_main
-        from gsplat.strategy import DefaultStrategy
-    except ImportError as e:
-        _logger.error(f"Required module not found: {e}. Please check your installation.")
-        sys.exit(1)
 
     # Check that colmap model exists (i.e .bin/.txt files)
     paths = [
