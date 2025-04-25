@@ -98,7 +98,7 @@ run_pipeline() {
         "src/run_gsplat.py"
         "--dataset-path" "$COLMAP_PATH"
         "--images-path" "$IMAGES_PATH"
-        "--results-path" "gsplat_pose_opt"
+        "--results-path" "gsplat"
         "--pose-opt"
     )
 
