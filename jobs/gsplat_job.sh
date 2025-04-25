@@ -2,8 +2,8 @@
 #SBATCH --job-name=gsplat_job
 #SBATCH --output=gsplat_job_out.log
 #SBATCH --error=gsplat_job_err.log
-#SBATCH --time=3-00:00:00
-#SBATCH --partition=long
+#SBATCH --time=7-00:00:00
+#SBATCH --partition=extralong
 #SBATCH --gres=gpu:a16:1
 #SBATCH --mem=24G
 #SBATCH --cpus-per-task=16
