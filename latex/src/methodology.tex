@@ -1,5 +1,8 @@
 \chapter{Methodology}\label{chap:methodology}
 
+This chapter describes the evaluation protocol used to assess the performance of the four SfM pipelines: AceZero, GLOMAP, VGGSfm, and FlowMap.
+We first present the proposed evaluation protocol. Then, we describe the datasets used for evaluation, including their characteristics and the rationale behind their selection.
+
 \section{Proposed evaluation protocol}\label{sec:proposed-evaluation-protocol}
 
 In this section, we present a comprehensive evaluation protocol for assessing the performance of Structure from Motion (SfM) algorithms.
@@ -8,11 +11,14 @@ These components are designed to evaluate the accuracy of camera pose estimation
 
 \subsection{Camera Pose Evaluation}
 To quantitatively assess camera pose accuracy, we compute relative rotations and translations between all possible pairs of estimated camera poses and compare these to the corresponding ground-truth poses.
+Additionally, we compare the absolute errors in camera poses between the estimated and ground-truth poses.
 
+\subsubsection{Relative Pose Error}
 Given two cameras \( i \) and \( j \), let the relative rotation and translation from camera \( i \) to camera \( j \) be defined as:
 \begin{equation}
     R_{ij} = R_j R_i^T
 \end{equation}
+
 \begin{equation}
     \vec{t}_{ij} = \vec{t}_i - R_{ij} \vec{t}_j
 \end{equation}
@@ -23,98 +29,197 @@ where \( R_i \) and \( R_j \) are the rotation matrices of cameras \( i \) and \
 The Relative Translation Error (RTE) measures the angular difference between the estimated and ground-truth camera relative translations and is computed as:
 
 \begin{equation}
-    \text{RTE}_{ij} = \arccos\left(\frac{\vec{t_{ij}}^{\text{gt}} \cdot \vec{t_{ij}}^{\text{est}}}{\lVert \vec{t_{ij}}^{\text{gt}} \rVert \lVert \vec{t_{ij}}^{\text{est}} \rVert}\right)
+    \text{RTE}_{ij} = \cos^{-1}\left(\frac{\vec{t_{ij}}^{\text{gt}} \cdot \vec{t_{ij}}^{\text{est}}}{\lVert \vec{t_{ij}}^{\text{gt}} \rVert \lVert \vec{t_{ij}}^{\text{est}} \rVert}\right)
 \end{equation}
 
 \paragraph{Relative Rotation Error (RRE)}
 The Relative Rotation Error (RRE) quantifies the angular difference between estimated and ground-truth relative rotations. It is defined as:
 
 \begin{equation}
-    \text{RRE}_{ij} = \arccos\left(\frac{\text{trace}(R_{ij}^{\text{gt}} (R_{ij}^{\text{est}})^T) - 1}{2}\right)
+    \text{RRE}_{ij} = \cos^{-1}\left(\frac{\text{trace}(R_{ij}^{\text{gt}} (R_{ij}^{\text{est}})^T) - 1}{2}\right)
 \end{equation}
 
-\paragraph{Absolute Pose Error}
-The Absolute Pose Error measures the absolute difference between the estimated and ground-truth camera poses.
 
-In order to compute the absolute pose error, we first need to align the models. Indeed, the estimated reconstruction might be in a different coordinate system than the ground-truth reconstruction.
-We align the estimated reconstruction with the ground-truth reconstruction using COLMAP \textit{model aligner}.
-
-To compute the absolute pose error between two cameras:
-\begin{equation}
-    T_{error} = T_{est}^{-1} T_{gt}
-\end{equation}
-where $T = [R|t]$ is the transformation matrix.
-
-The rotation error $R_{error}$ is then the top-left $3\times 3$ submatrix of the transformation matrix, and the translation error $t_{error}$ is the last column of the transformation matrix.
+if a pose is missing, we apply a high penalty of 180 degrees to both the RTE and RRE.
 
 
 \paragraph{Area Under the Curve (AUC)}
-
 To summarize the performance of the SfM algorithms, we report the Area Under the Curve (AUC) for the cumulative distribution of angular errors at different thresholds. 
 This provides a comprehensive assessment of the algorithm's accuracy across varying levels of tolerance.
 
+\subsubsection{Absolute Pose Error}
+The Absolute Pose Error measures the absolute difference between the estimated and ground-truth camera poses.
+
+In order to compute it, we first need to align the models. Indeed, the estimated reconstruction might be in a different coordinate system than the ground-truth reconstruction.
+
+We align the estimated reconstruction with the ground-truth reconstruction using COLMAP \textit{model aligner}.
+
+After alignment, the error in pose can be decomposed into two parts: the \textbf{rotation error} and the \textbf{camera position (translation) error}.
+
+The camera position in the world coordinate system is given by:
+\begin{equation}
+    \vec{C} = -R^\top \cdot \vec{t}
+\end{equation}
+where the rotation matrix $R$ is the world orientation in the camera coordinate frame and the translation vector $\vec{t}$ is the world origin in the camera coordinate frame.
+
+To compute the camera position error, we compare the estimated camera center $\vec{C}_{\text{est}}$ to the ground-truth camera center $\vec{C}_{\text{gt}}$ using the Euclidean distance:
+\begin{equation}
+    \vec{C}_{\text{error}} = \left\| \vec{C}_{\text{est}} - \vec{C}_{\text{gt}} \right\|_2
+\end{equation}
+
+The rotation error is computed using the relative rotation matrix:
+\begin{equation}
+    R_{\text{error}} = R_{\text{est}} R_{\text{gt}}^\top
+\end{equation}
+
+The angle of rotation $\alpha$ between the estimated and ground-truth rotations is then calculated as:
+
+\begin{equation}
+    \alpha = \cos^{-1}\left( \frac{\text{trace}(R_{\text{error}}) - 1}{2} \right)
+\end{equation}
+
+This gives the angular difference in radians. The result can be converted to degrees if needed.
+
+
+Again, if a pose is missing, we apply a high penalty of 180 degrees to the rotation error and a high penalty of 10 meters to the translation error.
+
 
 \subsection{Novel View Synthesis Evaluation}
-To evaluate the quality and accuracy of the reconstructed scene geometry, we employ Novel View Synthesis using Neural Radiance Fields (NeRF). 
-Specifically, the \texttt{Nerfstudio} \cite{nerfstudio} framework is utilized to render synthetic images from novel camera viewpoints not included in the original set of images used for reconstruction. 
-Several Neural Radiance Fields methods have been proposed over the recent years, but we focus on Nerfacto available by default in \texttt{Nerfstudio}.
+
+To evaluate the quality and accuracy of the reconstructed scene geometry, we employ Novel View Synthesis using Gaussian Splatting.
+Specifically, the \texttt{GSplat} \cite{ye2024gsplatopensourcelibrarygaussian} framework is utilized to render synthetic images from novel camera viewpoints not included in the original set of images used for reconstruction. 
+GSplat is an open-source library that implements Gaussian Splatting for real-time rendering of neural radiance fields (NeRFs) and is insipred by the original work on Gaussian Splatting \cite{kerbl20233dgaussiansplattingrealtime} but was imroved to be faster and more memory efficient.
+
+3D Gaussian Splatting methods have recently demonstrated state-of-the-art fidelity and real-time performance, motivating their adoption in place of Neural Radiance Fields.
 
 The quality of these synthetic views is quantitatively assessed using standard metrics, including Peak Signal-to-Noise Ratio (PSNR), Structural Similarity Index Measure (SSIM), and Learned Perceptual Image Patch Similarity (LPIPS). 
 
 \begin{itemize}
     \item \textbf{PSNR}: Measures the ratio of peak signal power to noise power in the image, expressed in decibels (dB). Higher values indicate lower distortion.
     \item \textbf{SSIM}: Evaluates perceptual similarity by comparing luminance, contrast, and structure between images. A higher SSIM score implies a closer match to the reference image.
-    \item \textbf{LPIPS}: Uses deep learning-based feature comparisons to assess perceptual similarity. Lower LPIPS scores indicate greater visual fidelity. By default, \texttt{Nerfstudio} uses AlexNet features for LPIPS computation.
+    \item \textbf{LPIPS}: Uses deep learning-based feature comparisons to assess perceptual similarity. Lower LPIPS scores indicate greater visual fidelity. AlexNet \cite{krizhevsky2012imagenet} is used as feature extractors for LPIPS.
 \end{itemize}
 
 Higher PSNR and SSIM scores, along with lower LPIPS scores, indicate superior reconstruction fidelity and scene representation accuracy.
 
-\subsection{3D Triangulation Evaluation}
+Novel View Synthesis is a convenient way to evaluate the quality of the reconstructed scene geometry, as it doesn't require any additional data or ground-truth information.
+Only the set of images used for reconstruction is needed, and the evaluation can be performed on any scene.
 
-To evaluate the quality of the reconstructed 3D points, we follow \cite{Knapitsch2017} and compute the distance between the estimated dense points cloud and the ground-truth points cloud provided by the datasets.
-This is done by aligning the estimated points cloud with the ground-truth points cloud. We again use COLMAP \textit{model aligner} to compute an inital aligment and then perform Iterative closest point (ICP) \cite{Besl1992} to refine the alignment.
+\subsubsection{Split Training and Evaluation Sets}\label{sec:split_sets}
 
-To compute the distance between the points clouds, we estimate the per-point distances in both directions: from the reconstructed point cloud to the ground-truth point cloud, and vice versa. 
-This bidirectional comparison captures both completeness and accuracy. For each point in one cloud, we compute the Euclidean distance to its nearest neighbor in the other cloud by building a K-d search tree.
+We first sort the images according to their acquisition order and assign every
+\emph{eighth} frame to the evaluation split, resulting in a deterministic $90\%$ training and $10\%$ evaluation split.
+Formally, let $\mathcal{I}=\{I_1,\dots,I_N\}$ be the set of frames that were successfully SfM-registered by a given pipeline together with their camera poses
+$\{\mathbf{T}_1,\dots,\mathbf{T}_N\}$. \\
+\\
+The training set $\mathcal{T}$ and evaluation set $\mathcal{E}$ are defined as:
+\begin{equation}
+  \mathcal{T} = \{I_k, \mathbf{T}_k\}_{k \in \mathcal{I}, k \mod 8 \neq 0}\,
+\end{equation}
+\begin{equation}
+  \mathcal{E} = \{I_k, \mathbf{T}_k\}_{k \in \mathcal{I}, k \mod 8 = 0}\,
+\end{equation}
+The training set $\mathcal{T}$ is used to train the Gaussian Splatting model, while the evaluation set $\mathcal{E}$ is used to evaluate the performance of the SfM pipeline.
 
-We report the precision and recall of the reconstructed points cloud with respect to the ground-truth points cloud under a threshold distance of $0.1$m.
+\paragraph{Handling missing registrations.}
+In practice, the four tested SfM pipelines do not register exactly the same subset of images.  
+A naïve stride-8 split would therefore evaluate each pipeline on a slightly different set of viewpoints, making the numerical comparison unfair.
+Indeed, if a methods does not register a smaller amount of images compare to other SfM methods, this would results in a smaller subset $\mathcal{E}$ and thus the mean PSNR, SSIM and LPIPS would be the results of fewer images evaluated.
 
-\begin{itemize}
-    \item \textbf{Precision}: This measures the accuracy of the reconstructed points. Specifically, it is the fraction of reconstructed points that lie within $0.1$m of any point in the ground-truth point cloud. 
-    A high precision indicates that most of the reconstructed points are close to the true surface.
-    \begin{equation}
-        \text{Precision} = \frac{\sum_{i=1}^{N} \mathbb{I}(d_i < 0.1)}{N}
-    \end{equation}
-    where $d_i$ is the distance from the $i$-th point in the reconstructed point cloud to its nearest neighbor in the ground-truth point cloud, and $N$ is the total number of reconstructed points.
+To guarantee that every algorithm is scored from identical viewpoints, we fill the gaps in $\mathcal{E}$: 
+if an image $I_k$ is missing for a particular pipeline, we use the RGB content of $I_k$ together with the pose of the closest registered frame,
+\begin{equation}
+  \mathbf{T}_{\operatorname*{arg\,min}_{j\in\mathcal{I}} |j-k| }\,
+\end{equation}
 
-    \item \textbf{Recall}: This measures the completeness of the reconstruction. It is the fraction of ground-truth points that are within $0.1$m of any point in the reconstructed point cloud.
-    A high recall indicates that most of the actual surface has been captured by the reconstruction.
-    \begin{equation}
-        \text{Recall} = \frac{\sum_{j=1}^{M} \mathbb{I}(d_j < 0.1)}{M}
-    \end{equation}
-    where $d_j$ is the distance from the $j$-th point in the ground-truth point cloud to its nearest neighbor in the reconstructed point cloud, and $M$ is the total number of ground-truth points.
-\end{itemize}
+Applying this rule implies that some ground truth images will be compared with reconstructed images from a different pose that is the closest. 
+Consequently, the resulting PSNR, SSIM, and LPIPS values will be affected by this heuristic.
 
+However, we discovered that this approach strikes a good balance between fairness and evaluation consistency. 
+It also serves as an effective way to penalize the absence of poses.
+
+Since this substitution is applied symmetrically to all pipelines, the visual content is shared, and the evaluation remains fair.
+
+\paragraph{No pose imputation during training.}
+For the Gaussian-Splatting optimisation itself we deliberately \emph{do not} impute the missing poses: inaccurate or duplicated camera parameters act as label noise and noticeably hinder convergence. 
+Consequently, each pipeline is trained on its own (possibly reduced) set $\mathcal{T}$, but all are evaluated on the common set $\mathcal{E}$. 
+Empirically, we found that this strategy offers the best trade-off between training stability and the comparability of the final metrics.
+
+% \subsection{3D Triangulation Evaluation}
+
+% To evaluate the quality of the reconstructed 3D points, we follow \cite{Knapitsch2017} and compute the distance between the estimated dense points cloud and the ground-truth points cloud provided by the datasets.
+% This is done by aligning the estimated points cloud with the ground-truth points cloud. We again use COLMAP \textit{model aligner} to compute an inital aligment and then perform Iterative closest point (ICP) \cite{Besl1992} to refine the alignment.
+
+% To compute the distance between the points clouds, we estimate the per-point distances in both directions: from the reconstructed point cloud to the ground-truth point cloud, and vice versa. 
+% This bidirectional comparison captures both completeness and accuracy. For each point in one cloud, we compute the Euclidean distance to its nearest neighbor in the other cloud by building a K-d search tree.
+
+% We report the precision and recall of the reconstructed points cloud with respect to the ground-truth points cloud under a threshold distance of $0.1$m.
+
+% \begin{itemize}
+%     \item \textbf{Precision}: This measures the accuracy of the reconstructed points. Specifically, it is the fraction of reconstructed points that lie within $0.1$m of any point in the ground-truth point cloud. 
+%     A high precision indicates that most of the reconstructed points are close to the true surface.
+%     \begin{equation}
+%         \text{Precision} = \frac{\sum_{i=1}^{N} \mathbb{I}(d_i < 0.1)}{N}
+%     \end{equation}
+%     where $d_i$ is the distance from the $i$-th point in the reconstructed point cloud to its nearest neighbor in the ground-truth point cloud, and $N$ is the total number of reconstructed points.
+
+%     \item \textbf{Recall}: This measures the completeness of the reconstruction. It is the fraction of ground-truth points that are within $0.1$m of any point in the reconstructed point cloud.
+%     A high recall indicates that most of the actual surface has been captured by the reconstruction.
+%     \begin{equation}
+%         \text{Recall} = \frac{\sum_{j=1}^{M} \mathbb{I}(d_j < 0.1)}{M}
+%     \end{equation}
+%     where $d_j$ is the distance from the $j$-th point in the ground-truth point cloud to its nearest neighbor in the reconstructed point cloud, and $M$ is the total number of ground-truth points.
+% \end{itemize}
+
+
+\subsection{Time and Memory Performance}
+In addition to reconstruction quality, we report the computational performance of the evaluated SfM algorithms in terms of both time and memory efficiency. 
+These aspects are particularly important when considering deployment in real-world applications, especially those requiring real-time processing or operating on large-scale datasets.
+
+Time performance is measured as the total processing time needed to reconstruct a scene from the input images, which includes camera pose estimation and sparse point cloud generation. 
+This metric reflects the overall computational efficiency of the algorithm.
+
+Memory performance is assessed by recording the peak GPU memory usage during reconstruction. Memory efficiency is a critical factor for scalability, as not all users have access to high-end GPUs with large memory capacities. 
+Such GPUs are not only expensive, but also increasingly difficult to obtain due to sustained high demand over the past few years in both academic and industrial settings. 
+Efficient memory usage therefore enables broader accessibility and allows SfM algorithms to run on more modest hardware, facilitating adoption in resource-constrained environments.
 
 
 \section{Dataset Selection}\label{sec:dataset-selection}
 
-TODO: 
+In this section, we provide an overview of the datasets used for evaluation and the rationale behind their selection.
+The chosen datasets span a diverse range of scenarios, including both indoor and outdoor environments, varying lighting conditions, and different types of scene geometry and motion trajectories.
+Some datasets feature long-range trajectories across large environments (e.g., urban or campus-scale), while others involve constrained camera motion around a central object or scene.
 
-Explain each dataset used for evaluation, including the number of images, available ground-truth data, 
-if the dataset has outdoor/indoors scenes, lighting conditions, if it is about a large scene with a long trajectory or if it turns around an main subject
-ETH3D and LaMAR has a long trajectory that goes around a bulding wheras Tanks and Temple and MiPNeRF360 turns around a main subject.
-
-AceZero has limitation, it can't handle dataset with different camera intrinsics. This is why we are not using dataset like IMC.
-
+It is important to note that AceZero assumes consistent camera intrinsics across all images, which limits its applicability to datasets where intrinsics vary between frames.
+Therefore, we excluded datasets such as IMC \cite{Jin2020}, which include multiple devices or cameras with different intrinsic parameters.
 
 \subsection{ETH3D Stereo}
-
+The ETH3D Stereo dataset \cite{schoeps2017cvpr} is a widely used benchmark for evaluating Structure-from-Motion (SfM) and stereo reconstruction algorithms. 
+We selected 12 scenes from the high-resolution subset, which includes both indoor and outdoor environments. 
+The camera captures images of either a large scene while retraining a relatively small number of images (e.g., 10 to 70 images).
+All images within a scene are captured using the same DSLR camera and lens, ensuring consistent camera intrinsics throughout. 
+The dataset provide ground-truth camera poses, but it does include high-quality 3D scan models of the scenes, which can be used for evaluating the accuracy of the reconstructed 3D points.
 
 \subsection{LaMAR}
+The LaMAR dataset \cite{sarlin2022lamar} is a large-scale benchmark designed for evaluating localization and mapping algorithms in augmented reality scenarios.
+It includes a wide range of challenging environments with both indoor and outdoor scenes, complex geometry, and varied lighting conditions.
+We use three large-scale scenes, each divided into multiple sessions. Each session contains a sequence of images captured with the same iOS device, ensuring consistent intrinsics.
+While LaMAR also includes data from the Microsoft HoloLens, we only use the iOS device images to comply with the single-intrinsic constraint of AceZero. 
 
+Similarity to ETH3D, the LaMAR dataset captures long-range trajectories, where the camera moves around a large scene, such as a building or a campus. 
+However, it provide much more images, allowing to both highlights the performance of the SfM algorithm and their scalability.
+The dataset provides high-quality ground-truth camera poses, making it suitable for evaluating camera pose estimation and robustness in real-world, dynamic environments.
 
 \subsection{MiPNeRF360}
+The MiPNeRF360 dataset \cite{barron2022mipnerf360} is designed for evaluating neural radiance field (NeRF) models in unbounded, 360-degree scenes.
+It consists of several scenes where the camera orbits around a central object or region of interest, capturing a dense set of images from multiple viewpoints.
+All scenes are captured under controlled lighting with consistent camera intrinsics, making it compatible with AceZero. 
+This dataset is especially valuable for testing systems on closed-loop trajectories with complex object geometry and view-dependent effects.
+Ground-truth camera poses are provided, enabling detailed evaluation of pose accuracy and consistency.
 
-
-\subsection{Tanks and Temple}
+\subsection{Tanks and Temples}
+The Tanks and Temples dataset \cite{Knapitsch2017} is a standard benchmark for evaluating multi-view stereo and 3D reconstruction techniques.
+It consists of high-resolution image sequences of complex scenes such as statues, monuments, and architectural structures. 
+Each sequence captures the camera rotating around a central subject, with sufficient overlap and varying viewpoints.
+Scenes are recorded under natural outdoor lighting, introducing realistic challenges such as shadows and specularities.
+All images within a scene share the same camera intrinsics, and accurate ground-truth 3D reconstructions are available, allowing both qualitative and quantitative assessments of SfM pipelines.

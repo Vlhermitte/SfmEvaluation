@@ -1,113 +1,147 @@
 \chapter{Experiments}\label{chap:experiments}
 
-TODO : 
-Explain the experiments setup i.e language, libraries, which datasets used for which metrics. 
-
-Explain stuff like if there is a unregistered camera, how to handle it e.g. we apply a high penalty in the camera pose error
-
-AceZero provide a confidence score for each camera pose, if it is bellow 1000, we consider the camera as unreliable.
-Unreliable camera poses can have a big effect on nerf for novel view synthesis.
-ACEZERO seems to perform well when the trajectory is a turns around a subject such as MipNeRF360.
-ACEZERO time complexity depends on the number of images and the spatial distribution of cameras. Worst case is $O(n^2)$ where n is the number of images. best case is $\Omega(n)$ when the cameras are well distributed in space.
-
-FlowMap does not scale very well with the number of images. The video memory usage increases linearly with the number of images.
-FlowMap also assume to run on video sequences with small jumps between frames because it needs to compute optical flow.
-Indeed, the current implementation of FlowMap uses full batch processing. A possible improvement would be using mini-batches to help reduce the memory usage.
-Impossible to run LaMAR dataset on FlowMap as each sessions is a few hundreds of images.
-FlowMap paper used a 40GB GPU to run their experiments. We run MIPNerf360 on a 32GB GPU. Thus, we run at images2 an $+experiment=low_memory$ to reduce the memory usage. Note that this can lower the results.
-
-
-Unfortunately, reducing image size for vggsfm doesn't appear to have a real impact on the memory usage. Scene Bonsai and room trigger a Out Of Memory error
-
-
-Also, explain the results of the experiments.
+In this section, we present the experimental setup and results of our evaluation of the different methods for 3D reconstruction and novel view synthesis. 
+We compare the performance of VGGSfM, GLOMAP, AceZero, and FlowMap on selected datasets, including ETH3D, LaMAR, MipNeRF360, and Tanks and Temples.
 
 \section{Experimental Setup}\label{sec:experimental-setup}
-TODO
+\subsection{Hardware}
+All methods were evaluated HPC server, equiped with NVIDIA Tesla V100 GPUs (32 GB). Only a single V100 was used to ensure a level playing field as VGGSfM and AceZero simply don't offer multi-GPU support.
+GLOMAP, which mirrors COLMAP's GPU-accelerated feature extractor and matcher, but its core mapping (bundle adjustment, graph construction, etc.) remains CPU-only in the current codebase. 
+For that stage we provisioned 32 CPU threads on an Intel Xeon Scalable Gold 6150; in practice, however, CPU-core count has negligible impact on the other pipelines, since they execute end-to-end on the GPU.
+
+\subsection{Software}
+We made sure that all methods would produce the results in a COLMAP-compatible format (\textit{images.bin, cameras.bin, points3D.bin}) to make it easier to handle the data and to compare the results.
+A Python-based pipeline was created and used pycolmap to handle the data throughout the process.
+
+\subsubsection{Gaussian Splatting parameters}
+The gaussian splatting was trained using 30 000 iterations and camera poses optimization enabled.
+
+\subsection{SfM methods parameters}
+\paragraph{VGGSfM}
+VGGSfM was run with camera type set to \textit{SIMPLE RADIAL} and the default image keypoints and descriptors extractor \textit{ALIKED} \cite{Zhao2023ALIKED}.
+
+We did however reduce the number of predicted tracks from 163.840 to 40.960, as well as the number of triangulated tracks from 819.200 to 204.800 
+in order to reduce the memory usage since VGGSfM is indended to run on a a larger GPU with higher memory.
+
+For this experiment, we use VGGSfM 2.0.
+
+\paragraph{GLOMAP}
+GLOMAP feature extractor was set to COLMAP's feature extractor \textit{RooTSIFT} \cite{arrandjelovic2012three} and feature matcher to COLMAP's \textit{Exhaustive Matcher} unless specified otherwise.
+The default \textit{SIMPLE RADIAL} camera model is used.
+
+For this experiment, we use GLOMAP 1.0.0.
+
+\paragraph{AceZero}
+AceZero was run with the default parameters, which include the use of \textit{SIMPLE PINHOLE} camera model. 
+This could represente a limitation for the method as it is not able to handle lens distortion.
+
+AceZero provides a useful confidence score. Following the authors' recommendation, if a pose has a confidence score lower than 1000, we consider the pose as unreliable and set it to an unregistered image.
+
+\paragraph{FlowMap}
+To run FlowMap, we used the provided pretrained model which was trained on CO3D \cite{reizenstein21co3d}, Real Estate 10K, and KITTI \cite{geiger2012kitti} datasets.
+This pre-training claims to achieve faster convergence and slightly improves the camera poses estimation.
+
+While the pre-training has been done using GMFlow \cite{xu2022gmflow} for optical flow, we used the default \textit{RAFT} \cite{teed2020raft} optical flow model for the evaluation.
+
+\paragraph{COLMAP}
+We compared the results of the different methods with the baseline COLMAP method.
+It was run with a \textit{SIMPLE RADIAL} camera model and the \textit{Exhaustive Matcher} feature matcher unless specified otherwise.
+
+The COLMAP version used for this experiment is 3.11.1.
+
+\subsection{Datasets}
+We evaluate the camera poses performance of the different methods on the datasets ETH3D and LaMAR, as they both provide ground truth camera poses.
+
+The novel view synthesis results are evaluated on the datasets ETH3D, MipNeRF360 and Tanks and Temples.
+
 
 \section{Experimental Results}\label{sec:experimental-results}
-TODO
 
 \newpage
-\subsection{NeRF Evaluation Results}\label{sec:nerf-evaluation-results}
+\subsection{Novel View Synthesis Results}\label{sec:gs-evaluation-results}
 
-The results have been generated by the Nerfstudio framework. 
-The trainning has been done over 30 000 iterations with images max dimensions of 1600 pixels (thos are nerfstudio default values).
-
-\subsubsection{ETH3D}\label{sec:nerf-evaluation-results-eth3d}
+\subsubsection{ETH3D}\label{sec:gs-evaluation-results-eth3d}
 Novel view synthesis results on ETH3D
 
-\input{tables/nerf_results_ETH3D.tex}
+\input{tables/gs_results_ETH3D.tex}
 
-\begin{figure}
-    \begin{minipage}[h]{0.23\textwidth}
-        \centering
-        \textbf{Ground Truth}
-        \includegraphics[width=\textwidth]{figures/nerf/relief.JPG}
-    \end{minipage}
-    \hspace{0.001\textwidth}
-    \begin{minipage}[h]{0.23\textwidth}
-        \centering
-        \textbf{VGGSfm}
-        \includegraphics[width=\textwidth]{figures/nerf/relief_vggsfm.png}
-    \end{minipage}
-    \hspace{0.001\textwidth}
-    \begin{minipage}[h]{0.23\textwidth}
-        \centering
-        \textbf{GLOMAP}
-        \includegraphics[width=\textwidth]{figures/nerf/relief_glomap.png}
-    \end{minipage}
-    \hspace{0.001\textwidth}
-    \begin{minipage}[h]{0.23\textwidth}
-        \centering
-        \textbf{FlowMap}
-        \includegraphics[width=\textwidth]{figures/nerf/relief_flowmap.png}
-    \end{minipage}
-    \caption{Qualitative comparison of novel view synthesis on the Relief scene from ETH3D dataset.}
-\end{figure}
+% \begin{figure}
+%     \begin{minipage}[h]{0.23\textwidth}
+%         \centering
+%         \textbf{Ground Truth}
+%         \includegraphics[width=\textwidth]{figures/nerf/relief.JPG}
+%     \end{minipage}
+%     \hspace{0.001\textwidth}
+%     \begin{minipage}[h]{0.23\textwidth}
+%         \centering
+%         \textbf{VGGSfm}
+%         \includegraphics[width=\textwidth]{figures/nerf/relief_vggsfm.png}
+%     \end{minipage}
+%     \hspace{0.001\textwidth}
+%     \begin{minipage}[h]{0.23\textwidth}
+%         \centering
+%         \textbf{GLOMAP}
+%         \includegraphics[width=\textwidth]{figures/nerf/relief_glomap.png}
+%     \end{minipage}
+%     \hspace{0.001\textwidth}
+%     \begin{minipage}[h]{0.23\textwidth}
+%         \centering
+%         \textbf{FlowMap}
+%         \includegraphics[width=\textwidth]{figures/nerf/relief_flowmap.png}
+%     \end{minipage}
+%     \caption{Qualitative comparison of novel view synthesis on the Relief scene from ETH3D dataset.}
+% \end{figure}
 
-Since each ETH3D scenes have a relatively small number of images, Nerfstudio evaluate the Novel view quality on a very small subset of images.
+Since each ETH3D scenes have a relatively small number of images, GSplat evaluate the Novel view quality on a very small subset of images.
 This means that the results might acctually not be representative of the overall quality of the scene.
 
-\subsubsection{MIPNeRF360}\label{sec:nerf-evaluation-results-mipnerf360}
+\subsubsection{MipNeRF360}\label{sec:gs-evaluation-results-mipnerf360}
 Novel view synthesis results on MipNeRF360
 
-\input{tables/nerf_results_MipNerf360.tex}
+\input{tables/gs_results_MipNerf360.tex}
 
 \begin{figure}
-    \begin{minipage}[h]{0.25\textwidth}
-        \centering
-        \textbf{Ground Truth}
-        \includegraphics[width=\textwidth]{figures/nerf/garden.JPG}
-    \end{minipage}
-    \hspace{0.01\textwidth}
-    \begin{minipage}[h]{0.25\textwidth}
-        \centering
-        \textbf{VGGSfm}
-        \includegraphics[width=\textwidth]{figures/nerf/garden_vggsfm.png}
-    \end{minipage}
-    \hspace{0.01\textwidth}
-    \begin{minipage}[h]{0.25\textwidth}
-        \centering
-        \textbf{GLOMAP}
-        \includegraphics[width=\textwidth]{figures/nerf/garden_glomap.png}
-    \end{minipage}
-    \hspace{0.01\textwidth}
-    \begin{minipage}[h]{0.25\textwidth}
-        \centering
-        \textbf{AceZero}
-        \includegraphics[width=\textwidth]{figures/nerf/garden_acezero.png}
-    \end{minipage}
-    \hspace{0.01\textwidth}
-    \begin{minipage}[h]{0.25\textwidth}
-        \centering
-        \textbf{FlowMap}
-        \includegraphics[width=\textwidth]{figures/nerf/garden_flowmap.png}
-    \end{minipage}
-    \caption{Qualitative comparison of novel view synthesis on the Garden scene from MipNeRF360 dataset.}
+    \centering
+    \includegraphics[width=1\textwidth]{figures/gs/kitchen_0000.png}
+    \caption{Qualitative comparison of novel view synthesis on the Kitchen scene from MipNeRF360 dataset.}
 \end{figure}
+
+
+
+% \begin{figure}
+%     \begin{minipage}[h]{0.25\textwidth}
+%         \centering
+%         \textbf{Ground Truth}
+%         \includegraphics[width=\textwidth]{figures/nerf/garden.JPG}
+%     \end{minipage}
+%     \hspace{0.01\textwidth}
+%     \begin{minipage}[h]{0.25\textwidth}
+%         \centering
+%         \textbf{VGGSfm}
+%         \includegraphics[width=\textwidth]{figures/nerf/garden_vggsfm.png}
+%     \end{minipage}
+%     \hspace{0.01\textwidth}
+%     \begin{minipage}[h]{0.25\textwidth}
+%         \centering
+%         \textbf{GLOMAP}
+%         \includegraphics[width=\textwidth]{figures/nerf/garden_glomap.png}
+%     \end{minipage}
+%     \hspace{0.01\textwidth}
+%     \begin{minipage}[h]{0.25\textwidth}
+%         \centering
+%         \textbf{AceZero}
+%         \includegraphics[width=\textwidth]{figures/nerf/garden_acezero.png}
+%     \end{minipage}
+%     \hspace{0.01\textwidth}
+%     \begin{minipage}[h]{0.25\textwidth}
+%         \centering
+%         \textbf{FlowMap}
+%         \includegraphics[width=\textwidth]{figures/nerf/garden_flowmap.png}
+%     \end{minipage}
+%     \caption{Qualitative comparison of novel view synthesis on the Garden scene from MipNeRF360 dataset.}
+% \end{figure}
 
 \subsubsection{Tanks and Temples}\label{sec:nerf-evaluation-results-tanks-and-temples}
 Novel view synthesis results on Tanks and Temples
 
-\input{tables/nerf_results_TanksAndTemples.tex}
+\input{tables/gs_results_TanksAndTemples.tex}

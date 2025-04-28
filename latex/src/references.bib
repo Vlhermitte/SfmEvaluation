@@ -33,6 +33,106 @@
     year={2024},
 }
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Evaluation Methods
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@article{Jin2020,
+    author={Yuhe Jin and Dmytro Mishkin and Anastasiia Mishchuk and Jiri Matas and Pascal Fua and Kwang Moo Yi and Eduard Trulls},
+    title={{Image Matching across Wide Baselines: From Paper to Practice}},
+    journal={International Journal of Computer Vision},
+    year={2020}
+} % For Camera Relative Pose Error
+
+@inproceedings{nerfstudio,
+	title        = {Nerfstudio: A Modular Framework for Neural Radiance Field Development},
+	author       = {
+		Tancik, Matthew and Weber, Ethan and Ng, Evonne and Li, Ruilong and Yi, Brent
+		and Kerr, Justin and Wang, Terrance and Kristoffersen, Alexander and Austin,
+		Jake and Salahi, Kamyar and Ahuja, Abhik and McAllister, David and Kanazawa,
+		Angjoo
+	},
+	year         = 2023,
+	booktitle    = {ACM SIGGRAPH 2023 Conference Proceedings},
+	series       = {SIGGRAPH '23}
+} % For Novel View Synthesis
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Datasets
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@inproceedings{schoeps2017cvpr,
+  author = {Thomas Sch\"ops and Johannes L. Sch\"onberger and Silvano Galliani and Torsten Sattler and Konrad Schindler and Marc Pollefeys and Andreas Geiger},
+  title = {A Multi-View Stereo Benchmark with High-Resolution Images and Multi-Camera Videos},
+  booktitle = {Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year = {2017}
+}
+
+@article{Knapitsch2017,
+    author    = {Arno Knapitsch and Jaesik Park and Qian-Yi Zhou and Vladlen Koltun},
+    title     = {Tanks and Temples: Benchmarking Large-Scale Scene Reconstruction},
+    journal   = {ACM Transactions on Graphics},
+    volume    = {36},
+    number    = {4},
+    year      = {2017},
+}
+
+@article{barron2022mipnerf360,
+    title={Mip-NeRF 360: Unbounded Anti-Aliased Neural Radiance Fields},
+    author={Jonathan T. Barron and Ben Mildenhall and 
+            Dor Verbin and Pratul P. Srinivasan and Peter Hedman},
+    journal={CVPR},
+    year={2022}
+}
+
+@inproceedings{reizenstein21co3d,
+	Author = {Reizenstein, Jeremy and Shapovalov, Roman and Henzler, Philipp and Sbordone, Luca and Labatut, Patrick and Novotny, David},
+	Booktitle = {International Conference on Computer Vision},
+	Title = {Common Objects in 3D: Large-Scale Learning and Evaluation of Real-life 3D Category Reconstruction},
+	Year = {2021},
+}
+
+@INPROCEEDINGS{geiger2012kitti,
+  author={Geiger, Andreas and Lenz, Philip and Urtasun, Raquel},
+  booktitle={2012 IEEE Conference on Computer Vision and Pattern Recognition}, 
+  title={Are we ready for autonomous driving? The KITTI vision benchmark suite}, 
+  year={2012},
+  volume={},
+  number={},
+  pages={3354-3361},
+  keywords={Benchmark testing;Cameras;Optical imaging;Visualization;Optical sensors;Measurement},
+  doi={10.1109/CVPR.2012.6248074}}
+
+
+@article{Jin_2020,
+   title={Image Matching Across Wide Baselines: From Paper to Practice},
+   volume={129},
+   ISSN={1573-1405},
+   url={http://dx.doi.org/10.1007/s11263-020-01385-0},
+   DOI={10.1007/s11263-020-01385-0},
+   number={2},
+   journal={International Journal of Computer Vision},
+   publisher={Springer Science and Business Media LLC},
+   author={Jin, Yuhe and Mishkin, Dmytro and Mishchuk, Anastasiia and Matas, Jiri and Fua, Pascal and Yi, Kwang Moo and Trulls, Eduard},
+   year={2020},
+   month=oct, pages={517–547} 
+}
+
+@InProceedings{sarlin2022lamar,
+  author    = {Paul-Edouard Sarlin and
+               Mihai Dusmanu and
+               Johannes L. Sch\"onberger and
+               Pablo Speciale and
+               Lukas Gruber and
+               Viktor Larsson and
+               Ondrej Miksik and
+               Marc Pollefeys},
+  title     = "{LaMAR: Benchmarking Localization and Mapping for Augmented Reality}",
+  booktitle = "ECCV",
+  year      = "2022",
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Various papers
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 @inproceedings{Chatterjee2013,
   author={Chatterjee, Avishek and Govindu, Venu Madhav},
   booktitle={2013 IEEE International Conference on Computer Vision}, 
@@ -127,6 +227,13 @@ numpages = {15},
 keywords = {automated cartography, camera calibration, image matching, location determination, model fitting, scene analysis}
 }
 
+@inproceedings{brachmann2023ace,
+    title={Accelerated Coordinate Encoding: Learning to Relocalize in Minutes using RGB and Poses},
+    author={Brachmann, Eric and Cavallari, Tommaso and Prisacariu, Victor Adrian},
+    booktitle={CVPR},
+    year={2023},
+}
+
 @inproceedings{muja2009fast,
 author = {Muja, Marius and Lowe, David},
 year = {2009},
@@ -154,6 +261,16 @@ journal = {VISAPP 2009 - Proceedings of the 4th International Conference on Comp
   timestamp    = {Tue, 24 Mar 2020 16:42:29 +0100},
   biburl       = {https://dblp.org/rec/journals/corr/abs-2003-08934.bib},
   bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@misc{kerbl20233dgaussiansplattingrealtime,
+      title={3D Gaussian Splatting for Real-Time Radiance Field Rendering}, 
+      author={Bernhard Kerbl and Georgios Kopanas and Thomas Leimkühler and George Drettakis},
+      year={2023},
+      eprint={2308.04079},
+      archivePrefix={arXiv},
+      primaryClass={cs.GR},
+      url={https://arxiv.org/abs/2308.04079}, 
 }
 
 
@@ -216,69 +333,49 @@ url={https://openreview.net/forum?id=fvm9jVcpBn}
   note         = {Accessed: 2025-04-05},
 }
 
-
-% Evaluation methods
-@article{Jin2020,
-    author={Yuhe Jin and Dmytro Mishkin and Anastasiia Mishchuk and Jiri Matas and Pascal Fua and Kwang Moo Yi and Eduard Trulls},
-    title={{Image Matching across Wide Baselines: From Paper to Practice}},
-    journal={International Journal of Computer Vision},
-    year={2020}
-} % For Camera Relative Pose Error
-
-@inproceedings{nerfstudio,
-	title        = {Nerfstudio: A Modular Framework for Neural Radiance Field Development},
-	author       = {
-		Tancik, Matthew and Weber, Ethan and Ng, Evonne and Li, Ruilong and Yi, Brent
-		and Kerr, Justin and Wang, Terrance and Kristoffersen, Alexander and Austin,
-		Jake and Salahi, Kamyar and Ahuja, Abhik and McAllister, David and Kanazawa,
-		Angjoo
-	},
-	year         = 2023,
-	booktitle    = {ACM SIGGRAPH 2023 Conference Proceedings},
-	series       = {SIGGRAPH '23}
-} % For Novel View Synthesis
-
-% Datasets
-@inproceedings{schoeps2017cvpr,
-  author = {Thomas Sch\"ops and Johannes L. Sch\"onberger and Silvano Galliani and Torsten Sattler and Konrad Schindler and Marc Pollefeys and Andreas Geiger},
-  title = {A Multi-View Stereo Benchmark with High-Resolution Images and Multi-Camera Videos},
-  booktitle = {Conference on Computer Vision and Pattern Recognition (CVPR)},
-  year = {2017}
+@article{ye2024gsplatopensourcelibrarygaussian,
+    title={gsplat: An Open-Source Library for {Gaussian} Splatting}, 
+    author={Vickie Ye and Ruilong Li and Justin Kerr and Matias Turkulainen and Brent Yi and Zhuoyang Pan and Otto Seiskari and Jianbo Ye and Jeffrey Hu and Matthew Tancik and Angjoo Kanazawa},
+    year={2024},
+    eprint={2409.06765},
+    journal={arXiv preprint arXiv:2409.06765},
+    archivePrefix={arXiv},
+    primaryClass={cs.CV},
+    url={https://arxiv.org/abs/2409.06765}, 
 }
 
-@article{Knapitsch2017,
-    author    = {Arno Knapitsch and Jaesik Park and Qian-Yi Zhou and Vladlen Koltun},
-    title     = {Tanks and Temples: Benchmarking Large-Scale Scene Reconstruction},
-    journal   = {ACM Transactions on Graphics},
-    volume    = {36},
-    number    = {4},
-    year      = {2017},
+@inproceedings{krizhevsky2012imagenet,
+    author = {Krizhevsky, Alex and Sutskever, Ilya and Hinton, Geoffrey E},
+    booktitle = {Advances in Neural Information Processing Systems},
+    editor = {F. Pereira and C.J. Burges and L. Bottou and K.Q. Weinberger},
+    pages = {},
+    publisher = {Curran Associates, Inc.},
+    title = {ImageNet Classification with Deep Convolutional Neural Networks},
+    url = {https://proceedings.neurips.cc/paper_files/paper/2012/file/c399862d3b9d6b76c8436e924a68c45b-Paper.pdf},
+    volume = {25},
+    year = {2012}
 }
 
-@article{barron2022mipnerf360,
-    title={Mip-NeRF 360: Unbounded Anti-Aliased Neural Radiance Fields},
-    author={Jonathan T. Barron and Ben Mildenhall and 
-            Dor Verbin and Pratul P. Srinivasan and Peter Hedman},
-    journal={CVPR},
-    year={2022}
+@inproceedings{xu2022gmflow,
+  title={GMFlow: Learning Optical Flow via Global Matching},
+  author={Xu, Haofei and Zhang, Jing and Cai, Jianfei and Rezatofighi, Hamid and Tao, Dacheng},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={8121-8130},
+  year={2022}
 }
 
-@inproceedings{reizenstein21co3d,
-	Author = {Reizenstein, Jeremy and Shapovalov, Roman and Henzler, Philipp and Sbordone, Luca and Labatut, Patrick and Novotny, David},
-	Booktitle = {International Conference on Computer Vision},
-	Title = {Common Objects in 3D: Large-Scale Learning and Evaluation of Real-life 3D Category Reconstruction},
-	Year = {2021},
+@article{teed2020raft,
+  author       = {Zachary Teed and
+                  Jia Deng},
+  title        = {{RAFT:} Recurrent All-Pairs Field Transforms for Optical Flow},
+  journal      = {CoRR},
+  volume       = {abs/2003.12039},
+  year         = {2020},
+  url          = {https://arxiv.org/abs/2003.12039},
+  eprinttype    = {arXiv},
+  eprint       = {2003.12039},
+  timestamp    = {Mon, 01 Feb 2021 18:33:24 +0100},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-2003-12039.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
-@article{Jin_2020,
-   title={Image Matching Across Wide Baselines: From Paper to Practice},
-   volume={129},
-   ISSN={1573-1405},
-   url={http://dx.doi.org/10.1007/s11263-020-01385-0},
-   DOI={10.1007/s11263-020-01385-0},
-   number={2},
-   journal={International Journal of Computer Vision},
-   publisher={Springer Science and Business Media LLC},
-   author={Jin, Yuhe and Mishkin, Dmytro and Mishchuk, Anastasiia and Matas, Jiri and Fua, Pascal and Yi, Kwang Moo and Trulls, Eduard},
-   year={2020},
-   month=oct, pages={517–547} }

@@ -1,3 +1,15 @@
 \chapter{Discussion}\label{chap:discussion}
 
-TODO
+% Explain stuff like if there is a unregistered camera, how to handle it e.g. we apply a high penalty in the camera pose error
+
+% AceZero provide a confidence score for each camera pose, if it is bellow 1000, we consider the camera as unreliable.
+% ACEZERO seems to perform well when the trajectory is a turns around a subject such as MipNeRF360.
+% ACEZERO time complexity depends on the number of images and the spatial distribution of cameras. Worst case is $O(n^2)$ where n is the number of images. best case is $\Omega(n)$ when the cameras are well distributed in space.
+
+% FlowMap does not scale very well with the number of images. The video memory usage increases linearly with the number of images.
+% FlowMap also assume to run on video sequences with small jumps between frames because it needs to compute optical flow.
+% Indeed, the current implementation of FlowMap uses full batch processing. A possible improvement would be using mini-batches to help reduce the memory usage.
+% Impossible to run LaMAR dataset on FlowMap as each sessions is a few hundreds of images.
+% FlowMap paper used a 40GB GPU to run their experiments. We run MIPNerf360 on a 32GB GPU. Thus, we run at images2 an $+experiment=low_memory$ to reduce the memory usage. Note that this can lower the results.
+
+% Unfortunately, reducing image size for vggsfm doesn't appear to have a real impact on the memory usage.

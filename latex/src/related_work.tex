@@ -183,7 +183,7 @@ AceZero \cite{brachmann2024acezero} introduces an innovative approach to Structu
 This method diverges from conventional feature-matching SfM frameworks by employing scene coordinate regression, enabling the construction of implicit neural scene representations directly from unposed image collections without relying on local feature matching.
 
 \paragraph{Scene Coordinate Regression}
-At the core of AceZero is a scene coordinate regression method, a learning-based technique that regresses the coordinates of 3D scene points directly from 2D image locations. 
+At the core of AceZero is a scene coordinate regression method \cite{brachmann2023ace}, a learning-based technique that regresses the coordinates of 3D scene points directly from 2D image locations. 
 This bypasses the need for traditional feature extraction and matching, significantly streamlining the process and potentially reducing error propagation associated with matching failures. Unlike other neural reconstruction approaches, AceZero does not require camera pose priors or sequentially ordered inputs, enhancing flexibility and applicability.
 
 \paragraph{Incremental Learning of Visual Relocalizer}
@@ -196,56 +196,151 @@ AceZero demonstrates competitive pose accuracy compared to classical feature-bas
 One significant advantage is its ability to implicitly represent scenes using neural networks, potentially capturing complex scene structures better than discrete point clouds.
 
 However, as a learning-based approach, AceZero is reliant on sufficient training data to generalize well across various scenes and environments. 
-The method's performance might degrade in scenarios with insufficient data coverage or highly repetitive visual textures. Furthermore, the computational complexity associated with neural training and inference could present scalability challenges, particularly in real-time or near-real-time applications.
+The method's performance might degrade in scenarios with insufficient data coverage or highly repetitive visual textures. 
+Furthermore, the scene coordinate regressor struggles with large-scale scenes, as well as big lighting changes such as day-night transitions.
+AceZero also consider the has shared camera intrinsics across all images, which may not be suitable for all datasets.
 
-In summary, AceZero presents an exciting direction for neural-based SfM, promising improved robustness and implicit scene understanding capabilities, though practical considerations around training complexity and scalability must be carefully managed.
+In summary, AceZero presents an exciting direction for neural-based SfM, promising improved robustness and implicit scene understanding capabilities, though it may face challenges in generalization and scalability compared to traditional methods.
 
-\section{Neural Radiance Fields (NeRF) for Novel View Synthesis}
+% \section{Neural Radiance Fields (NeRF) for Novel View Synthesis}
 
-Neural Radiance Fields (NeRF) \cite{mildenhall2020nerf} is a groundbreaking method for representing and rendering complex 3D scenes in a continuous and highly detailed manner. 
-Originally proposed by Mildenhall et al., NeRF leverages neural networks to generate novel views from a sparse set of input images.
+% Neural Radiance Fields (NeRF) \cite{mildenhall2020nerf} is a groundbreaking method for representing and rendering complex 3D scenes in a continuous and highly detailed manner. 
+% Originally proposed by Mildenhall et al., NeRF leverages neural networks to generate novel views from a sparse set of input images.
 
-\subsection{Implicit Scene Representation}
-Unlike traditional volumetric representations that discretize a scene into voxels, NeRF models a scene as a continuous function. 
-This function is implemented as a fully connected neural network that maps a 5D input, comprising a 3D spatial coordinate $(x,y,z)$ and a 2D viewing direction $(\theta,\phi)$, to an output consisting of an RGB color vector and a scalar density value. 
-To capture fine-grained details and high-frequency variations, the input coordinates are passed through a positional encoding function that transforms them into a higher-dimensional space.
+% \subsection{Implicit Scene Representation}
+% Unlike traditional volumetric representations that discretize a scene into voxels, NeRF models a scene as a continuous function. 
+% This function is implemented as a fully connected neural network that maps a 5D input, comprising a 3D spatial coordinate $(x,y,z)$ and a 2D viewing direction $(\theta,\phi)$, to an output consisting of an RGB color vector and a scalar density value. 
+% To capture fine-grained details and high-frequency variations, the input coordinates are passed through a positional encoding function that transforms them into a higher-dimensional space.
+
+% \subsection{Volumetric Rendering and Ray Marching}
+% \paragraph{Ray Casting and Sampling:} For generating a novel view, a ray is cast from the camera's origin for each pixel. 
+% Multiple sample points are taken along the ray, and the network is queried at each point to obtain corresponding density and color values.  
+% \paragraph{Volume Rendering Integration:} The final pixel color is computed by integrating these samples using volumetric rendering principles. 
+% Each sample's contribution is weighted based on its density and position along the ray, in a manner similar to alpha compositing, where closer, more opaque samples influence the final rendered color more strongly.
+
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{figures/related_work/nerf_pipeline.png}
+%     \caption{NeRF Ray Sampling and Model Querying \cite{mildenhall2020nerf}.}
+%     \label{fig:nerf_pipeline}
+% \end{figure}
+
+% \subsection{Learning and Optimization Process}
+% \paragraph{Training Objective:} During training, the network's parameters are optimized by minimizing a photometric reconstruction loss (often the mean squared error) between the rendered images and the ground truth images.  
+% \paragraph{Differentiable Rendering:} The volumetric rendering process is fully differentiable, which allows gradients to flow through the entire pipeline. This enables the joint optimization of both scene geometry (via density) and appearance (via RGB color) within a unified framework.
+
+% \subsection{Novel View Synthesis}
+% Once the network is trained, NeRF can render the scene from arbitrary viewpoints, even ones not present in the training data. By varying the camera parameters (position and orientation) and applying the same ray marching and integration process, the network synthesizes photorealistic images. 
+% Moreover, the inclusion of the viewing direction helps capture view-dependent effects such as specular highlights and reflections.
+
+% \subsection{Advantages and Limitations}
+% \paragraph{Advantages:}
+% \begin{itemize}
+%     \item \textbf{High-Fidelity Rendering:} Produces photorealistic images with rich details.
+%     \item \textbf{Implicit Representation:} Avoids explicit geometry representations like voxels or meshes, enabling the capture of complex scene structures.
+%     \item \textbf{Differentiability:} Allows for joint optimization of geometry and appearance via end-to-end differentiable rendering.
+% \end{itemize}
+% \paragraph{Limitations:}
+% \begin{itemize}
+%     \item \textbf{Computational Complexity:} The training and rendering processes are computationally intensive.
+%     \item \textbf{Scene Specificity:} Standard NeRF models are trained per-scene and do not readily generalize to new scenes without retraining.
+% \end{itemize}
+
+% \subsection{Relation to Structure-from-Motion (SfM) Techniques}
+% SfM methods such as GLOMAP, VGGSfM, FlowMap, and Ace Zero primarily focus on reconstructing sparse or dense 3D point clouds and accurately estimating camera poses from image correspondences. 
+% In contrast, NeRF shifts the emphasis towards high-quality photorealistic rendering by learning a continuous implicit representation of both geometry and appearance. 
+% This approach provides additional benefits like capturing view-dependent effects, albeit at the cost of higher computational demands.
+% Since NeRF's need images as well as camera poses, it can be used in conjunction with SfM methods to provide a complete pipeline for 3D reconstruction and rendering.
+
+
+\section{Gaussian Splatting for Novel View Synthesis}
+
+Gaussian Splatting \cite{kerbl20233dgaussiansplattingrealtime} is a recently introduced technique for rendering 3D scenes in real time by representing them with a set of continuous Gaussian functions.
+Much like NeRF \cite{mildenhall2020nerf}, it can generate novel views from sparse images, but it departs from NeRF's dense sampling strategy and instead relies on a compact set of Gaussian “splats” to capture scene geometry and appearance.
+
+\subsection{Scene Representation}
+Instead of relying on dense voxel grids or explicit meshes, Gaussian Splatting represents a 3D scene as a collection of Gaussian functions. 
+Each Gaussian splat is defined by its mean, which specifies the 3D center; its covariance, a $3 \times 3$ matrix that encodes the shape, scale, and orientation (often in an anisotropic manner); its associated RGB color; and a weight that modulates its contribution in the scene. 
+This representation creates a continuous model of the scene where neighboring Gaussians naturally blend, leading to smooth visual transitions.
+
+Formally, each Gaussian $g_i(\mathbf{x})$ is expressed as
+\begin{equation}
+    g_i(\mathbf{x}) = \sigma(\alpha_i) \exp\left(-\frac{1}{2} \bigl(\mathbf{x} - \boldsymbol{\mu}_i\bigr)^\top \Sigma_i^{-1} \bigl(\mathbf{x} - \boldsymbol{\mu}_i\bigr)\right),
+\end{equation}
+
+where $\boldsymbol{\mu}_i$ is the 3D center, $\Sigma_i$ is the covariance matrix, and $\sigma(\alpha_i)$ is a sigmoid function that modulates the Gaussian's opacity based on its weight $\alpha_i$.
 
 \subsection{Volumetric Rendering and Ray Marching}
-\paragraph{Ray Casting and Sampling:} For generating a novel view, a ray is cast from the camera's origin for each pixel. 
-Multiple sample points are taken along the ray, and the network is queried at each point to obtain corresponding density and color values.  
-\paragraph{Volume Rendering Integration:} The final pixel color is computed by integrating these samples using volumetric rendering principles. 
-Each sample's contribution is weighted based on its density and position along the ray, in a manner similar to alpha compositing, where closer, more opaque samples influence the final rendered color more strongly.
+\paragraph{Ray Casting and Sampling:}
+To render a novel view, Gaussian Splatting conceptually follows a ray-casting procedure akin to NeRF.
+A ray is cast from each pixel, intersecting the cloud of Gaussians in 3D.
+However, instead of sampling many points along the ray, the algorithm computes the projected contribution of each Gaussian onto the ray.
+In practice, these Gaussians project to ellipses in the image, often referred to as “splats.”
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/related_work/nerf_pipeline.png}
-    \caption{NeRF Ray Sampling and Model Querying \cite{mildenhall2020nerf}.}
-    \label{fig:nerf_pipeline}
-\end{figure}
+\paragraph{Volume Rendering Integration:}
+Like traditional volumetric rendering, the final color of each pixel is obtained by integrating the contributions of the Gaussians encountered along that ray.
+Closer, high-density Gaussians have a stronger influence on the pixel color, while distant or low-density Gaussians are more transparent.
+This process can be viewed as a weighted alpha-compositing step:
+
+% \begin{equation}
+%     \text{Color}(\mathbf{r}) = \sum_{i} T_{i-1} \,\alpha_i \,g_i(\mathbf{r}),
+% \end{equation}
+
+\begin{equation}
+    \text{Color}(\mathbf{r}) = \sum_{i} \prod_{j=1}^{i-1}(1 - \alpha_j) \,\alpha_i \,g_i(\mathbf{r}),
+\end{equation}
+
+where $\alpha_i$ is the opacity $i$-th Gaussian, and $T_{i-1}$ is the accumulated transmittance up to Gaussian $i-1$.
+
+Because each Gaussian has a continuous extent (defined by its covariance), the representation is smooth and captures fine scene details without requiring dense point sampling.
 
 \subsection{Learning and Optimization Process}
-\paragraph{Training Objective:} During training, the network's parameters are optimized by minimizing a photometric reconstruction loss (often the mean squared error) between the rendered images and the ground truth images.  
-\paragraph{Differentiable Rendering:} The volumetric rendering process is fully differentiable, which allows gradients to flow through the entire pipeline. This enables the joint optimization of both scene geometry (via density) and appearance (via RGB color) within a unified framework.
+\paragraph{Training Objective:}
+During training, a photometric loss between rendered images and ground truth images drives the optimization of each Gaussian's parameters (mean, covariance, color, and weight).
+Typically, a mean squared error or a combination of L1 and SSIM loss is used to measure the difference between the rendered and target images.
+The optimization process adjusts the Gaussian parameters to minimize this loss, effectively learning the scene representation.
+
+\paragraph{Differentiable Rendering:}
+Crucially, the Gaussian Splatting formulation is fully differentiable.
+By computing analytic derivatives of each Gaussian's projection and integration, gradients can flow back through the splatting process.
+This means the positions, shapes, and colors of the Gaussians are refined in an end-to-end manner, allowing the model to converge toward an accurate and compact representation of the scene.
 
 \subsection{Novel View Synthesis}
-Once the network is trained, NeRF can render the scene from arbitrary viewpoints, even ones not present in the training data. By varying the camera parameters (position and orientation) and applying the same ray marching and integration process, the network synthesizes photorealistic images. 
-Moreover, the inclusion of the viewing direction helps capture view-dependent effects such as specular highlights and reflections.
+Once trained, the collection of Gaussians can be used to render the scene from any new viewpoint by projecting them onto the new camera plane and compositing their contributions.
+Despite the absence of a dense voxel or mesh structure, Gaussian Splatting achieves high-quality visual fidelity while often being more computationally efficient than sampling thousands of points along each ray (as done in many NeRF-style methods).
+It also naturally handles partially transparent or semi-opaque regions because each Gaussian's opacity contributes smoothly during splatting.
 
 \subsection{Advantages and Limitations}
 \paragraph{Advantages:}
 \begin{itemize}
-    \item \textbf{High-Fidelity Rendering:} Produces photorealistic images with rich details.
-    \item \textbf{Implicit Representation:} Avoids explicit geometry representations like voxels or meshes, enabling the capture of complex scene structures.
-    \item \textbf{Differentiability:} Allows for joint optimization of geometry and appearance via end-to-end differentiable rendering.
+    \item \textbf{Efficiency:} Fewer samples per ray are needed compair to NeRFs because each Gaussian describes a continuous region in space.
+    \item \textbf{Smooth Blending:} Overlapping Gaussians create soft transitions, reducing aliasing and flickering in rendered views.
+    \item \textbf{Differentiable Splatting:} The rendering process is end-to-end trainable, enabling data-driven optimization.
+    \item \textbf{Real-Time Potential:} With the right GPU-based implementations, Gaussian Splatting can achieve near-real-time rendering performance.
 \end{itemize}
+
 \paragraph{Limitations:}
 \begin{itemize}
-    \item \textbf{Computational Complexity:} The training and rendering processes are computationally intensive.
-    \item \textbf{Scene Specificity:} Standard NeRF models are trained per-scene and do not readily generalize to new scenes without retraining.
+    \item \textbf{Sensitivity to Initialization:} Selecting initial Gaussian parameters can be challenging; poor initialization may lead to suboptimal solutions.
+    \item \textbf{Complex Scenes:} Highly detailed or large-scale scenes may require many Gaussians, increasing both memory usage and render time.
+    \item \textbf{Dependence on Pose Accuracy:} As with NeRF, reliable camera poses (or a reliable pose optimization stage) are essential for achieving high-quality results.
 \end{itemize}
 
 \subsection{Relation to Structure-from-Motion (SfM) Techniques}
-SfM methods such as GLOMAP, VGGSfM, FlowMap, and Ace Zero primarily focus on reconstructing sparse or dense 3D point clouds and accurately estimating camera poses from image correspondences. 
-In contrast, NeRF shifts the emphasis towards high-quality photorealistic rendering by learning a continuous implicit representation of both geometry and appearance. 
-This approach provides additional benefits like capturing view-dependent effects, albeit at the cost of higher computational demands.
-Since NeRF's need images as well as camera poses, it can be used in conjunction with SfM methods to provide a complete pipeline for 3D reconstruction and rendering.
+Like NeRF, Gaussian Splatting requires knowledge of camera intrinsics and extrinsics to project Gaussians correctly onto the image plane.
+SfM pipelines such as GLOMAP, VGGSfM, FlowMap, and Ace Zero can provide these camera poses from unstructured image sets or video.
+Once the poses are available, Gaussian Splatting can be trained or refined using the resulting images.
+This synergy allows for:
+\begin{itemize}
+\item \textbf{Accurate Geometry Initialization:} SfM's 3D points or camera parameters help position Gaussians in the correct locations.
+\item \textbf{Improved Novel View Synthesis:} The continuous Gaussian representation can fill in details and handle transparent or semi-transparent regions better than sparse point-based methods alone.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{figures/related_work/gs_splat_pipeline.png}
+    \caption{Gaussian Splatting pipeline overview \cite{kerbl20233dgaussiansplattingrealtime}.}
+    \label{fig:gaussian_splatting}
+\end{figure}
+
+Overall, Gaussian Splatting offers an efficient and differentiable avenue for novel view synthesis, complementing existing SfM reconstructions by generating high-fidelity renders at interactive speeds.
