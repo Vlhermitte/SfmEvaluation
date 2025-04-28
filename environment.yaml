@@ -17,4 +17,4 @@ dependencies:
   - pip:
       - pycolmap==3.10
       - opencv-python
-      - gsplat
+      - gsplat==1.5.1
