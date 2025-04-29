@@ -99,4 +99,6 @@ run_pipeline() {
 
 }
 
+log "Starting gsplat pipeline script"
 run_pipeline
+log "Pipeline completed successfully"
