@@ -64,17 +64,21 @@ fi
 run_pipeline() {
   conda activate gsplat || { log "ERROR: Failed to activate conda environment"; exit 1; }
 
-  LOG_FILE="$(dirname ${COLMAP_PATH})/gsplat.log"
+  local colmap_path=$1
+  local images_path=$2
+  local results_path=$3
+
+  LOG_FILE="$(dirname ${colmap_path})/gsplat.log"
   rm "$LOG_FILE"
   mkdir -p "$(dirname "$LOG_FILE")"
   touch "$LOG_FILE"
 
-  log "Running gsplat pipeline for ${COLMAP_PATH} and ${IMAGES_PATH}"
+  log "Running gsplat pipeline for ${colmap_path} and ${images_path}"
   # Base arguments for the python script
   cmd_args=(
       "src/run_gsplat.py"
-      "--dataset-path" "$COLMAP_PATH"
-      "--images-path" "$IMAGES_PATH"
+      "--dataset-path" "$colmap_path"
+      "--images-path" "$images_path"
   )
 
   # Conditionally add the pose optimization flag
@@ -86,9 +90,9 @@ run_pipeline() {
   fi
 
   # Add the results path if provided
-  if [ -n "$RESULTS_PATH" ]; then
-      log "Results will be saved to ${RESULTS_PATH}"
-      cmd_args+=("--results-path" "$RESULTS_PATH")
+  if [ -n "$results_path" ]; then
+      log "Results will be saved to ${results_path}"
+      cmd_args+=("--results-path" "$results_path")
   else
       log "No results path provided, using default"
   fi
@@ -100,5 +104,5 @@ run_pipeline() {
 }
 
 log "Starting gsplat pipeline script"
-run_pipeline
+run_pipeline "$COLMAP_PATH" "$IMAGES_PATH" "$RESULTS_PATH"
 log "Pipeline completed successfully"
