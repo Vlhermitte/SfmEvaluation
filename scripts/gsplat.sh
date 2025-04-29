@@ -9,7 +9,11 @@
 #SBATCH --cpus-per-task=12
 
 log() {
-    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    local msg="$(date +'%Y-%m-%d %H:%M:%S') - $1"
+    echo "$msg"
+    if [ -n "$LOG_FILE" ]; then
+        echo "$msg" >> "$LOG_FILE"
+    fi
 }
 
 if [ -n "${SLURM_JOB_ID:-}" ]; then
@@ -60,6 +64,11 @@ fi
 run_pipeline() {
   conda activate gsplat || { log "ERROR: Failed to activate conda environment"; exit 1; }
 
+  LOG_FILE="$(dirname ${COLMAP_PATH})/gsplat.log"
+  rm "$LOG_FILE"
+  mkdir -p "$(dirname "$LOG_FILE")"
+  touch "$LOG_FILE"
+
   log "Running gsplat pipeline for ${COLMAP_PATH} and ${IMAGES_PATH}"
   # Base arguments for the python script
   cmd_args=(
@@ -86,7 +95,7 @@ run_pipeline() {
 
   # Execute the command
   log "Executing: python ${cmd_args[*]}"
-  python "${cmd_args[@]}"
+  python "${cmd_args[@]}" >> "$LOG_FILE" 2>&1
 
 }
 
