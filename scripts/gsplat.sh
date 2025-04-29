@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=gsplat_job
-#SBATCH --output=gsplat_job.log
-#SBATCH --error=gsplat_job.log
+#SBATCH --job-name=gsplat_script
+#SBATCH --output=gsplat_script.log
+#SBATCH --error=gsplat_script.log
 #SBATCH --time=24:00:00
 #SBATCH --partition=1day
 #SBATCH --gres=gpu:a16:1
