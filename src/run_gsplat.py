@@ -10,6 +10,7 @@ from PIL import Image
 from tqdm import tqdm
 from typing import Optional
 from utils.common import read_model
+from pycolmap import Reconstruction
 
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -147,22 +148,32 @@ def check_colmap_model(colmap_path: str, images_path: str) -> bool:
         _logger.error("Colmap model is None")
         return False
 
+    # get img extension of first image in images_path
+    image_files = os.listdir(images_path)
+    if len(image_files) == 0:
+        _logger.error(f"No images found in {images_path}")
+        return False
+    img_extension = os.path.splitext(image_files[0])[1]
+
     # Check images names
     is_overwrite = False
     for image in model.images.values():
         # keep only the image name
         image_name = os.path.basename(image.name)
+        # add the extension if not present or replace if different
+        if not image_name.endswith(img_extension):
+            image_name = os.path.splitext(image_name)[0] + img_extension
         # make sure the image name is in the images path
         if not os.path.exists(os.path.join(images_path, image_name)):
             _logger.error(f"Image {image_name} not found in {images_path}")
             return False
         if image.name != image_name:
             # Overwrite the image name in the scene manager
-            model.images[image.id].name = image_name
+            model.images[image.image_id].name = image_name
             is_overwrite = True
     if is_overwrite:
         # Save the updated scene manager
-        model.save_images(colmap_path)
+        model.write(colmap_path)
 
     return True
 
