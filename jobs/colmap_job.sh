@@ -20,9 +20,9 @@ log() {
     fi
 }
 
-mkdir -p data/results/clomap
+mkdir -p data/results/colmap
 DATASETS_DIR="$(realpath data/datasets)"
-OUT_DIR="$(realpath data/results/clomap)"
+OUT_DIR="$(realpath data/results/colmap)"
 
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
 log "Starting COLMAP batch processing GPU: $gpu_name"
