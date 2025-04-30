@@ -231,8 +231,8 @@ def run_gsplat(dataset_path: Path, images_path: Path, result_path: Path, pose_op
         shutil.rmtree(downscaled_dir)
         _logger.info(f"Cleaning {downscaled_dir}")
     if Path(downscaled_dir + f'_{factor}_png').exists():
-        shutil.rmtree(downscaled_dir + f'_{factor}_png')
-        _logger.info(f"Cleaning {downscaled_dir + f'_{factor}_png'}")
+        shutil.rmtree(f"images_{factor}_png")
+        _logger.info(f"Cleaning images_{factor}_png")
 
 
 if __name__ == '__main__':
