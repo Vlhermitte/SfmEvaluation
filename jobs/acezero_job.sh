@@ -51,18 +51,39 @@ TANKS_AND_TEMPLES=(
 
 LAMAR_HGE_SCENES=()
 while IFS= read -r line; do
-  LAMAR_HGE_SCENES+=("$line")
-done < data/datasets/LaMAR/HGE/sessions/query_phone/proc/subsessions.txt
+  case "$line" in
+    ios*)
+      LAMAR_HGE_SCENES+=("$line")
+      ;;
+    *)
+      # skip anything that doesn’t start with “ios”
+      ;;
+  esac
+done < data/datasets/LaMAR/HGE/sessions/map/proc/subsessions.txt
 
 LAMAR_CAB_SCENES=()
 while IFS= read -r line; do
-  LAMAR_CAB_SCENES+=("$line")
-done < data/datasets/LaMAR/CAB/sessions/query_phone/proc/subsessions.txt
+  case "$line" in
+    ios*)
+      LAMAR_CAB_SCENES+=("$line")
+      ;;
+    *)
+      # skip anything that doesn’t start with “ios”
+      ;;
+  esac
+done < data/datasets/LaMAR/CAB/sessions/map/proc/subsessions.txt
 
 LAMAR_LIN_SCENES=()
 while IFS= read -r line; do
-  LAMAR_LIN_SCENES+=("$line")
-done < data/datasets/LaMAR/LIN/sessions/query_phone/proc/subsessions.txt
+  case "$line" in
+    ios*)
+      LAMAR_LIN_SCENES+=("$line")
+      ;;
+    *)
+      # skip anything that doesn’t start with “ios”
+      ;;
+  esac
+done < data/datasets/LaMAR/LIN/sessions/map/proc/subsessions.txt
 
 # Verify Conda environment exists
 conda_env="ace0"
