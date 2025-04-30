@@ -47,6 +47,21 @@ TANKS_AND_TEMPLES=(
     "Barn" "Caterpillar" "Church" "Courthouse" "Ignatius" "Meetingroom" "Truck"
 )
 
+LAMAR_HGE_SCENES=()
+while IFS= read -r line; do
+  LAMAR_HGE_SCENES+=("$line")
+done < data/datasets/LaMAR/HGE/sessions/query_phone/proc/subsessions.txt
+
+LAMAR_CAB_SCENES=()
+while IFS= read -r line; do
+  LAMAR_CAB_SCENES+=("$line")
+done < data/datasets/LaMAR/CAB/sessions/query_phone/proc/subsessions.txt
+
+LAMAR_LIN_SCENES=()
+while IFS= read -r line; do
+  LAMAR_LIN_SCENES+=("$line")
+done < data/datasets/LaMAR/LIN/sessions/query_phone/proc/subsessions.txt
+
 # Verify Conda environment exists
 conda_env="vggsfm_tmp"
 if ! conda env list | grep -q "$conda_env"; then
@@ -157,6 +172,24 @@ fi
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples_reduced" ] || [ "$dataset_choice" = "tanksandtemples_reduced" ] || [ "$dataset_choice" = "t2_r" ]; then
     for SCENE in "${TANKS_AND_TEMPLES[@]}"; do
         process_scene "TanksAndTemples_reduced" "$SCENE"
+    done
+fi
+
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LaMAR_HGE" ] || [ "$dataset_choice" = "lamar_hge" ]; then
+    for SCENE in "${LAMAR_HGE_SCENES[@]}"; do
+        process_scene "LaMAR/HGE/sessions/query_phone/raw_data" "$SCENE" "sequential"
+    done
+fi
+
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LaMAR_CAB" ] || [ "$dataset_choice" = "lamar_cab" ]; then
+    for SCENE in "${LAMAR_CAB_SCENES[@]}"; do
+        process_scene "LaMAR/CAB/sessions/query_phone/raw_data" "$SCENE" "sequential"
+    done
+fi
+
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LaMAR_LIN" ] || [ "$dataset_choice" = "lamar_lin" ]; then
+    for SCENE in "${LAMAR_LIN_SCENES[@]}"; do
+        process_scene "LaMAR/LIN/sessions/query_phone/raw_data" "$SCENE" "sequential"
     done
 fi
 

@@ -49,14 +49,20 @@ TANKS_AND_TEMPLES=(
 )
 
 
-#LAMAR_HGE_SCENES=(
-#    "ios_2022-01-12_14.59.02_000" "ios_2022-01-12_15.15.53_000" "ios_2022-01-18_17.05.03_000"
-#    "ios_2022-01-18_17.10.39_000" "ios_2022-01-20_16.52.33_001" "ios_2022-01-25_14.34.24_002"
-#    "ios_2022-01-25_14.57.49_000" "ios_2022-01-25_15.13.54_000" "ios_2022-01-25_15.13.54_002"
-#    "ios_2022-06-13_10.45.07_000" "ios_2022-06-13_15.59.36_000" "ios_2022-06-14_17.12.28_000"
-#    "ios_2022-06-30_15.55.53_000" "ios_2022-07-01_15.18.09_000" "ios_2022-07-01_15.45.08_000"
-#    "ios_2022-07-01_15.58.10_000" "ios_2022-07-03_16.00.37_000"
-#)
+LAMAR_HGE_SCENES=()
+while IFS= read -r line; do
+  LAMAR_HGE_SCENES+=("$line")
+done < data/datasets/LaMAR/HGE/sessions/query_phone/proc/subsessions.txt
+
+LAMAR_CAB_SCENES=()
+while IFS= read -r line; do
+  LAMAR_CAB_SCENES+=("$line")
+done < data/datasets/LaMAR/CAB/sessions/query_phone/proc/subsessions.txt
+
+LAMAR_LIN_SCENES=()
+while IFS= read -r line; do
+  LAMAR_LIN_SCENES+=("$line")
+done < data/datasets/LaMAR/LIN/sessions/query_phone/proc/subsessions.txt
 
 
 # Process each scene
@@ -180,6 +186,24 @@ fi
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "TanksAndTemples_reduced" ] || [ "$dataset_choice" = "tanksandtemples_reduced" ] || [ "$dataset_choice" = "t2_r" ]; then
     for SCENE in "${TANKS_AND_TEMPLES[@]}"; do
         process_scene "TanksAndTemples_reduced" "$SCENE"
+    done
+fi
+
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LaMAR_HGE" ] || [ "$dataset_choice" = "lamar_hge" ]; then
+    for SCENE in "${LAMAR_HGE_SCENES[@]}"; do
+        process_scene "LaMAR/HGE/sessions/query_phone/raw_data" "$SCENE" "sequential"
+    done
+fi
+
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LaMAR_CAB" ] || [ "$dataset_choice" = "lamar_cab" ]; then
+    for SCENE in "${LAMAR_CAB_SCENES[@]}"; do
+        process_scene "LaMAR/CAB/sessions/query_phone/raw_data" "$SCENE" "sequential"
+    done
+fi
+
+if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LaMAR_LIN" ] || [ "$dataset_choice" = "lamar_lin" ]; then
+    for SCENE in "${LAMAR_LIN_SCENES[@]}"; do
+        process_scene "LaMAR/LIN/sessions/query_phone/raw_data" "$SCENE" "sequential"
     done
 fi
 
