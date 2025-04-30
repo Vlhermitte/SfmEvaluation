@@ -4,7 +4,7 @@
 #SBATCH --output=colmap_job.out
 #SBATCH --error=colmap_job.err
 #SBATCH --partition=gpu
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=32G
