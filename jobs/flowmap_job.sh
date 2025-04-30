@@ -142,16 +142,44 @@ process_scene() {
 
     # If number of image is less than 180, use the default settings
     if [ "$num_images" -lt 180 ]; then
-        if ! "$PYTHON_BIN" -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" local_save_root="$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
-        log "ERROR: FlowMap pipeline execution failed for scene: $scene"
-    fi
+        set +e
+        "$PYTHON_BIN" -m flowmap.overfit \
+          dataset=images \
+          dataset.images.root="$scene_dir/images" \
+          output_dir="$out_dir" \
+          local_save_root="$out_dir" 2>&1 | tee -a "$LOG_FILE"
+        exit_code=${PIPESTATUS[0]}
+        set -e
+        if [ $exit_code -ne 0 ]; then
+          # check for a CUDA OOM in the last few lines of the log
+          if tail -n 50 "$LOG_FILE" | grep -q -i "out of memory"; then
+            log "WARNING: GPU out-of-memory on scene $scene – skipping."
+          else
+            log "ERROR: FlowMap failed (exit code $exit_code) on scene $scene."
+          fi
+        fi
     else
       log "Running FlowMap pipeline with low memory settings on scene: $scene"
         if ! "$PYTHON_BIN" -m flowmap.overfit dataset=images dataset.images.root="$scene_dir/images" output_dir="$out_dir" local_save_root="$out_dir" +experiment=low_memory 2>&1 | tee -a "$LOG_FILE"; then
             log "ERROR: FlowMap pipeline execution failed for scene: $scene"
         fi
+        set +e
+        "$PYTHON_BIN" -m flowmap.overfit \
+          dataset=images \
+          dataset.images.root="$scene_dir/images" \
+          output_dir="$out_dir" \
+          local_save_root="$out_dir" +experiment=low_memory 2>&1 | tee -a "$LOG_FILE"
+        exit_code=${PIPESTATUS[0]}
+        set -e
+        if [ $exit_code -ne 0 ]; then
+          # check for a CUDA OOM in the last few lines of the log
+          if tail -n 50 "$LOG_FILE" | grep -q -i "out of memory"; then
+            log "WARNING: GPU out-of-memory on scene $scene – skipping."
+          else
+            log "ERROR: FlowMap failed (exit code $exit_code) on scene $scene."
+          fi
+        fi
     fi
-
 
     end_time=$(date +%s)
     elapsed_time=$((end_time - start_time))
