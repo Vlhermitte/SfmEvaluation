@@ -107,7 +107,7 @@ log "Pipeline completed in $elapsed_time seconds"
 echo "Elapsed time: $elapsed_time seconds" >> "$out/time.txt"
 
 log "Converting to COLMAP format..."
-if ! PYTHON_BIN_EVAL convert_to_colmap.py --src_dir "$parent_dir/acezero_format" --dst_dir "$out"; then
+if ! PYTHON_BIN_EVAL convert_to_colmap.py --src_dir "$parent_dir/acezero_format" --dst_dir "$out" --images_dir "$scene/"; then
     log "ERROR: COLMAP conversion failed"
     exit 1
 fi

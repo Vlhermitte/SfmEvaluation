@@ -149,7 +149,7 @@ process_scene() {
     log "Finished processing scene: $scene in $elapsed_time seconds"
 
     log "Converting to COLMAP format..."
-    if ! "$PYTHON_BIN_EVAL" convert_to_colmap.py --src_dir "$acezero_format_dir" --dst_dir "$out_dir" 2>&1 | tee -a "$LOG_FILE"; then
+    if ! "$PYTHON_BIN_EVAL" convert_to_colmap.py --src_dir "$acezero_format_dir" --dst_dir "$out_dir" --images_dir "$scene_dir/images/" 2>&1 | tee -a "$LOG_FILE"; then
         log "ERROR: COLMAP conversion failed"
     fi
     cd ..
