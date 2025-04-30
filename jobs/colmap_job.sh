@@ -210,19 +210,19 @@ fi
 
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LaMAR_HGE" ] || [ "$dataset_choice" = "lamar_hge" ]; then
     for SCENE in "${LAMAR_HGE_SCENES[@]}"; do
-        process_scene "LaMAR/HGE/sessions/query_phone/raw_data" "$SCENE" "sequential"
+        process_scene "LaMAR/HGE/sessions/map/raw_data" "$SCENE" "sequential"
     done
 fi
 
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LaMAR_CAB" ] || [ "$dataset_choice" = "lamar_cab" ]; then
     for SCENE in "${LAMAR_CAB_SCENES[@]}"; do
-        process_scene "LaMAR/CAB/sessions/query_phone/raw_data" "$SCENE" "sequential"
+        process_scene "LaMAR/CAB/sessions/map/raw_data" "$SCENE" "sequential"
     done
 fi
 
 if [ "$dataset_choice" = "all" ] || [ "$dataset_choice" = "LaMAR_LIN" ] || [ "$dataset_choice" = "lamar_lin" ]; then
     for SCENE in "${LAMAR_LIN_SCENES[@]}"; do
-        process_scene "LaMAR/LIN/sessions/query_phone/raw_data" "$SCENE" "sequential"
+        process_scene "LaMAR/LIN/sessions/map/raw_data" "$SCENE" "sequential"
     done
 fi
 
