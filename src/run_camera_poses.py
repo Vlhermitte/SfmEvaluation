@@ -220,6 +220,10 @@ if __name__ == '__main__':
     gt_sparse_model = read_model(gt_model_path)
     est_sparse_model = read_model(est_model_path)
 
+    if est_sparse_model is None or gt_sparse_model is None:
+        _logger.error("Error reading the models. Please check the paths and formats.")
+        exit(1)
+
     # Find how many camera were not registered in the estimated model
     number_of_missing_cameras = len(gt_sparse_model.images) - len(est_sparse_model.images)
 
