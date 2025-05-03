@@ -2,11 +2,11 @@
 #SBATCH --job-name=gsplat_script
 #SBATCH --output=gsplat_script.log
 #SBATCH --error=gsplat_script.log
-#SBATCH --time=24:00:00
-#SBATCH --partition=1day
+#SBATCH --time=4:00:00
+#SBATCH --partition=fast
 #SBATCH --gres=gpu:a16:1
-#SBATCH --mem=32G
-#SBATCH --cpus-per-task=12
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
 
 log() {
     local msg="$(date +'%Y-%m-%d %H:%M:%S') - $1"
