@@ -50,38 +50,23 @@ TANKS_AND_TEMPLES=(
 
 
 LAMAR_HGE_SCENES=()
-while IFS= read -r line; do
+while IFS= read -r line || [[ -n "$line" ]]; do
   case "$line" in
-    ios*)
-      LAMAR_HGE_SCENES+=("$line")
-      ;;
-    *)
-      # skip anything that doesn’t start with “ios”
-      ;;
+    ios*) LAMAR_HGE_SCENES+=("$line") ;;
   esac
 done < data/datasets/LaMAR/HGE/sessions/map/proc/subsessions.txt
 
 LAMAR_CAB_SCENES=()
-while IFS= read -r line; do
+while IFS= read -r line || [[ -n "$line" ]]; do
   case "$line" in
-    ios*)
-      LAMAR_CAB_SCENES+=("$line")
-      ;;
-    *)
-      # skip anything that doesn’t start with “ios”
-      ;;
+    ios*) LAMAR_CAB_SCENES+=("$line") ;;
   esac
 done < data/datasets/LaMAR/CAB/sessions/map/proc/subsessions.txt
 
 LAMAR_LIN_SCENES=()
-while IFS= read -r line; do
+while IFS= read -r line || [[ -n "$line" ]]; do
   case "$line" in
-    ios*)
-      LAMAR_LIN_SCENES+=("$line")
-      ;;
-    *)
-      # skip anything that doesn’t start with “ios”
-      ;;
+    ios*) LAMAR_LIN_SCENES+=("$line") ;;
   esac
 done < data/datasets/LaMAR/LIN/sessions/map/proc/subsessions.txt
 
