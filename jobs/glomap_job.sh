@@ -106,31 +106,31 @@ process_scene() {
 
     # If database does not exist, create a new database
     if [ ! -f "${database}" ]; then
-      echo "Creating new database: ${database}"
-      echo "COLMAP feature_extractor..."
-      colmap feature_extractor \
-        --database_path ${database} \
-        --image_path ${scene_dir}/images \
-        --ImageReader.camera_model SIMPLE_RADIAL \
-        --SiftExtraction.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
-
-      if [ "${matcher}" = "sequential" ]; then
-        echo "COLMAP sequential_matcher..."
-        colmap sequential_matcher \
-          --database_path ${database} \
-          --SiftMatching.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
-      else
-        echo "COLMAP exhaustive_matcher..."
-        colmap exhaustive_matcher \
-          --database_path ${database} \
-          --SiftMatching.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
-      fi
-
+      log "Removing existing db"
+      rm ${database}
     fi
+    log "Creating new database: ${database}"
+    log "COLMAP feature_extractor..."
+    colmap feature_extractor \
+      --database_path ${database} \
+      --image_path ${scene_dir}/images \
+      --ImageReader.camera_model SIMPLE_RADIAL \
+      --SiftExtraction.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
 
+    if [ "${matcher}" = "sequential" ]; then
+      log "COLMAP sequential_matcher..."
+      colmap sequential_matcher \
+        --database_path ${database} \
+        --SiftMatching.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
+    else
+      log "COLMAP exhaustive_matcher..."
+      colmap exhaustive_matcher \
+        --database_path ${database} \
+        --SiftMatching.use_gpu 1 2>&1 | tee -a "$LOG_FILE"
+    fi
     # GLOMAP execution
     mkdir -p "${out_dir}"
-    echo "GLOMAP mapper..."
+    log "GLOMAP mapper..."
     glomap mapper \
       --database_path ${database} \
       --image_path ${scene_dir}/images \
