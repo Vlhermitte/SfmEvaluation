@@ -158,33 +158,52 @@ def export_abs_results(abs_results: dict, output_path: Path):
         rotation_errors = np.NAN
         translation_errors = np.NAN
         number_of_missing_cameras = np.NAN
+        accuracy = np.NAN
     else:
         # For each rotation error, compute mean and std
         rotation_errors = abs_results['rotation_errors']
         translation_errors = abs_results['translation_errors']
         number_of_missing_cameras = abs_results['number_of_missing_cameras']
+        accuracy = abs_results['accuracy']
+
+    min_rotation_error = np.min(rotation_errors)
+    max_rotation_error = np.max(rotation_errors)
     mean_rotation_error = np.mean(rotation_errors)
-    std_rotation_error = np.std(rotation_errors)
+    median_rotation_error = np.median(rotation_errors)
     rotation_99_percentile = np.percentile(rotation_errors, 99)
     rotation_95_percentile = np.percentile(rotation_errors, 95)
+
+    min_translation_error = np.min(translation_errors)
+    max_translation_error = np.max(translation_errors)
     mean_translation_error = np.mean(translation_errors)
-    std_translation_error = np.std(translation_errors)
+    median_translation_error = np.median(translation_errors)
     translation_99_percentile = np.percentile(translation_errors, 99)
     translation_95_percentile = np.percentile(translation_errors, 95)
+
 
 
     # Write mean and std to txt file
     with open(f'{output_path}/abs_errors_summary.json', 'w') as f:
         json.dump({
             'Missing_cameras': number_of_missing_cameras,
-            'Mean_rotation_error': mean_rotation_error,
-            'Std_rotation_error': std_rotation_error,
-            'Rotation_99_percentile': rotation_99_percentile,
-            'Rotation_95_percentile': rotation_95_percentile,
-            'Mean_translation_error': mean_translation_error,
-            'Std_translation_error': std_translation_error,
-            'Translation_99_percentile': translation_99_percentile,
-            'Translation_95_percentile': translation_95_percentile
+            'Accuracy': accuracy,
+            'Rotation_errors': {
+                'Min': min_rotation_error,
+                'Max': max_rotation_error,
+                'Mean': mean_rotation_error,
+                'Median': median_rotation_error,
+                '95_percentile': rotation_95_percentile,
+                '99_percentile': rotation_99_percentile,
+            },
+            'Translation_errors': {
+                'Min': min_translation_error,
+                'Max': max_translation_error,
+                'Mean': mean_translation_error,
+                'Median': median_translation_error,
+                '95_percentile': translation_95_percentile,
+                '99_percentile': translation_99_percentile
+
+            }
         }, f, indent=4)
 
 if __name__ == '__main__':
@@ -231,14 +250,14 @@ if __name__ == '__main__':
     # Relative errors evaluation                                                                                       #
     ####################################################################################################################
     rel_results = run_rel_err_evaluation(gt_model=gt_sparse_model, est_model=est_sparse_model)
-    export_rel_results(rel_results, est_model_path)
+    export_rel_results(rel_results, Path(est_model_path).parent)
 
 
     ####################################################################################################################
     # Absolute errors evaluation                                                                                       #
     ####################################################################################################################
     abs_results = run_abs_err_evaluation(gt_model=gt_sparse_model, est_model=est_sparse_model)
-    export_abs_results(abs_results, est_model_path)
+    export_abs_results(abs_results, Path(est_model_path).parent)
 
 
 
