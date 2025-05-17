@@ -4,6 +4,7 @@ import pycolmap
 import matplotlib.pyplot as plt
 from cycler import cycler
 from scipy.interpolate import splprep, splev
+from scipy.spatial.transform import Rotation
 from typing import Optional
 from pathlib import Path
 
@@ -166,7 +167,6 @@ def plot_cameras(fig: go.Figure, reconstruction: pycolmap.Reconstruction, color:
             color=color
         )
 
-
 def plot_trajectory(
         fig: go.Figure,
         reconstruction: pycolmap.Reconstruction,
@@ -210,31 +210,17 @@ def plot_trajectory(
 
 def plot_points(
     fig: go.Figure,
-    reconstruction: pycolmap.Reconstruction,
+    reconstruction: Optional[pycolmap.Reconstruction] = None,
+    pcd: Optional[o3d.geometry.PointCloud] = None,
     ps: int = 2,
     color: Optional[str] = None,
     colorscale: Optional[str] = None,
-    name: Optional[str] = None,
-    ply_file: Optional[Path] = None,
+    name: Optional[str] = None
 ):
     """Plot a set of 3D points."""
-    if ply_file is not None and ply_file.exists() and len(reconstruction.points3D.items()) == 0 and 'o3d' in globals():
-        pcd = o3d.io.read_point_cloud(str(ply_file))
-        # Limit to 100k points (compute voxel size)
-        if len(pcd.points) > 100000:
-            # Get the bounding box
-            min_bound = pcd.get_min_bound()
-            max_bound = pcd.get_max_bound()
-            # Compute the dimensions and volume of the bounding box
-            dims = max_bound - min_bound
-            volume = dims[0] * dims[1] * dims[2]
-            # Desired number of points
-            target_points = 100000
-            # Calculate voxel size
-            voxel_size = (volume / target_points)
-            pcd = pcd.voxel_down_sample(voxel_size)
+    if pcd is not None:
         xyzs = np.asarray(pcd.points)
-        pcolor = np.asarray(pcd.colors)
+        pcolor = np.asarray(pcd.colors) * 255
     else:
         # Filter outliers
         bbs = reconstruction.compute_bounding_box(0.001, 0.999)
@@ -263,6 +249,33 @@ def plot_points(
     )
     fig.add_trace(tr)
 
+def compute_camera_bbox(reconstruction: pycolmap.Reconstruction):
+    # List to store camera centers
+    camera_centers = []
+
+    # Iterate over images in the reconstruction
+    for image in reconstruction.images.values():
+        # Skip images that do not have a valid pose (if applicable)
+        if not image.registered:
+            continue
+
+        # If the image pose is stored as a quaternion (qvec) and translation (tvec),
+        # convert the quaternion to a rotation matrix.
+        T = image.cam_from_world.matrix()
+        R = T[:3, :3]
+        t = T[:3, 3]
+        # Compute the camera center using: center = -R^T * t
+        center = -R.T @ t
+        camera_centers.append(center)
+
+    # Convert list to a NumPy array for easier manipulation
+    camera_centers = np.array(camera_centers)
+
+    # Compute the bounding box around the cameras
+    min_bound = np.min(camera_centers, axis=0) + np.min(camera_centers, axis=0) * 0.1
+    max_bound = np.max(camera_centers, axis=0) + np.max(camera_centers, axis=0) * 0.1
+
+    return min_bound, max_bound
 
 if __name__ == '__main__':
     import argparse
@@ -271,14 +284,14 @@ if __name__ == '__main__':
         "--gt-model-path",
         type=str,
         required=False,
-        default="../../data/datasets/TanksAndTemples/Ignatius/sparse/0",
+        default="../../data/results/colmap/TanksAndTemples/Truck/colmap/sparse/0",
         help="path to the ground truth model containing .bin or .txt colmap format model"
     )
     parser.add_argument(
         "--est-model-path",
         type=str,
         required=False,
-        default="../../data/results/flowmap/TanksAndTemples/Ignatius/colmap/sparse/0",
+        default="../../data/results/acezero/TanksAndTemples/Truck/colmap/sparse/0",
         help="path to the estimated model containing .bin or .txt colmap format model"
     )
 
@@ -292,6 +305,28 @@ if __name__ == '__main__':
     gt_sparse_model = read_model(gt_model_path)
     est_sparse_model = read_model(est_model_path)
 
+    if len(est_sparse_model.points3D.values()) == 0:
+        pcd = o3d.io.read_point_cloud(str(est_model_path / "points3D.ply"))
+        pcd = pcd.uniform_down_sample(100)
+        pcd.remove_statistical_outlier(nb_neighbors=50, std_ratio=2.0)
+
+        # remove any points far away from the cameras
+        bbs = est_sparse_model.compute_bounding_box(0.001, 0.999)
+        pcd_points = np.asarray(pcd.points)
+        mask = np.all(np.logical_and(bbs[0] <= pcd_points, pcd_points <= bbs[1]), axis=1)
+        pcd.points = o3d.utility.Vector3dVector(pcd_points[mask])
+        pcd.colors = o3d.utility.Vector3dVector(np.asarray(pcd.colors)[mask])
+    else:
+        points3D = est_sparse_model.points3D
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(np.array([p3D.xyz for p3D in points3D.values()]))
+        pcd.colors = o3d.utility.Vector3dVector(np.array([p3D.color for p3D in points3D.values()]) / 255.0)
+
+        if len(pcd.points) > 1e5:
+            pcd = pcd.uniform_down_sample(10)
+
+    print(len(pcd.points))
+
     comparison_results = pycolmap.compare_reconstructions(
         reconstruction1=gt_sparse_model,
         reconstruction2=est_sparse_model,
@@ -299,17 +334,20 @@ if __name__ == '__main__':
     )
 
     if comparison_results is not None:
-        est_sparse_model.transform(comparison_results['rec2_from_rec1'].inverse())
-
+        transform = comparison_results['rec2_from_rec1'].inverse()
+        est_sparse_model.transform(transform)
+        transform = np.vstack((transform.matrix(), [0, 0, 0, 1]))
+        if pcd is not None:
+            pcd.transform(transform)
     fig = init_figure()
 
     # plot_trajectory(fig, gt_sparse_model)
-    plot_cameras(fig, gt_sparse_model)
-    plot_points(fig, gt_sparse_model)
+    plot_cameras(fig, gt_sparse_model, color="rgb(0, 0, 255)")
+    #plot_points(fig, gt_sparse_model)
 
-    # plot_trajectory(fig, est_sparse_model, line_color="rgb(100, 255, 100)")
-    plot_cameras(fig, est_sparse_model, color="rgb(227, 130, 66)")
-    plot_points(fig, est_sparse_model, ply_file=est_model_path / "points3D.ply")
+    #plot_trajectory(fig, est_sparse_model, line_color="rgb(100, 255, 100)")
+    plot_cameras(fig, est_sparse_model, color="rgb(255, 0, 0)")
+    # plot_points(fig, est_sparse_model, pcd=pcd)
 
     fig.show()
 
