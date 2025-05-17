@@ -1,3 +1,4 @@
+import copy
 import os
 import json
 import logging
@@ -6,21 +7,24 @@ from typing import Tuple, Optional
 import open3d as o3d
 import numpy as np
 import pycolmap
+import sys
+
+sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.common import detect_colmap_format, read_model
 from run_camera_poses import (
     run_rel_err_evaluation, run_abs_err_evaluation, export_rel_results, export_abs_results
 )
 from run_nerfstudio import sanity_check_colmap, run_nerfstudio
-from run_triangulation import parse_mlp_matrices
-from evaluation.triangulation_evaluation import run_triangulation_evaluation, write_color_distances, get_f1_score_histo2
-from visualization.plotting import plot_fscore
 
 from config import (
         ETH3D_DATA_PATH, ETH3D_SCENES,
         MIP_NERF_360_DATA_PATH, MIP_NERF_360_SCENES,
         TANKS_AND_TEMPLES_DATA_PATH, TANKS_AND_TEMPLES_SCENES,
-        GLOMAP_RESULTS_PATH, VGGSFM_RESULTS_PATH, FLOWMAP_RESULTS_PATH, ACEZERO_RESULTS_PATH,
+        LAMAR_HGE_DATA_PATH, LAMAR_HGE_SCENES,
+        LAMAR_CAB_DATA_PATH, LAMAR_CAB_SCENES,
+        LAMAR_LIN_DATA_PATH, LAMAR_LIN_SCENES,
+        COLMAP_RESULTS_PATH, GLOMAP_RESULTS_PATH, VGGSFM_RESULTS_PATH, FLOWMAP_RESULTS_PATH, ACEZERO_RESULTS_PATH,
         COLMAP_FORMAT, COLMAP_DENSE_FORMAT
     )
 
@@ -138,182 +142,107 @@ class Evaluator:
         return distance1, distance2
 
 
+def evaluate_scene(
+        scene: str,
+        gt_model_path: Path,
+        est_model_path: Path,
+        evaluator
+):
+    """
+    Evaluate camera poses for a single scene.
+    """
+    print(f"  Scene: {scene}")
+    if not est_model_path.exists():
+        print(f"  Warning: Estimated model path {est_model_path} does not exist.")
+        return
+
+    # find numeric subdirectories
+    directories = sorted(
+        (d for d in os.listdir(est_model_path) if d.isdigit()),
+        key=lambda x: int(x)
+    )
+    gt_sparse_model = read_model(gt_model_path)
+
+    num_img = 0
+    est_sparse_model = None
+    for directory in directories:
+        model_dir = est_model_path / directory
+        if not (model_dir / 'images.bin').exists() or (model_dir / 'images.txt').exists():
+            print(f"  Warning: The model at {model_dir} does not exist.")
+            continue
+        curr_est_sparse_model = read_model(model_dir)
+        curr_num_img = curr_est_sparse_model.num_images()
+        # We keep the largest model
+        if curr_num_img > num_img:
+            est_sparse_model = copy.deepcopy(curr_est_sparse_model)
+            num_img = curr_num_img
+
+    if est_sparse_model is None:
+        print("  Error: no valid model found")
+        return
+    rel_results, abs_results = evaluator.run_camera_evaluator(
+        gt_sparse_model=gt_sparse_model,
+        est_sparse_model=est_sparse_model
+    )
+    if rel_results is not None:
+        export_rel_results(rel_results, model_dir.parent)
+    if abs_results is not None:
+        export_abs_results(abs_results, model_dir.parent)
+
+
+def main():
+    evaluator = Evaluator()
+
+    results_paths = [
+        COLMAP_RESULTS_PATH,
+        GLOMAP_RESULTS_PATH,
+        VGGSFM_RESULTS_PATH,
+        FLOWMAP_RESULTS_PATH,
+        ACEZERO_RESULTS_PATH
+    ]
+
+    # Configuration for each dataset
+    datasets = [
+        {
+            'name': 'ETH3D',
+            'scenes': ETH3D_SCENES,
+            'get_gt': lambda scene: ETH3D_DATA_PATH / scene / 'dslr_calibration_jpg',
+            'get_est': lambda results, scene: results / 'ETH3D' / scene / 'colmap' / 'sparse'
+        },
+        {
+            'name': 'LaMAR HGE',
+            'scenes': LAMAR_HGE_SCENES,
+            'get_gt': lambda scene: LAMAR_HGE_DATA_PATH / scene / 'sparse/0',
+            'get_est': lambda results, scene: results / 'LaMAR/HGE/sessions/map/raw_data/' / scene / 'colmap' / 'sparse'
+        },
+        {
+            'name': 'LaMAR CAB',
+            'scenes': LAMAR_CAB_SCENES,
+            'get_gt': lambda scene: LAMAR_CAB_DATA_PATH / scene / 'sparse/0',
+            'get_est': lambda results, scene: results / 'LaMAR/CAB/sessions/map/raw_data/' / scene / 'colmap' / 'sparse'
+        },
+        {
+            'name': 'LaMAR LIN',
+            'scenes': LAMAR_LIN_SCENES,
+            'get_gt': lambda scene: LAMAR_LIN_DATA_PATH / scene / 'sparse/0',
+            'get_est': lambda results, scene: results / 'LaMAR/LIN/sessions/map/raw_data/' / scene / 'colmap' / 'sparse'
+        }
+    ]
+
+    for results in results_paths:
+        print(f"Evaluating {results}")
+        for ds in datasets:
+            print(ds['name'])
+            for scene in ds['scenes']:
+                gt_model = ds['get_gt'](scene)
+                est_model = ds['get_est'](results, scene)
+                evaluate_scene(
+                    scene=scene,
+                    gt_model_path=gt_model,
+                    est_model_path=est_model,
+                    evaluator=evaluator,
+                )
+
 
 if __name__ == '__main__':
-    evaluator = Evaluator()
-    triangulation_threshold = 0.1
-    for results in [GLOMAP_RESULTS_PATH, VGGSFM_RESULTS_PATH, FLOWMAP_RESULTS_PATH, ACEZERO_RESULTS_PATH]:
-        print("Evaluating", results)
-        for scene in ETH3D_SCENES:
-            print(scene)
-            gt_model_path = ETH3D_DATA_PATH / scene / "dslr_calibration_jpg"
-            est_model_path = results / "ETH3D" / scene / COLMAP_FORMAT
-            image_path = ETH3D_DATA_PATH / scene / "images"
-            if not est_model_path.exists():
-                print(f"Error: The model path {est_model_path} does not exist.")
-                continue
-
-            gt_sparse_model = read_model(gt_model_path)
-            est_sparse_model = read_model(est_model_path)
-
-            # Camera poses evaluation
-            rel_results, abs_results = evaluator.run_camera_evaluator(gt_sparse_model, est_sparse_model)
-            if rel_results is not None:
-                export_rel_results(rel_results, est_model_path)
-            if abs_results is not None:
-                export_abs_results(abs_results, est_model_path)
-
-            # Novel view synthesis evaluation
-            # ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator(image_path, est_model_path)
-
-            # Triangulation evaluation
-            dense_path = results / "ETH3D" / scene / COLMAP_DENSE_FORMAT
-            if dense_path.exists():
-                print("Using dense reconstruction")
-                # We use the sparse model produced during the dense reconstruction (colmap stereo_fusion)
-                est_sparse_model = read_model(str(dense_path / "sparse"))
-                est_pcd = o3d.io.read_point_cloud(str(dense_path / "fused.ply"))
-            elif est_sparse_model is not None:
-                # Flowmap doesn't create a point3D.bin file but a points3D.ply file
-                if (est_model_path / "points3D.ply").exists():
-                    est_pcd = o3d.io.read_point_cloud(str(est_model_path / "points3D.ply"))
-                else:
-                    print(
-                        "No dense points cloud provided. Falling back on sparse reconstruction. This might give poor results.")
-                    est_pcd = extract_pcd_from_model(est_sparse_model)
-            else:
-                print("No sparse reconstruction found.")
-                continue
-
-            # Read the XML file
-            mlp_file = ETH3D_DATA_PATH / scene / "dslr_scan_eval/scan_alignment.mlp"
-            with open(mlp_file, "r") as file:
-                mlp_lines = file.readlines()
-
-            mlp_lines = [line.strip() for line in mlp_lines]
-            matrices = parse_mlp_matrices(mlp_lines)
-            init_alignment = matrices["scan1.ply"]
-
-            # ETH3D applies the alignment to the ground truth scan
-            gt_scan_pcd = o3d.io.read_point_cloud(str(ETH3D_DATA_PATH / scene / "dslr_scan_eval/scan1.ply"))
-            gt_scan_pcd.transform(init_alignment)
-            distance1, distance2 = evaluator.run_triangulation_evaluator(
-                colmap_sparse_ref=gt_sparse_model,
-                est_sparse_model=est_sparse_model,
-                gt_scan_pcd=gt_scan_pcd,
-                est_dense_pcd=est_pcd,
-                threshold=triangulation_threshold,
-                verbose=True,
-            )
-
-            # write_color_distances(est_model_path / f"{scene}_precision.ply", est_pcd, distance1, triangulation_threshold)
-            # write_color_distances(est_model_path / f"{scene}_recall.ply", gt_scan_pcd, distance2, triangulation_threshold)
-
-            metrics = get_f1_score_histo2(distance1, distance2, triangulation_threshold, stretch=5)
-            precision = metrics["precision"]
-            recall = metrics["recall"]
-            fscore = metrics["fscore"]
-            edges_source = metrics["edges_source"]
-            cum_source = metrics["cum_source"]
-            edges_target = metrics["edges_target"]
-            cum_target = metrics["cum_target"]
-            plot_fscore(
-                scene=str(scene),
-                fscore=fscore,
-                dist_threshold=triangulation_threshold,
-                edges_source=edges_source,
-                cum_source=cum_source,
-                edges_target=edges_target,
-                cum_target=cum_target,
-                plot_stretch=5,
-                mvs_outpath=str(est_model_path),
-            )
-
-        for scene in MIP_NERF_360_SCENES:
-            print(scene)
-            est_model_path = results / "MipNerf360" / scene / COLMAP_FORMAT
-            if not est_model_path.exists():
-                print(f"Error: The model path {est_model_path} does not exist.")
-                continue
-
-            gt_sparse_model = read_model(MIP_NERF_360_DATA_PATH / scene / "sparse/0")
-            est_sparse_model = read_model(est_model_path)
-            image_path = MIP_NERF_360_DATA_PATH / scene / "images"
-
-            # Camera poses evaluation
-            rel_results, abs_results = evaluator.run_camera_evaluator(
-                gt_sparse_model=gt_sparse_model,
-                est_sparse_model=est_sparse_model
-            )
-            if rel_results is not None:
-                export_rel_results(rel_results, est_model_path)
-            if abs_results is not None:
-                export_abs_results(abs_results, est_model_path)
-
-            # Novel view synthesis evaluation
-            ssim, psnr, lpips = evaluator.run_novel_view_synthesis_evaluator(image_path, est_sparse_model)
-
-        for scene in TANKS_AND_TEMPLES_SCENES:
-            print(scene)
-            scene_dir = TANKS_AND_TEMPLES_DATA_PATH / scene
-            est_model_path = results / "TanksAndTemples" / scene / COLMAP_FORMAT
-            if not est_model_path.exists() or not scene_dir.exists():
-                continue
-
-            gt_pcd = o3d.io.read_point_cloud(str(scene_dir / f"{scene_dir.name}.ply"))
-            colmap_sparse_ref = read_model(scene_dir / "sparse/0")
-            est_sparse_model = read_model(str(est_model_path))
-
-            est_pcd = None
-            dense_path = results / "TanksAndTemples" / scene / COLMAP_DENSE_FORMAT
-            if dense_path.exists():
-                print("Using dense reconstruction")
-                # We use the sparse model produced during the dense reconstruction (colmap stereo_fusion)
-                est_sparse_model = read_model(str(dense_path / "sparse"))
-                est_pcd = o3d.io.read_point_cloud(str(dense_path / "fused.ply"))
-            elif est_sparse_model is not None:
-                # Flowmap doesn't create a point3D.bin file but a points3D.ply file
-                if (est_model_path / "points3D.ply").exists():
-                    est_pcd = o3d.io.read_point_cloud(str(est_model_path / "points3D.ply"))
-                else:
-                    print("No dense points cloud provided. Falling back on sparse reconstruction. This might give poor results.")
-                    est_pcd = extract_pcd_from_model(est_sparse_model)
-            else:
-                print("No sparse reconstruction found.")
-                continue
-
-            cropfile = scene_dir / f"{scene_dir.name}.json"
-            # Tanks and Temples applies the alignment to the estimated reconstruction
-            init_alignment = np.loadtxt(scene_dir / f"{scene_dir.name}_trans.txt")
-
-            distance1, distance2 = run_triangulation_evaluation(
-                colmap_sparse_ref=colmap_sparse_ref,
-                est_sparse_reconstruction=est_sparse_model,
-                gt_pcd=gt_pcd,
-                est_pcd=est_pcd,
-                cropfile=cropfile,
-                init_alignment=init_alignment,
-            )
-
-            # write_color_distances(est_model_path / f"{scene}_precision.ply", est_pcd, distance1, triangulation_threshold)
-            # write_color_distances(est_model_path / f"{scene}_recall.ply", gt_scan_pcd, distance2, triangulation_threshold)
-
-            metrics = get_f1_score_histo2(distance1, distance2, triangulation_threshold, stretch=5)
-            precision = metrics["precision"]
-            recall = metrics["recall"]
-            fscore = metrics["fscore"]
-            edges_source = metrics["edges_source"]
-            cum_source = metrics["cum_source"]
-            edges_target = metrics["edges_target"]
-            cum_target = metrics["cum_target"]
-            plot_fscore(
-                scene=str(scene),
-                fscore=fscore,
-                dist_threshold=triangulation_threshold,
-                edges_source=edges_source,
-                cum_source=cum_source,
-                edges_target=edges_target,
-                cum_target=cum_target,
-                plot_stretch=5,
-                mvs_outpath=str(est_model_path),
-            )
+    main()
