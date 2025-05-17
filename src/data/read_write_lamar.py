@@ -27,7 +27,7 @@ class LamarSessionProcessor:
 
     def get_trajectory(self, session_id: str):
         # Read the file
-        session = self.datasets_path / 'sessions/map/raw_data' / session_id
+        session = self.datasets_path / 'sessions/map/raw_data/' / session_id
         assert session.exists(), f"Error: {session} does not exist"
 
         # Read the file trajectories.txt
@@ -118,47 +118,48 @@ class LamarSessionProcessor:
         if isinstance(session_ids, str):
             session_ids = [session_ids]
 
-        # Global dictionaries to accumulate COLMAP data.
-        colmap_cameras = {}
-        colmap_images = {}
-        image_index = 0
-
         # Process each session.
-        for session_id in session_ids:
-            session_path = self.datasets_path / 'sessions/map/raw_data' / session_id
-            assert session_path.exists(), f"Error: {session_path} does not exist"
+        with tqdm(session_ids, desc='Exporting sessions') as pbar:
+            for session_id in pbar:
+                pbar.set_description(f'Exporting session: {session_id}')
+                session_path = self.datasets_path / 'sessions/map/raw_data' / session_id
+                assert session_path.exists(), f"Error: {session_path} does not exist"
 
-            # Get the trajectory and sensors for this session.
-            poses = self.get_trajectory(session_id)
-            sensors = self.get_sensors(session_id)
-            # Merge sensors into a single dictionary.
-            for camera in sensors:
-                colmap_cameras[camera.id] = camera
+                colmap_cameras = {}
+                colmap_images = {}
+                image_index = 0
 
-            # Create COLMAP image entries for each pose.
-            # We prepend the session ID to the image name for uniqueness.
-            for timestamp, (q, t) in poses.items():
-                colmap_images[image_index] = ColmapImage(
-                    id=image_index,
-                    qvec=q,
-                    tvec=t,
-                    camera_id=int(timestamp),  # Update this if a proper camera_id is available.
-                    name=f'{timestamp}.jpg',
-                    xys=[],
-                    point3D_ids=[]
-                )
-                image_index += 1
+                # Get the trajectory and sensors for this session.
+                poses = self.get_trajectory(session_id)
+                sensors = self.get_sensors(session_id)
+                # Merge sensors into a single dictionary.
+                for camera in sensors:
+                    colmap_cameras[camera.id] = camera
 
-        # COLMAP points3D.txt remains empty.
-        colmap_points = {}
+                # Create COLMAP image entries for each pose.
+                # We prepend the session ID to the image name for uniqueness.
+                for timestamp, (q, t) in poses.items():
+                    colmap_images[image_index] = ColmapImage(
+                        id=image_index,
+                        qvec=q,
+                        tvec=t,
+                        camera_id=int(timestamp),
+                        name=f'{timestamp}.jpg',
+                        xys=[],
+                        point3D_ids=[]
+                    )
+                    image_index += 1
 
-        # Use a dedicated output folder for the combined export.
-        if saving_path is None:
-            output_path = self.datasets_path / 'sessions/map' / 'colmap_all' / 'sparse/0'
-            output_path.mkdir(exist_ok=True, parents=True)
-        else:
-            output_path = Path(saving_path)
-        write_model(colmap_cameras, colmap_images, colmap_points, output_path, ext='.txt')
+                # COLMAP points3D.txt remains empty.
+                colmap_points = {}
+
+                # Use a dedicated output folder for the combined export.
+                if saving_path is None:
+                    output_path = session_path / 'sparse' / '0'
+                    output_path.mkdir(exist_ok=True, parents=True)
+                else:
+                    output_path = Path(saving_path)
+                write_model(colmap_cameras, colmap_images, colmap_points, output_path, ext='.txt')
 
     def export_all_in_directory(self, session_ids: Union[str, List[str]]):
         if isinstance(session_ids, str):
@@ -230,7 +231,8 @@ if __name__ == '__main__':
         exit(1)
 
     # retrieve all session ids that start with ios
+    # session_ids = [session.name for session in datasets_path.glob('sessions/map/raw_data/ios*')]
     session_ids = [session.name for session in datasets_path.glob('sessions/map/raw_data/ios*')]
     lamar = LamarSessionProcessor(datasets_path)
-    #lamar.export_to_colmap(session_ids)
-    lamar.export_all_in_directory(session_ids)
+    lamar.export_to_colmap(session_ids)
+    # lamar.export_all_in_directory(session_ids)
