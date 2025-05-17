@@ -38,16 +38,11 @@ def evaluate_camera_pose(
             T_gt = gt_image.cam_from_world.matrix()
             T_est = est_image.cam_from_world.matrix()
 
-            T_gt = np.vstack((T_gt, [0, 0, 0, 1]))
-            T_est = np.vstack((T_est, [0, 0, 0, 1]))
-
             R_gt = T_gt[:3, :3]
             R_est = T_est[:3, :3]
             R_error = R_est @ R_gt.T
-            t_gt = T_gt[:3, 3]
-            t_est = T_est[:3, 3]
-            c_gt = -R_gt.T * t_gt
-            c_est = -R_est.T * t_est
+            c_gt = gt_image.projection_center()
+            c_est = est_image.projection_center()
 
             angle = np.arccos((np.trace(R_error) - 1) / 2)
             angle = np.degrees(angle)
@@ -55,13 +50,13 @@ def evaluate_camera_pose(
             if angle <= R_threshold and c_error <= t_threshold:
                 accuracy += 1
 
-            rotation_errors.append(np.degrees(angle))
+            rotation_errors.append(angle)
             translation_errors.append(c_error)
-        else:
-            # Assign high values for missing cameras
-            rotation_errors.append(180.0)
-            translation_errors.append(100.0)
+        # else:
+        #     # Assign high values for missing cameras
+        #     rotation_errors.append(180.0)
+        #     translation_errors.append(100.0)
 
-    accuracy = accuracy / len(est_images)
+    accuracy = accuracy / len(gt_images)
 
     return {'rotation_errors': rotation_errors, 'translation_errors': translation_errors, 'accuracy': accuracy}
