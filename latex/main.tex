@@ -6,6 +6,11 @@
 % and a couple more: draft and oneside
 \documentclass[oneside]{ctuthesis}
 
+%— PDF compression settings (lossless) —%
+\pdfminorversion=5
+\pdfcompresslevel=9
+\pdfobjcompresslevel=3
+
 \ctusetup{
 	preprint = \ctuverlog,
 	mainlanguage = english,
@@ -16,7 +21,7 @@
 	title-english = {A Detailed Evaluation of State-of-the-Art Structure-from-Motion Approaches},
 	% subtitle-czech = {Cesta do tajů kdovíčeho},
 	% subtitle-english = {Journey to the who-knows-what wondeland},
-	doctype = MP,
+	doctype = M,
 	faculty = F3,
 	% department-czech = {Katedra matematiky},
 	department-english = {Department of Cybernetics},
@@ -28,10 +33,10 @@
 	subfieldofstudy-english = {Computer Vision and Image Proccessing},
 	% fieldofstudy-czech = {Matematcké inženýrství},
 	% subfieldofstudy-czech = {Matematické modelování},
-	keywords-czech = {Structure-from-motion, Modern SFM, Camera pose evaluation},
-	keywords-english = {Structure-from-motion, Modern SFM, Camera pose evaluation},
-	day = 19,
-	month = 1,
+	keywords-czech = {Structure-from-motion, Moderní SFM, Vyhodnocení polohy kamery, Syntéza nového pohledu, Vyhodnocovací protokol},
+	keywords-english = {Structure-from-motion, Modern SFM, Camera pose evaluation, Novel view synthesis, Evaluation protocol},
+	day = 23,
+	month = 5,
 	year = 2025,
 	specification-file = {ctutest-zadani.pdf},
 %	front-specification = true,
@@ -80,14 +85,18 @@
 
 % Abstract in Czech
 \begin{abstract-czech}
-
+	Techniky SfM (Structure-from-Motion) jsou nedílnou součástí rekonstrukce 3D geometrie z 2D obrazových sekvencí.
+	Nedávný pokrok v oblasti SfM vedl k vývoji několika nejmodernějších algoritmů, které využívají hluboké učení a další moderní techniky.
+	Tato zpráva hodnotí čtyři současné algoritmy SfM \textbf{GLOMAP, VGGSfM, FlowMap} a \textbf{AceZero} na rozmanitých referenčních souborech dat.
+	Hodnocení se zaměřuje na kritické ukazatele, včetně přesnosti odhadu polohy kamery, kvality syntézy nových pohledů a také časové efektivity a spotřeby paměti.
+	Poznatky z této studie mají za cíl nasměrovat budoucí vývoj a použití SfM v počítačovém vidění a příbuzných oborech.
 \end{abstract-czech}
 
 % Abstract in English
 \begin{abstract-english}
 	Structure-from-Motion (SfM) techniques are integral in reconstructing 3D geometry from 2D image sequences.
 	Recent advancements in SfM have led to the development of several state-of-the-art algorithms that leverage deep learning and other modern techniques.
-	This report evaluates four contemporary SfM algorithms \textbf{Glomap, VGGsfm, FlowMap} and \textbf{AceZero} on a diverse set of benchmark datasets.
+	This report evaluates four contemporary SfM algorithms \textbf{GLOMAP, VGGSfM, FlowMap} and \textbf{AceZero} on a diverse set of benchmark datasets.
 	The evaluation focuses on critical metrics, including camera pose estimation accuracy, the quality of novel view synthesis as well as time efficiency and memory consumption.
 	The insights from this study aim to guide future development and application of SfM in computer vision and related fields.
 \end{abstract-english}
@@ -120,7 +129,6 @@ In Prague, \ctufield{day}.~\monthinlanguage{title}~\ctufield{year}
 \usepackage{lipsum,blindtext}
 \usepackage{mathrsfs} % provides \mathscr used in the ridiculous examples
 \usepackage{amsmath}
-\usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{subcaption} % Required for subfigure captions
 \usepackage{float} % Required for H float positioning
@@ -131,13 +139,24 @@ In Prague, \ctufield{day}.~\monthinlanguage{title}~\ctufield{year}
 \usepackage{hyperref}
 \usepackage{booktabs}     
 \usepackage{multirow}
+\usepackage{longtable}
+\usepackage{siunitx}         % aligns numbers on the decimal point
+\usepackage{adjustbox}       % quick resize or clip
+\usepackage{rotating} 	  	 % for sidewaystable
+\usepackage{siunitx}
+\usepackage{changepage}
+
+\sisetup{table-format=1.2, detect-all, round-mode=places}
 
 \hypersetup{
 	colorlinks=true,
-	linkcolor=black,
+	linkcolor=red,
 	citecolor=blue,
 	urlcolor=blue,
 }
+
+\newcommand{\best}[1]{\textbf{#1}}
+\newcommand{\sbest}[1]{\underline{#1}}
 
 % \addbibresource{src/references.bib}
 

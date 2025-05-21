@@ -1,15 +1,75 @@
-\chapter{Discussion}\label{chap:discussion}
+% ------------------------------------------------------------
+% Things to include in discussion : 
 
-% Explain stuff like if there is a unregistered camera, how to handle it e.g. we apply a high penalty in the camera pose error
-
-% AceZero provide a confidence score for each camera pose, if it is bellow 1000, we consider the camera as unreliable.
-% ACEZERO seems to perform well when the trajectory is a turns around a subject such as MipNeRF360.
-% ACEZERO time complexity depends on the number of images and the spatial distribution of cameras. Worst case is $O(n^2)$ where n is the number of images. best case is $\Omega(n)$ when the cameras are well distributed in space.
+% AceZero seems to perform well when the trajectory is a turns around a subject such as MipNeRF360. or purly outdoor/indoor such as LaMAR but no indoor/outdoor transition.
+% AceZero time complexity depends on the number of images and the spatial distribution of cameras. Worst case is $O(n^2)$ where n is the number of images. best case is $\Omega(n)$ when the cameras are well distributed in space.
 
 % FlowMap does not scale very well with the number of images. The video memory usage increases linearly with the number of images.
 % FlowMap also assume to run on video sequences with small jumps between frames because it needs to compute optical flow.
 % Indeed, the current implementation of FlowMap uses full batch processing. A possible improvement would be using mini-batches to help reduce the memory usage.
 % Impossible to run LaMAR dataset on FlowMap as each sessions is a few hundreds of images.
-% FlowMap paper used a 40GB GPU to run their experiments. We run MIPNerf360 on a 32GB GPU. Thus, we run at images2 an $+experiment=low_memory$ to reduce the memory usage. Note that this can lower the results.
+
+% FlowMap current implementation uses full batch for computing optical flow. Perhaps using mini-batches could help reduce the memory usage and improve scalability.
 
 % Unfortunately, reducing image size for vggsfm doesn't appear to have a real impact on the memory usage.
+
+% COLMAP and GLOMAP could be improved by replacing the basic Sift based feature extraction with a more recent and efficient feature extractor such as SuperPoint \cite{detone2018superpoint}. The Hloc \cite{Hloc} library already provide a wrapper for SuperPoint and easy integration with COLMAP.
+
+% ------------------------------------------------------------
+
+\chapter{Discussion}\label{chap:discussion}
+Across four heterogeneous benchmarks (ETH3D, LaMAR, MipNeRF360 and Tanks And Temples) a consistent ranking emerges:
+
+\begin{itemize}
+    \item \textbf{GLOMAP} delivers the best \emph{relative} pose accuracy on ETH3D (AUC$_{30}=93.4$) and got \SI{99.5}{\percent} accuracy, whereas COLMAP stops at \SI{75.6}{\percent}.
+    \item \textbf{COLMAP} remains the most robust when absolute accuracy is critical: it attains the lowest median translation errors on LaMAR and remains faithful Gaussian-splat renders.
+    \item \textbf{VGGSfM} achieves mid-tier accuracy but is memory hungry (\SI{>30}{GB} on ETH3D scenes) and fails on long LaMAR sequences due to sliding-window divergence.
+    \item \textbf{AceZero} scales gracefully with sequence length but its worst-case time complexity is $O(n^{2})$ when camera baselines form a line; it also assumes a single intrinsic calibration and under-performs in wide environement with low images overlap (e.g. ETH3D, LaMAR).
+    \item \textbf{FlowMap} struggles whenever optical-flow baselines exceed a few pixels. Even with ideal conditions (Tanks And Temples reduced), it fails to match the other methods accuracy.
+\end{itemize}
+
+\paragraph{GLOMAP}
+Its joint \emph{global positioning} step side-steps translation averaging issues and explains the striking ETH3D gains.  
+Nevertheless, a degenerate solutions produce metre-scale outliers (e.g.\ a \SI{105}{m} error in \texttt{courtyard}) inflating its mean translation error to \SI{9.1}{m}.
+Because GLOMAP still relies on SIFT, scenes with motion blur or specular glass façades (common in LaMAR) occasionally break its feature graph; substituting SuperPoint \cite{detone18superpoint} through Hloc \cite{sarlin2019coarse} could reduce such failure modes.
+The current implementation performs the mapping step on the CPU which could benefit from GPU acceleration.
+
+\paragraph{COLMAP}
+The incremental pipeline remains a safe baseline: it discards dubious keyframes aggressively, which keeps per-frame errors low but fragments long mobile sessions into multiple sub-models.
+Replacing exhaustive matching with \emph{sequential} matching halves run-time on phone videos with a small accuracy drop, yet global pipelines still out-pace it on large-scale data.
+
+\paragraph{VGGSfM}
+The fully differentiable design is attractive for end-to-end learning, but its memory footprint scales with the amount of predicted tracks; even after reducing tracks $4\times$, MipNerf360 scenes need \SI{30}{GB} of VRAM.
+On LaMAR, the tracker occasionally enters an infinite loop when no keyframe in the sliding window satisfies its visibility heuristics.
+Enabling muli-GPU support would allows to process larger sequences, but the current implementation is not designed for that.
+
+\paragraph{AceZero}
+When the camera follows a closed loop around an object (e.g. MipNerf360 \texttt{garden}), AceZero produces crisp trajectories and fair (PSNR \SI{19.89}{dB}, SSIM \SI{0.53}, LPIPS \SI{0.41}).
+Performance collapses at outdoor-to-indoor transitions and large scenes with minimal overlap (e.g. LaMAR) cause the scene coordinate regression to diverge.
+% Future work might add an adaptive curriculum that injects synthetic views when pose confidence falls below the empirical threshold of $1\,000$.
+
+\paragraph{FlowMap}
+Full-batch optical-flow warping makes memory scale linearly with image count (30 GB for 150 frame Tanks And Temples sequence).
+Mini-batch optimisation could drop memory by an order of magnitude, enabling evaluation on complete LaMAR runs.
+
+The idea of using depth and known correspondences to compute a camera-induced loss is a promising approach, as it allows to optimise camera parameters in a self-supervised way. 
+However, relying on optical flow, limits FlowMap's application to small video sequences. 
+
+\paragraph{Complexity \& resource usage}
+Tables in Section \ref{sec:time-and-memory-evaluation} show that GLOMAP is consistently the fastest on ETH3D, MipNerf360 and Tanks And Temples.
+VGGSfM is \emph{slower but steady}: once memory is available, it produces relatively accurate trajectories.
+AceZero is the slowest on average because it iterates scene-coordinate regression until convergence; however, for trajectories with thousands of frames and wide image overlap, its near-linear regime overtakes COLMAP while maintaining moderate memory usage compared to more memory-intensive alternatives.
+
+\paragraph{Novel-view synthesis quality}
+Gaussian Splatting magnifies pose inaccuracies: a small rotation drift can displace splats by tens of pixels. 
+Accordingly, COLMAP and GLOMAP, which offer the best pose precision, produce almost identical renders on MipNeRF360; GLOMAP edges ahead in confined interiors (e.g. \texttt{bonsai} 0.92 vs 0.68 SSIM).
+VGGSfM's softer geometry lowers PSNR by \SI{\approx3}{dB} on average, whereas FlowMap collapses completely (13.13 dB, SSIM 0.38, LPIPS 0.84).  
+AceZero's pinhole model leaves residual distortion that the splatter cannot absorb, explaining its blurry \texttt{room} failure.
+
+% \clearpage
+% \paragraph{Limitations of this study}
+% \begin{enumerate}
+%     \item \textbf{Dataset scope.} We could not test the $\ge10\,000$-image regime advertised by AceZero and GLOMAP because of time constraints.
+%     \item \textbf{Intrinsic homogeneity.} Datasets with multiple devices (IMC, ScanNet) were excluded to satisfy AceZero's single-intrinsic assumption; generalising results to heterogeneous rigs thus needs further work.
+%     \item \textbf{GPU bias.} Two methods (VGGSfM, FlowMap) exceeded our \SI{32}{GB} VRAM limit on some scenes; their ETH3D scores therefore reflect a favourable subset.
+% \end{enumerate}
