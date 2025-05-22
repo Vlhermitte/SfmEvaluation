@@ -131,11 +131,13 @@ def export_rel_results(rel_results: dict, output_path: Path):
     RTE_10 = np.mean(np.cumsum(normalized_histogram[:10]) * 100)
 
     number_of_missing_cameras = rel_results['number_of_missing_cameras']
+    number_of_images = rel_results['number_of_images']
 
     # Write auc to txt file
     with open(f'{output_path}/rel_auc.json', 'w') as f:
         json.dump({
             'Missing_cameras': number_of_missing_cameras,
+            'Number_of_images': number_of_images,
             'Auc_3': Auc_3,
             'Auc_5': Auc_5,
             'Auc_10': Auc_10,
